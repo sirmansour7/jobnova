@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  candidate
+  hr
+  admin
+}
+
+enum OrgRoleInOrg {
+  OWNER
+  HR
+  MEMBER
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+enum AuditEvent {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGIN_BLOCKED
+  LOGOUT
+  REFRESH
+  REGISTER
+  EMAIL_VERIFIED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_SUCCESS
+  SUSPICIOUS_ACTIVITY
+}
+
+model User {
+  id           String @id @default(cuid())
+  fullName     String
+  email        String @unique
+  passwordHash String
+  role         Role   @default(candidate)
+
+  emailVerified     Boolean @default(false)
+  verificationToken String? @unique
+  refreshTokenHash  String?
+
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
+  passwordResetToken  String?   @unique
+  passwordResetExpiry DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships      Membership[]
+  candidateProfile CandidateProfile?
+  applications     Application[]
+  auditLogs        AuditLog[]
+  cv               Cv?
+}
+
+model AuditLog {
+  id        String     @id @default(cuid())
+  userId    String?
+  event     AuditEvent
+  ip        String?
+  userAgent String?
+  meta      Json?
+  createdAt DateTime   @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  jobs        Job[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  roleInOrg      OrgRoleInOrg
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([roleInOrg])
+}
+
+model Job {
+  id             String  @id @default(cuid())
+  organizationId String
+  title          String
+  partnerName    String
+  description    String?
+  governorate    String?
+  city           String?
+  category       String?
+  isActive       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@index([organizationId])
+  @@index([isActive])
+  @@index([category])
+}
+
+model CandidateProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  phone     String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  jobId       String
+  candidateId String
+  status      ApplicationStatus @default(APPLIED)
+  coverLetter String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  job       Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate User @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, candidateId])
+  @@index([jobId])
+  @@index([candidateId])
+  @@index([status])
+}
+
+model ImportBatch {
+  id        String   @id @default(cuid())
+  source    String
+  createdAt DateTime @default(now())
+
+  raws JobRaw[]
+}
+
+model JobRaw {
+  id         String @id @default(cuid())
+  batchId    String
+  sourcePage Int?
+  rawText    String
+  confidence Int?
+
+  companyName String?
+  jobTitle    String?
+  phone       String?
+  governorate String?
+  city        String?
+  category    String?
+  tagsCsv     String?
+
+  createdAt DateTime @default(now())
+
+  batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([phone])
+  @@index([companyName])
+}
+
+model Cv {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+

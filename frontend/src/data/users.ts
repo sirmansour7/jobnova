@@ -1,0 +1,115 @@
+export type UserRole = "candidate" | "hr" | "admin"
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  avatar: string
+  phone: string
+  location: string
+  createdAt: string
+}
+
+export const mockUsers: User[] = [
+  {
+    id: "1",
+    name: "أحمد محمد",
+    email: "ahmed@example.com",
+    role: "candidate",
+    avatar: "AM",
+    phone: "01012345678",
+    location: "القاهرة",
+    createdAt: "2026-01-15",
+  },
+  {
+    id: "2",
+    name: "سارة أحمد",
+    email: "sara@fawry.com",
+    role: "hr",
+    avatar: "SA",
+    phone: "01098765432",
+    location: "القاهرة",
+    createdAt: "2026-01-10",
+  },
+  {
+    id: "3",
+    name: "محمد عبدالله",
+    email: "admin@jobnova.com",
+    role: "admin",
+    avatar: "MA",
+    phone: "01155667788",
+    location: "القاهرة",
+    createdAt: "2025-12-01",
+  },
+  {
+    id: "4",
+    name: "فاطمة حسن",
+    email: "fatma@example.com",
+    role: "candidate",
+    avatar: "FH",
+    phone: "01234567890",
+    location: "الإسكندرية",
+    createdAt: "2026-02-01",
+  },
+  {
+    id: "5",
+    name: "محمود علي",
+    email: "mahmoud@example.com",
+    role: "candidate",
+    avatar: "MA",
+    phone: "01122334455",
+    location: "الجيزة",
+    createdAt: "2026-02-05",
+  },
+  {
+    id: "6",
+    name: "نور الدين أحمد",
+    email: "nour@example.com",
+    role: "candidate",
+    avatar: "ND",
+    phone: "01066778899",
+    location: "المنصورة",
+    createdAt: "2026-01-20",
+  },
+  {
+    id: "7",
+    name: "سلمى إبراهيم",
+    email: "salma@example.com",
+    role: "candidate",
+    avatar: "SI",
+    phone: "01288990011",
+    location: "القاهرة الجديدة",
+    createdAt: "2026-02-10",
+  },
+  {
+    id: "8",
+    name: "كريم وليد",
+    email: "kareem@vodafone.com",
+    role: "hr",
+    avatar: "KW",
+    phone: "01199887766",
+    location: "القاهرة",
+    createdAt: "2026-01-25",
+  },
+  {
+    id: "9",
+    name: "هالة مصطفى",
+    email: "hala@cib.com",
+    role: "hr",
+    avatar: "HM",
+    phone: "01033445566",
+    location: "القاهرة",
+    createdAt: "2026-01-18",
+  },
+  {
+    id: "10",
+    name: "عمر حسام",
+    email: "omar@example.com",
+    role: "candidate",
+    avatar: "OH",
+    phone: "01177889900",
+    location: "أسوان",
+    createdAt: "2026-02-15",
+  },
+]

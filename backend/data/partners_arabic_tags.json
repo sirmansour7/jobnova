@@ -1,0 +1,2587 @@
+[
+  {
+    "companyName": "مطعم حمزه الشام",
+    "jobTitle": "شيف كريب",
+    "phone": "+201000047398",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مطاعم"
+    ],
+    "sourcePage": 1,
+    "rawText": "| بيرك فيش | ماشلا هزمح معطم ي | 1",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم حمزه الشام",
+    "jobTitle": "شيف بيتا",
+    "phone": "+201000047398",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مطاعم"
+    ],
+    "sourcePage": 1,
+    "rawText": "| ز اتيب فيش | ماشلا هزمح معطم ي | 2",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم حمزه الشام",
+    "jobTitle": "شيف جريل",
+    "phone": "+201000047398",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مطاعم"
+    ],
+    "sourcePage": 1,
+    "rawText": "| ليرج فيش | ماشلا هزمح معطم ي | 3",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم حمزه الشام",
+    "jobTitle": "مدير",
+    "phone": "+201000047398",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "إدارة"
+    ],
+    "sourcePage": 1,
+    "rawText": "| ريدم | ماشلا هزمح معطم ي | 4",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم جاست فريش",
+    "jobTitle": "مساعد شيف سخن",
+    "phone": "+201060007717",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مساعد",
+      "مطاعم"
+    ],
+    "sourcePage": 1,
+    "rawText": "| نخس فيش دعاسم | شيرف تساج معطم | 5",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم جاست فريش",
+    "jobTitle": "خابط",
+    "phone": "+201060007717",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| خابط | شيرف تساج معطم | 6",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم المحمدي",
+    "jobTitle": "سيدات ف المطبخ المركزي",
+    "phone": "+201095527977",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مطاعم"
+    ],
+    "sourcePage": 1,
+    "rawText": "| ز يزكرملا خبطملا ف تاديس ي | يدمحملا معطم | 8",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم المحمدي",
+    "jobTitle": "نزاخم لامع",
+    "phone": "+201095527977",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| نزاخم لامع | يدمحملا معطم | 9",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم المحمدي",
+    "jobTitle": "ويت",
+    "phone": "+201095527977",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| تيو | يدمحملا معطم | 10",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم المحمدي",
+    "jobTitle": "دراويتس",
+    "phone": "+201095527977",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| دراويتس | يدمحملا معطم | 11",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "زز تيرام ميج",
+    "jobTitle": "ولد سيلز",
+    "phone": "+966562924245",
+    "governorate": null,
+    "city": null,
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| زليس دلو | زز تيرام ميج | 12",
+    "confidence": 90,
+    "missingFields": [
+      "governorate",
+      "city"
+    ]
+  },
+  {
+    "companyName": "زز تيرام ميج",
+    "jobTitle": "ولد وبنت سيلز كول",
+    "phone": "+966562924245",
+    "governorate": null,
+    "city": null,
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| لوك زليس تنبو دلو | زز تيرام ميج | 13",
+    "confidence": 90,
+    "missingFields": [
+      "governorate",
+      "city"
+    ]
+  },
+  {
+    "companyName": "شكة أكوا زاها ر",
+    "jobTitle": "مساعد مدير مخازن",
+    "phone": "+201069669435",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مساعد",
+      "إدارة"
+    ],
+    "sourcePage": 1,
+    "rawText": "| نزاخم ريدم دعاسم | ر اهاز اوكأ ةكش | 14",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "اوشلا عرف",
+    "jobTitle": "يتنا اتاد",
+    "phone": "+201012926915",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| يتنا اتاد | اوشلا عرف | 15",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ر elite properties group هكش",
+    "jobTitle": "هفاظن ةلماع",
+    "phone": "+201034660015",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Real Estate",
+    "tags": [
+      "تقنية معلومات",
+      "عقارات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| هفاظن ةلماع | ر elite properties group هكش | 16",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "لوم افصلا",
+    "jobTitle": "تانبو بابش ففرأ ي قسنم",
+    "phone": "+201040440334",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| ز تانبو بابش ففرأ ي قسنم | لوم افصلا | 17",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "لوم افصلا",
+    "jobTitle": "تانبو بابش هفاظن لامع",
+    "phone": "+201040440334",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| تانبو بابش هفاظن لامع | لوم افصلا | 18",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "لوم افصلا",
+    "jobTitle": "سيلز مالبس شباب وبنات",
+    "phone": "+201040440334",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| تانبو بابش سبلام زليس | لوم افصلا | 19",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "لوم افصلا",
+    "jobTitle": "شيف أجبان شباب",
+    "phone": "+201040440334",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مطاعم"
+    ],
+    "sourcePage": 1,
+    "rawText": "| بابش نابجأ فيش | لوم افصلا | 20",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "يوشم فيغر",
+    "jobTitle": "استيوارد",
+    "phone": "+201004079544",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "نظافة",
+      "تقنية معلومات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| دراويتسا | يوشم فيغر | 21",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة أكوا زاها ر",
+    "jobTitle": "محاسب خزينه",
+    "phone": "+201069669435",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "محاسبة"
+    ],
+    "sourcePage": 1,
+    "rawText": "| هنيزخ بساحم | ر اهاز اوكأ ةكش | 22",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم بالك جوت",
+    "jobTitle": "ويت شباب وبنات",
+    "phone": "+201011668823",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| تانبو بابش تيو | توج كلاب معطم | 23",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مركز ل تر روم",
+    "jobTitle": "تمريض",
+    "phone": "+201558089088",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 1,
+    "rawText": "| ضيرمت | ز مور رت ل زكرم | 24",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "زدلانودكام",
+    "jobTitle": "تانبو بابش لمع قيرف",
+    "phone": "+201020652127",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| تانبو بابش لمع قيرف | زدلانودكام | 25",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "زدلانودكام",
+    "jobTitle": "باريستا",
+    "phone": "+201020652127",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مطاعم"
+    ],
+    "sourcePage": 1,
+    "rawText": "| اتسيراب | زدلانودكام | 26",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "زدلانودكام",
+    "jobTitle": "تانبو بابش ميات تراب لمع قيرف",
+    "phone": "+201020652127",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| تانبو بابش ميات تراب لمع قيرف | زدلانودكام | 27",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "رمغ تيم عرف ءاشلاا اتيب",
+    "jobTitle": "لمع قيرف",
+    "phone": "+201556370999",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| لمع قيرف | ز رمغ تيم عرف ءاشلاا اتيب | 28",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة ابن سينا فارما ر",
+    "jobTitle": "هفاظن لماع",
+    "phone": "+201064144366",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 1,
+    "rawText": "| هفاظن لماع | ر امراف انيس نبا ةكش | 29",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم زبده بيت الكبده",
+    "jobTitle": "لوتنك يباك",
+    "phone": "+201068758955",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| ز لوتنك يباك | هدبكلا تيب هدبز معطم | 30",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم زبده بيت الكبده",
+    "jobTitle": "استيوارد",
+    "phone": "+201068758955",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "نظافة"
+    ],
+    "sourcePage": 1,
+    "rawText": "| دراويتسا | هدبكلا تيب هدبز معطم | 31",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم زبده بيت الكبده",
+    "jobTitle": "مساعد شيف",
+    "phone": "+201068758955",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مساعد",
+      "مطاعم"
+    ],
+    "sourcePage": 1,
+    "rawText": "| فيش دعاسم | هدبكلا تيب هدبز معطم | 32",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "لش يدمح",
+    "jobTitle": "ت شاك",
+    "phone": "+201010111742",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| ت شاك | ب لش يدمح ي | 33",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نوشاف ج نا",
+    "jobTitle": "مدير فرع",
+    "phone": "+201222210474",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "إدارة"
+    ],
+    "sourcePage": 1,
+    "rawText": "| عرف ريدم | نوشاف ج نا ي | 34",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة مودرن ك ت ر",
+    "jobTitle": "سيلز مستحضات تجميل",
+    "phone": "+201003222269",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Retail & Fashion",
+    "tags": [
+      "تجزئة",
+      "مبيعات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| ز ليمجت تاضحتسم زليس | ر ت ك نردوم ةكش | 35",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "طيقنلا",
+    "jobTitle": "سيلز براند عطاره",
+    "phone": "+201003741168",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| هراطع دنارب زليس | طيقنلا ي | 36",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "طيقنلا",
+    "jobTitle": "محاسب براند عطاره",
+    "phone": "+201003741168",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "محاسبة"
+    ],
+    "sourcePage": 1,
+    "rawText": "| هراطع دنارب بساحم | طيقنلا ي | 37",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "DM3 سكيتامزوك",
+    "jobTitle": "تل سيلز",
+    "phone": "+201067684385",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| زليس لت ي | DM3 سكيتامزوك | 38",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "Massive real estate",
+    "jobTitle": "هت تركس",
+    "phone": "+201063356451",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Real Estate",
+    "tags": [
+      "عقارات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| هت تركس | Massive real estate | 39",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Massive real estate",
+    "jobTitle": "سيلز",
+    "phone": "+201063356451",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Real Estate",
+    "tags": [
+      "عقارات",
+      "مبيعات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| زليس | Massive real estate | 40",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Rich Bake",
+    "jobTitle": "مندوب ي",
+    "phone": "+201068051455",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| ز ي بودنم | Rich Bake | 41",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "Rich Bake",
+    "jobTitle": "هثلاث ةجرد ي قاوس",
+    "phone": "+201068051455",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| ز هثلاث ةجرد ي قاوس | Rich Bake | 42",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نوشاف ج نا",
+    "jobTitle": "يتنا اتاد",
+    "phone": "+201222210474",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| يتنا اتاد | نوشاف ج نا ي | 43",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نوشاف ج نا",
+    "jobTitle": "تامدخ صخش",
+    "phone": "+201222210474",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| تامدخ صخش | نوشاف ج نا ي | 44",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نوشاف ج نا",
+    "jobTitle": "reels maker تنب",
+    "phone": "+201222210474",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 1,
+    "rawText": "| reels maker تنب | نوشاف ج نا ي | 45",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شركة السويدي للبرمجيات",
+    "jobTitle": "ينف معدو IT يرادإ",
+    "phone": "+201012201717",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات"
+    ],
+    "sourcePage": 1,
+    "rawText": "| ينف معدو IT يرادإ | تايجمربلل يديوسلا ةكرش | 46",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": ")Egy group( بورج يجيإ",
+    "jobTitle": "إدارة صفحات وإعالنات ممولة",
+    "phone": "+201012818172",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Marketing & Media",
+    "tags": [
+      "تسويق"
+    ],
+    "sourcePage": 2,
+    "rawText": "| ةلومم تانلاعإو تاحفص ةرادإ | )Egy group( بورج يجيإ | 47",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ريدصتلاو داريتسلال ولباوكأ",
+    "jobTitle": "موديريتور ومبيعات أونالين",
+    "phone": "+201111596669",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| نيلانوأ تاعيبمو روتيريدوم | ريدصتلاو داريتسلال ولباوكأ | 48",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "تادمجملل زدوف تيرج",
+    "jobTitle": "مناديب مبيعات",
+    "phone": "+201065336645",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| تاعيبم بيدانم | تادمجملل زدوف تيرج | 49",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةحايسلل مزمز",
+    "jobTitle": "سيلز حجز طيران",
+    "phone": "+201060005585",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Travel & Tourism",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| ناريط زجح زليس | ةحايسلل مزمز | 50",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مؤسسة عنوون لإللكترونيات",
+    "jobTitle": "سيلز (مبيعات)",
+    "phone": "0100664392801028440210",
+    "governorate": null,
+    "city": null,
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "/ | )تاعيبم( زليس | تاينورتكللإل نوونع ةسسؤم | 51",
+    "confidence": 80,
+    "missingFields": [
+      "governorate",
+      "city"
+    ]
+  },
+  {
+    "companyName": ")يرخف دمحم( نزاخم",
+    "jobTitle": "نزخم نيمأ",
+    "phone": "+201068051455",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| نزخم نيمأ | )يرخف دمحم( نزاخم | 52",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نامز ريخ تكرام ربوس",
+    "jobTitle": "ةلاص فظوم",
+    "phone": "+201008187197",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| ةلاص فظوم | نامز ريخ تكرام ربوس | 53",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شركة دومتي",
+    "jobTitle": "مندوب جملة",
+    "phone": "+201006365277",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| ةلمج بودنم | يتمود ةكرش | 54",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "تلالآل نيشام ةيرصملا",
+    "jobTitle": ")Solidworks( ميمصت تاسدنهم",
+    "phone": "+201026959669",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Manufacturing & Industry",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| )Solidworks( ميمصت تاسدنهم | تلالآل نيشام ةيرصملا | 55",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "صيدلية أبو عبده",
+    "jobTitle": ")ديوكت( تانايب لخدم",
+    "phone": "+201014140507",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 2,
+    "rawText": "| )ديوكت( تانايب لخدم | هدبع وبأ ةيلديص | 56",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شركة البركة للشحن",
+    "jobTitle": "تسويق أونالين (من البيت)",
+    "phone": "+201060105694",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Logistics & Delivery",
+    "tags": [
+      "شحن وتوصيل",
+      "تسويق"
+    ],
+    "sourcePage": 2,
+    "rawText": "| )تيبلا نم( نيلانوأ قيوست | نحشلل ةكربلا ةكرش | 57",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "يطيرمعلا تلاحم",
+    "jobTitle": "سيلز (مبيعات)",
+    "phone": "+201000226280",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| )تاعيبم( زليس | يطيرمعلا تلاحم | 58",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "City System تايجمربلل",
+    "jobTitle": "رتنس لوك",
+    "phone": "+201025018831",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| رتنس لوك | City System تايجمربلل | 59",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شركة طلبات",
+    "jobTitle": ")رايط( يرفيلد",
+    "phone": "+201069033480",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Logistics & Delivery",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| )رايط( يرفيلد | تابلط ةكرش | 60",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم توما",
+    "jobTitle": "عضو فريق / مساعد شيف",
+    "phone": "+201050237170",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مساعد",
+      "مطاعم"
+    ],
+    "sourcePage": 2,
+    "rawText": "| فيش دعاسم / قيرف وضع | اموت معطم | 61",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم شاشلك",
+    "jobTitle": "مساعد باريستا",
+    "phone": "+201064882334",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مساعد",
+      "مطاعم"
+    ],
+    "sourcePage": 2,
+    "rawText": "| اتسيراب دعاسم | كلشاش معطم | 62",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "إدارة أهل الشام",
+    "jobTitle": "هيفوبو ةفاظن ةلماع",
+    "phone": "+201100643880",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| هيفوبو ةفاظن ةلماع | ماشلا لهأ ةرادإ | 63",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةايحلا تانيمأتل سيوسلا ةانق",
+    "jobTitle": "سيلز (تأمينات)",
+    "phone": "+201050078416",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Finance & Insurance",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| )تانيمأت( زليس | ةايحلا تانيمأتل سيوسلا ةانق | 64",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شركة لؤطة للمالبس",
+    "jobTitle": "مدير فرع",
+    "phone": "+201273766835",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "إدارة"
+    ],
+    "sourcePage": 2,
+    "rawText": "| عرف ريدم | سبلاملل ةطؤل ةكرش | 65",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نيمأتلل ةيتاراملإا ةيرصملا",
+    "jobTitle": "مدير مبيعات",
+    "phone": "+201010247221",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "إدارة",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| تاعيبم ريدم | نيمأتلل ةيتاراملإا ةيرصملا | 66",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "يدشرملا رامعم",
+    "jobTitle": "سيلز عقارات",
+    "phone": "+201201282792",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Real Estate",
+    "tags": [
+      "عقارات",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| تاراقع زليس | يدشرملا رامعم | 67",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "A2Z لحم",
+    "jobTitle": "سيلز (مبيعات)",
+    "phone": "+201228015977",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| )تاعيبم( زليس | A2Z لحم | 68",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "تادمجملل بورج تجرات",
+    "jobTitle": "رتنس لوكو ينورتكلإ قوسم",
+    "phone": "+201001955420",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| رتنس لوكو ينورتكلإ قوسم | تادمجملل بورج تجرات | 69",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شركة الوعد للعمالة",
+    "jobTitle": "محاسب",
+    "phone": "+201100114461",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "محاسبة"
+    ],
+    "sourcePage": 2,
+    "rawText": "| بساحم | ةلامعلل دعولا ةكرش | 70",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شركة فيوال (جمصة)",
+    "jobTitle": "ديربت فرغ ةنايص ينف",
+    "phone": "+201032630133",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| ديربت فرغ ةنايص ينف | )ةصمج( لاويف ةكرش | 71",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نملأل دليش تيليإ",
+    "jobTitle": "أفراد أمن (التجمع)",
+    "phone": "+201146888848",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Security",
+    "tags": [
+      "تقنية معلومات",
+      "أمن"
+    ],
+    "sourcePage": 2,
+    "rawText": "| )عمجتلا( نمأ دارفأ | نملأل دليش تيليإ | 72",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ريماكس للتسويق العقاري",
+    "jobTitle": "سيلز (مبيعات)",
+    "phone": "+201099696956",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Real Estate",
+    "tags": [
+      "تسويق",
+      "عقارات",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| )تاعيبم( زليس | يراقعلا قيوستلل سكامير | 73",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "رامثتسلال AROPE ةكرش",
+    "jobTitle": "نيمأت ءلاكو",
+    "phone": "+201004695466",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| نيمأت ءلاكو | رامثتسلال AROPE ةكرش | 74",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "امراف انيس نبا",
+    "jobTitle": "تلي سيلز",
+    "phone": "+201033682682",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| زليس يلت | امراف انيس نبا | 75",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "حلواني الفخراني",
+    "jobTitle": "ريشاك",
+    "phone": "+201006973002",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| ريشاك | ينارخفلا يناولح | 76",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Eureka Pharmaceutical",
+    "jobTitle": "خدمة عمالء",
+    "phone": "+201111969916",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 2,
+    "rawText": "| ءلامع ةمدخ | Eureka Pharmaceutical | 77",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم بالك جوت",
+    "jobTitle": "مساعد شيف",
+    "phone": "+201011668823",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مساعد",
+      "مطاعم"
+    ],
+    "sourcePage": 2,
+    "rawText": "| فيش دعاسم | توج كلاب معطم | 78",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "PostX",
+    "jobTitle": "خدمة عمالء",
+    "phone": "+201026213886",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Logistics & Delivery",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| ءلامع ةمدخ | PostX | 79",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Tutrend",
+    "jobTitle": "ايديم لايشوس ئاصخأ",
+    "phone": "+201005333909",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| ايديم لايشوس ئاصخأ ي | Tutrend | 80",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "Tutrend",
+    "jobTitle": "محاسب مخازن",
+    "phone": "+201005333909",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "محاسبة"
+    ],
+    "sourcePage": 2,
+    "rawText": "| نزاخم بساحم | Tutrend | 81",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "Tutrend",
+    "jobTitle": "تيل سيلز",
+    "phone": "+201005333909",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| زليس ليت ي | Tutrend | 82",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "طيقنلا ةراطع",
+    "jobTitle": "سيلز",
+    "phone": "+201067154351",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| زليس | طيقنلا ةراطع ي | 83",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "طيقنلا ةراطع",
+    "jobTitle": "ت شاك",
+    "phone": "+201067154351",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| ت شاك | طيقنلا ةراطع ي | 84",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم عنب",
+    "jobTitle": "مساعد شيف",
+    "phone": "0101617374701012635298",
+    "governorate": null,
+    "city": null,
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مساعد",
+      "مطاعم"
+    ],
+    "sourcePage": 2,
+    "rawText": "/ | فيش دعاسم | بنع معطم | 85",
+    "confidence": 90,
+    "missingFields": [
+      "governorate",
+      "city"
+    ]
+  },
+  {
+    "companyName": "iTechnology",
+    "jobTitle": "سكرتارية",
+    "phone": "+201206909049",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "إداري",
+      "تقنية معلومات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| ةيراتركس | iTechnology | 86",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "iTechnology",
+    "jobTitle": "سيلز",
+    "phone": "+201206909049",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| زليس | iTechnology | 87",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Medical Dream",
+    "jobTitle": "تيل سيلز",
+    "phone": "+201024973404",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| زليس ليت ي | Medical Dream | 88",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "DM Cosmetics",
+    "jobTitle": "تيل سيلز",
+    "phone": "+201004759359",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "تجزئة",
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| زليس ليت ي | DM Cosmetics | 89",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "كافيه س تينو",
+    "jobTitle": "باريستا",
+    "phone": "+201093497921",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مطاعم"
+    ],
+    "sourcePage": 2,
+    "rawText": "| اتسيراب | ونيت س هيفاك | 90",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "تايولحلل هدبع وبأ",
+    "jobTitle": "سيلز",
+    "phone": "+201091697993",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| زليس | تايولحلل هدبع وبأ | 91",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "هدبع دلاوأ",
+    "jobTitle": "سيلز",
+    "phone": "+201091697993",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 2,
+    "rawText": "| زليس | هدبع دلاوأ | 92",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "هدبع دلاوأ",
+    "jobTitle": "ةفاظن لامع",
+    "phone": "+201091697993",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 2,
+    "rawText": "| ةفاظن لامع | هدبع دلاوأ | 93",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "جاش ضوع",
+    "jobTitle": "محاسب خزينة",
+    "phone": "+201554988833",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "محاسبة"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ةنيزخ بساحم | جاش ضوع | 94",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "جاش ضوع",
+    "jobTitle": "ةيئابرهك ةزهجأ عايب",
+    "phone": "+201554988833",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| ةيئابرهك ةزهجأ عايب | جاش ضوع | 95",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةعانصلل ليدنق",
+    "jobTitle": "مندوب أوردرات",
+    "phone": "+201090741635",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| تاردروأ بودنم | ةعانصلل ليدنق | 96",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "اوشلا",
+    "jobTitle": "أفراد أمن",
+    "phone": "+201012926915",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Security",
+    "tags": [
+      "تقنية معلومات",
+      "أمن"
+    ],
+    "sourcePage": 3,
+    "rawText": "| نمأ دارفأ | اوشلا | 97",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Panda",
+    "jobTitle": "سائق",
+    "phone": "+201000469348",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "شحن وتوصيل"
+    ],
+    "sourcePage": 3,
+    "rawText": "| قئاس | Panda | 98",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "Shelter",
+    "jobTitle": "ردروأ يباك",
+    "phone": "+201064942618",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| ز ردروأ يباك | Shelter | 99",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "Shelter",
+    "jobTitle": "ويت",
+    "phone": "+201064942618",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| تيو | Shelter | 100",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Golden Smile",
+    "jobTitle": "Assistant نانسأ",
+    "phone": "+201080080825",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "مساعد",
+      "صيدلة"
+    ],
+    "sourcePage": 3,
+    "rawText": "| Assistant نانسأ | Golden Smile | 101",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم رشدي",
+    "jobTitle": "استيوارد",
+    "phone": "+201095958526",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "نظافة"
+    ],
+    "sourcePage": 3,
+    "rawText": "| دراويتسا | يدشر معطم | 102",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم رشدي",
+    "jobTitle": "مساعد شيف",
+    "phone": "+201095958526",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مساعد",
+      "مطاعم"
+    ],
+    "sourcePage": 3,
+    "rawText": "| فيش دعاسم | يدشر معطم | 103",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم رشدي",
+    "jobTitle": "شيف مشاوي",
+    "phone": "+201095958526",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مطاعم"
+    ],
+    "sourcePage": 3,
+    "rawText": "| يواشم فيش | يدشر معطم | 104",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةيئاودلا تاعانصلل ةعومجملا",
+    "jobTitle": "هيفوبو ةفاظن",
+    "phone": "+201024615857",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| هيفوبو ةفاظن | ةيئاودلا تاعانصلل ةعومجملا | 105",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "مصنع المكاوي",
+    "jobTitle": "محاسب",
+    "phone": "+201111778520",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Manufacturing & Industry",
+    "tags": [
+      "محاسبة",
+      "تصنيع"
+    ],
+    "sourcePage": 3,
+    "rawText": "| بساحم | يواكملا عنصم | 106",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مصنع المكاوي",
+    "jobTitle": "جاتنإ لامع",
+    "phone": "+201111778520",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Manufacturing & Industry",
+    "tags": [
+      "تصنيع"
+    ],
+    "sourcePage": 3,
+    "rawText": "| جاتنإ لامع | يواكملا عنصم | 107",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Fitness Sport",
+    "jobTitle": "سكرتارية",
+    "phone": "+201501333207",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Fitness & Sports",
+    "tags": [
+      "إداري",
+      "تقنية معلومات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ةيراتركس | Fitness Sport | 108",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Fitness Sport",
+    "jobTitle": "خدمة عمالء",
+    "phone": "+201501333207",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Fitness & Sports",
+    "tags": [
+      "تقنية معلومات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ءلامع ةمدخ | Fitness Sport | 109",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Fitness Sport",
+    "jobTitle": "تيل سيلز",
+    "phone": "+201501333207",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Fitness & Sports",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| زليس ليت ي | Fitness Sport | 110",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Fitness Sport",
+    "jobTitle": "مسؤول مبيعات",
+    "phone": "+201501333207",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Fitness & Sports",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| تاعيبم لوؤسم | Fitness Sport | 111",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Smart Optics",
+    "jobTitle": "خدمة عمالء",
+    "phone": "+201013495042",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ءلامع ةمدخ | Smart Optics | 112",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Flamingo Bakery",
+    "jobTitle": "ةفاظن لامع",
+    "phone": "+201000142083",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| ةفاظن لامع | Flamingo Bakery | 113",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Smile Craft",
+    "jobTitle": "مندوب",
+    "phone": "+201094763815",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة",
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| بودنم | Smile Craft | 114",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةيجيلخلا",
+    "jobTitle": "صقم بف",
+    "phone": "+201029600005",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| ز صقم بف ي | ةيجيلخلا | 115",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "Mac N Pie",
+    "jobTitle": "استيوارد مطبخ",
+    "phone": "+201005058002",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [
+      "مطاعم",
+      "نظافة"
+    ],
+    "sourcePage": 3,
+    "rawText": "| خبطم دراويتسا | Mac N Pie | 116",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Mac N Pie",
+    "jobTitle": "نزخم ي مأ",
+    "phone": "+201005058002",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| ز نزخم ي مأ | Mac N Pie | 117",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Gold's Gym",
+    "jobTitle": "سيلز",
+    "phone": "+201558089088",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Fitness & Sports",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| زليس | Gold's Gym | 118",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "نانتما",
+    "jobTitle": "مندوب مبيعات",
+    "phone": "+201068051455",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| تاعيبم بودنم | نانتما | 119",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "هايملا رتلافل قن",
+    "jobTitle": "تيل سيلز",
+    "phone": "+201003883660",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| زليس ليت ي | هايملا رتلافل قن ي | 120",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "Sale 3l Moda",
+    "jobTitle": "سيلز",
+    "phone": "+201270664188",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| زليس | Sale 3l Moda | 121",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ت ياه فاوقلا",
+    "jobTitle": "تارمم قسنم",
+    "phone": "+201003175745",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| تارمم قسنم | ت ياه فاوقلا | 122",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "بيرغلا دلب",
+    "jobTitle": "كرو مطعم",
+    "phone": "+201009187421",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| معطم ورك | بيرغلا دلب | 123",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةرانإ",
+    "jobTitle": "جاتنإ لامع",
+    "phone": "+201002250081",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| جاتنإ لامع | ةرانإ | 124",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "لرون",
+    "jobTitle": "سيلز",
+    "phone": "+201040002308",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| زليس | لرون ي | 125",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةيئاذغلا داوملل داحتلاا",
+    "jobTitle": "سائق / أم ي مخزن / عمال",
+    "phone": "+201000366167",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "شحن وتوصيل"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ز لامع / نزخم ي مأ / قئاس | ةيئاذغلا داوملل داحتلاا | 126",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "MK هيليتأ",
+    "jobTitle": "سيلز",
+    "phone": "+201034647070",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| زليس | MK هيليتأ | 127",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ر وزيز يشك",
+    "jobTitle": "كاش ت / كول سنت / مدير",
+    "phone": "+201000047398",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "إدارة"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ريدم / تنس لوك / ت شاك | ر وزيز يشك | 128",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ماشلا ةزمح",
+    "jobTitle": "ويت / شيف",
+    "phone": "+201000047398",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "مطاعم",
+      "تقنية معلومات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| فيش / تيو | ماشلا ةزمح ي | 129",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة القزاز للدعاية والتسويق ر",
+    "jobTitle": "سيلز",
+    "phone": "+201500133105",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Marketing & Media",
+    "tags": [
+      "تسويق",
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| زليس | ر قيوستلاو ةياعدلل زازقلا ةكش | 130",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة العروبة للمواد الغذائية ر",
+    "jobTitle": "مشف ي مبيعات / مناديب مبيعات ر",
+    "phone": "+201030888776",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ز ر تاعيبم بيدانم / تاعيبم ي فشم | ر ةيئاذغلا داوملل ةبورعلا ةكش | 131",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة دكتور بحر لألدوات المتلية ر زز",
+    "jobTitle": "سيلز أوت دور (بنات)",
+    "phone": "+201014744749",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| )تانب( رود توأ زليس | زز ر ةيلتملا تاودلأل رحب روتكد ةكش | 132",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "AB Chem ةيئاودلا تاماخلل",
+    "jobTitle": "سيلز (بنات)",
+    "phone": "+201050389859",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 3,
+    "rawText": "| )تانب( زليس | AB Chem ةيئاودلا تاماخلل | 133",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة القزاز للدعاية والتسويق ر",
+    "jobTitle": "كيفارج ممصم",
+    "phone": "+201500133105",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Marketing & Media",
+    "tags": [
+      "تسويق"
+    ],
+    "sourcePage": 3,
+    "rawText": "| كيفارج ممصم | ر قيوستلاو ةياعدلل زازقلا ةكش | 134",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مطعم جدو",
+    "jobTitle": "تنس لوك",
+    "phone": "+201210676902",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Restaurants & Cafes",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| تنس لوك | ودج معطم | 135",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مصنع ليتا للحلويات زز",
+    "jobTitle": "ةفاظن لامع",
+    "phone": "+201010545089",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Manufacturing & Industry",
+    "tags": [
+      "تصنيع"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ةفاظن لامع | زز تايولحلل اتيل عنصم | 136",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة أوبكس (فابريكا) ر",
+    "jobTitle": "ةحفص ليومت ةلوؤسم",
+    "phone": "+201002651951",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| ةحفص ليومت ةلوؤسم | ر )اكيرباف( سكبوأ ةكش | 137",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "مصنع إيفنت للمالبس",
+    "jobTitle": "ايديم لايشوس ةت تركس",
+    "phone": "+201093063063",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Manufacturing & Industry",
+    "tags": [
+      "تصنيع"
+    ],
+    "sourcePage": 3,
+    "rawText": "| ايديم لايشوس ةت تركس | سبلاملل تنفيإ عنصم | 138",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "مصنع أدوات كهربائية – ميت غمر",
+    "jobTitle": "HR",
+    "phone": "+201060011244",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Manufacturing & Industry",
+    "tags": [
+      "موارد بشرية",
+      "تصنيع"
+    ],
+    "sourcePage": 3,
+    "rawText": "| HR | رمغ تيم – ةيئابرهك تاودأ عنصم | 139",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ليعامسإ دمحم هيليتأ",
+    "jobTitle": "تافظوم",
+    "phone": "+201066176605",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 3,
+    "rawText": "| تافظوم | ليعامسإ دمحم هيليتأ | 140",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ج يإ امراف زلود",
+    "jobTitle": "ةفاظن لامع",
+    "phone": "+201024615857",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| ةفاظن لامع | ج يإ امراف زلود ي | 141",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة براشوت للشحن ر",
+    "jobTitle": "مندوب شحن",
+    "phone": "+201025457600",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Logistics & Delivery",
+    "tags": [
+      "شحن وتوصيل",
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| نحش بودنم | ر نحشلل توشارب ةكش | 142",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ع يزوتلاو ةراجتلل ةيملاعلا ديبس",
+    "jobTitle": "بيدانم",
+    "phone": "+201026262855",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| بيدانم | ع يزوتلاو ةراجتلل ةيملاعلا ديبس | 143",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ج يإ امراف زلود",
+    "jobTitle": "سائق",
+    "phone": "+201024615857",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "شحن وتوصيل"
+    ],
+    "sourcePage": 4,
+    "rawText": "| قئاس | ج يإ امراف زلود ي | 144",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ج يإ امراف زلود",
+    "jobTitle": "سكرتارية",
+    "phone": "+201024615857",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "إداري"
+    ],
+    "sourcePage": 4,
+    "rawText": "| ةيراتركس | ج يإ امراف زلود ي | 145",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةيئابرهك ةزهجأ روتسا",
+    "jobTitle": "تانلاعإ ممصمو قوسم",
+    "phone": "+201000773730",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| تانلاعإ ممصمو قوسم | ةيئابرهك ةزهجأ روتسا | 146",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةيئابرهك ةزهجأ روتسا",
+    "jobTitle": "مبيعات وخدمة عمالء",
+    "phone": "+201000773730",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| ءلامع ةمدخو تاعيبم | ةيئابرهك ةزهجأ روتسا | 147",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة أجهزة متلية ر زز",
+    "jobTitle": "Sales Promoter",
+    "phone": "+201278485805",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| Sales Promoter | زز ر ةيلتم ةزهجأ ةكش | 148",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة رامكو فارم ر",
+    "jobTitle": "تيل سيلز",
+    "phone": "+201220080306",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| زليس ليت ي | ر مراف وكمار ةكش | 149",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "تافييكتلل يركف دمحم تلايكوت",
+    "jobTitle": "سائق",
+    "phone": "+201099387975",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "شحن وتوصيل"
+    ],
+    "sourcePage": 4,
+    "rawText": "| قئاس | تافييكتلل يركف دمحم تلايكوت | 150",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "تافييكتلل يركف دمحم تلايكوت",
+    "jobTitle": "فييكت بف",
+    "phone": "+201099387975",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| ز فييكت بف ي | تافييكتلل يركف دمحم تلايكوت | 151",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ليومتلل ةضباقلا نامأ",
+    "jobTitle": "محاسب",
+    "phone": "+201044961007",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "محاسبة"
+    ],
+    "sourcePage": 4,
+    "rawText": "| بساحم | ليومتلل ةضباقلا نامأ | 152",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "سبلاملل جنيتس لحم",
+    "jobTitle": "درج لوؤسم",
+    "phone": "+201000371791",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| درج لوؤسم ي | سبلاملل جنيتس لحم | 153",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "سبلاملل جنيتس لحم",
+    "jobTitle": "سيلز",
+    "phone": "+201000371791",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| زليس | سبلاملل جنيتس لحم | 154",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "زز ةيلتملا ةزهجلأل جاش ضوع",
+    "jobTitle": "نزاخم لامع",
+    "phone": "+201554988833",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| نزاخم لامع | زز ةيلتملا ةزهجلأل جاش ضوع | 155",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "مركز ريفاين لل تر",
+    "jobTitle": "تمريض / سحب عينات",
+    "phone": "+201272961194",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 4,
+    "rawText": "| تانيع بحس / ضيرمت | ز رت لل نيافير زكرم | 156",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة ميديكال دريم ر",
+    "jobTitle": "تيل سيلز (بنات)",
+    "phone": "+201024973404",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Technology & IT",
+    "tags": [
+      "تقنية معلومات",
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| )تانب( زليس ليت ي | ر ميرد لاكيديم ةكش | 157",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "روطعلل سيراب ابوك",
+    "jobTitle": "خدمة عمالء",
+    "phone": "+201019678477",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| ءلامع ةمدخ | روطعلل سيراب ابوك | 158",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "مركز أشعة أسنان",
+    "jobTitle": "جنيتكرام",
+    "phone": "+201025229927",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 4,
+    "rawText": "| جنيتكرام | نانسأ ةعشأ زكرم | 159",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "عيبطلا جلاعلل ABC زكرم ي",
+    "jobTitle": "نشبيسير",
+    "phone": "0115497818",
+    "governorate": null,
+    "city": null,
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| نشبيسير | عيبطلا جلاعلل ABC زكرم ي | 160",
+    "confidence": 80,
+    "missingFields": [
+      "governorate",
+      "city"
+    ]
+  },
+  {
+    "companyName": "شكة ال تا ك للخرسانة ر",
+    "jobTitle": "محاسب مال",
+    "phone": "0115497818",
+    "governorate": null,
+    "city": null,
+    "category": "Other",
+    "tags": [
+      "محاسبة"
+    ],
+    "sourcePage": 4,
+    "rawText": "| لام بساحم ي | ر ةناسرخلل ك ات لا ةكش ي | 161",
+    "confidence": 80,
+    "missingFields": [
+      "governorate",
+      "city"
+    ]
+  },
+  {
+    "companyName": "اديفأ تادايع",
+    "jobTitle": "تمريض",
+    "phone": "+201062099900",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 4,
+    "rawText": "| ضيرمت | اديفأ تادايع | 162",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةردابملا ةيعمج",
+    "jobTitle": "نامتئا لوئسم",
+    "phone": "+201096534343",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| نامتئا لوئسم | ةردابملا ةيعمج | 163",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "Prime Zone مقرلا قيوستلل ي",
+    "jobTitle": "سيلز",
+    "phone": "+201040047459",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| زليس | Prime Zone مقرلا قيوستلل ي | 164",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "شكة باندا لألغذية ر",
+    "jobTitle": "مندوب مبيعات",
+    "phone": "+201000469348",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| تاعيبم بودنم | ر ةيذغلأل ادناب ةكش | 165",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "صيدلية سال",
+    "jobTitle": "مندوب توصيل",
+    "phone": "+201068579584",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "شحن وتوصيل",
+      "صيدلة",
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| ليصوت بودنم | لاس ةيلديص ي | 166",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ج يإ امراف زلود",
+    "jobTitle": "فرد أمن",
+    "phone": "+201024615857",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Security",
+    "tags": [
+      "تقنية معلومات",
+      "أمن"
+    ],
+    "sourcePage": 4,
+    "rawText": "| نمأ درف | ج يإ امراف زلود ي | 167",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ي لا امريد تادايع",
+    "jobTitle": "نشبيسير",
+    "phone": "+201092298157",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 4,
+    "rawText": "| نشبيسير | ز ي لا امريد تادايع | 168",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "مكتب كازابرنت للعقارات",
+    "jobTitle": "سكرتارية",
+    "phone": "+201000670970",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Real Estate",
+    "tags": [
+      "إداري",
+      "عقارات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| ةيراتركس | تاراقعلل تنربازاك بتكم | 169",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "ةحايسلل ةرادصلا تلاحر",
+    "jobTitle": "سيلز",
+    "phone": "+201091200760",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 4,
+    "rawText": "| زليس | ةحايسلل ةرادصلا تلاحر | 170",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "ي لا امريد تادايع",
+    "jobTitle": "تمريض",
+    "phone": "+201092298157",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Pharma & Healthcare",
+    "tags": [
+      "صيدلة"
+    ],
+    "sourcePage": 4,
+    "rawText": "| ضيرمت | ز ي لا امريد تادايع | 171",
+    "confidence": 95,
+    "missingFields": []
+  },
+  {
+    "companyName": "هسوبسبو هفانك",
+    "jobTitle": "عضو فريق / مساعد شيف",
+    "phone": "+201033079030",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مساعد",
+      "مطاعم"
+    ],
+    "sourcePage": 6,
+    "rawText": "| فيش دعاسم / قيرف وضع | هسوبسبو هفانك | 266",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نورابلا ضق",
+    "jobTitle": "لماك فاتسا",
+    "phone": "+201144447871",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 6,
+    "rawText": "| لماك فاتسا | نورابلا ضق | 267",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "met life",
+    "jobTitle": "سيلز",
+    "phone": "+201097973686",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [
+      "مبيعات"
+    ],
+    "sourcePage": 6,
+    "rawText": "| زليس | met life | 268",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "نوفادوف ليكو",
+    "jobTitle": "رود توا ت لس",
+    "phone": "+201140049949",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 6,
+    "rawText": "| ز رود توا ت لس | نوفادوف ليكو | 269",
+    "confidence": 85,
+    "missingFields": []
+  },
+  {
+    "companyName": "روتس يراخبلا",
+    "jobTitle": "سبلام ت لس",
+    "phone": "+201004880730",
+    "governorate": "الدقهلية",
+    "city": "المنصورة",
+    "category": "Other",
+    "tags": [],
+    "sourcePage": 6,
+    "rawText": "| ز سبلام ت لس | روتس يراخبلا | 270",
+    "confidence": 85,
+    "missingFields": []
+  }
+]
