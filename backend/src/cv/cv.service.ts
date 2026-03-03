@@ -24,11 +24,12 @@ export class CvService {
     return this.prisma.cv.findUnique({ where: { userId } });
   }
   async upsertMyCv(userId: string, body: unknown) {
-    const contentJson = this.normalizeContent(body) as Prisma.InputJsonValue;
+    const normalized = this.normalizeContent(body);
+    const data = normalized as unknown as Prisma.InputJsonValue;
     return this.prisma.cv.upsert({
       where: { userId },
-      create: { userId, contentJson },
-      update: { contentJson },
+      create: { userId, data },
+      update: { data },
     });
   }
   async analyzeMyCv(userId: string): Promise<CvAnalysisResult> {
@@ -40,16 +41,32 @@ export class CvService {
     ).toLowerCase();
     const version = this.config.get<number>('CV_ANALYSIS_VERSION') ?? 1;
     const provider = this.getProvider(providerKey);
-    const analysis = await provider.analyze(
-      cv.contentJson as CvContentInput | null,
-    );
+
+    const content =
+      cv.data && typeof cv.data === 'object' && !Array.isArray(cv.data)
+        ? (cv.data as unknown as CvContentInput)
+        : null;
+
+    const analysis = await provider.analyze(content);
+
+    const baseData =
+      cv.data && typeof cv.data === 'object' && !Array.isArray(cv.data)
+        ? (cv.data as Record<string, unknown>)
+        : {};
+    const nextData: Record<string, unknown> = {
+      ...baseData,
+      analysis,
+      analysisMeta: {
+        provider: provider.name,
+        version,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
     await this.prisma.cv.update({
       where: { userId },
       data: {
-        analysisJson: analysis as unknown as Prisma.InputJsonValue,
-        analysisProvider: provider.name,
-        analysisVersion: version,
-        analysisUpdatedAt: new Date(),
+        data: nextData as unknown as Prisma.InputJsonValue,
       },
     });
     return analysis;
