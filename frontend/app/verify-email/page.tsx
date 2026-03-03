@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { CheckCircle2, Loader2, XCircle } from "lucide-react"
@@ -10,7 +10,7 @@ import { api } from "@/src/lib/api"
 
 type Status = "idle" | "loading" | "success" | "error"
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<Status>("idle")
 
@@ -85,3 +85,10 @@ export default function VerifyEmailPage() {
   )
 }
 
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
+  )
+}
