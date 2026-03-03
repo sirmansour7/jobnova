@@ -43,18 +43,10 @@ export class CvService {
     const analysis = await provider.analyze(
       cv.contentJson as CvContentInput | null,
     );
-    const analysisJson: Prisma.InputJsonValue = {
-      score: analysis.score,
-      strengths: analysis.strengths,
-      gaps: analysis.gaps,
-      keywordsMissing: analysis.keywordsMissing,
-      suggestedImprovements: analysis.suggestedImprovements,
-      atsNotes: analysis.atsNotes,
-    };
     await this.prisma.cv.update({
       where: { userId },
       data: {
-        analysisJson,
+        analysisJson: analysis as unknown as Prisma.InputJsonValue,
         analysisProvider: provider.name,
         analysisVersion: version,
         analysisUpdatedAt: new Date(),
