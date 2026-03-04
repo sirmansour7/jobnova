@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import type { UserRole, User } from "@/src/data/users"
+import { mockUsers } from "@/src/data/users"
 
 interface AuthContextType {
   user: User | null
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 const COOKIE_TOKEN = "jobnova_token"   // raw JWT for Authorization header
 const COOKIE_USER = "jobnova_user"     // JSON user for session restore & middleware role
+const STORAGE_KEY = "jobnova_registered_users"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
 
@@ -57,6 +59,27 @@ function deleteCookie(name: string) {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
 }
 
+function getRegisteredUsers(): User[] {
+  if (typeof window === "undefined") return []
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function saveRegisteredUser(user: User) {
+  if (typeof window === "undefined") return
+  const existing = getRegisteredUsers()
+  existing.push(user)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(existing))
+}
+
+function findUserById(id: string): User | undefined {
+  return mockUsers.find((u) => u.id === id) ?? getRegisteredUsers().find((u) => u.id === id)
+}
+
 function getDashboardPath(role: string): string {
   if (role === "candidate") return "/candidate/dashboard"
   if (role === "hr") return "/hr/dashboard"
@@ -81,7 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (parsed?.email && (parsed.name ?? parsed.role)) {
           queueMicrotask(() => setUser(parsed))
         } else {
-          deleteCookie(COOKIE_USER)
+          const foundUser = findUserById(parsed?.id)
+          if (foundUser) queueMicrotask(() => setUser(foundUser))
+          else deleteCookie(COOKIE_USER)
         }
       } catch {
         deleteCookie(COOKIE_USER)
@@ -107,44 +132,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push(getDashboardPath(user.role))
         return { success: true }
       }
-      let message = "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-      try {
-        const err = await res.json()
-        if (err?.message && typeof err.message === "string") message = err.message
-      } catch {
-        // use default message
-      }
-      return { success: false, error: message }
     } catch {
-      return { success: false, error: "تعذر الاتصال بالخادم، يرجى المحاولة لاحقاً" }
+      // Fall through to mock auth
     }
+
+    const allUsers = [...mockUsers, ...getRegisteredUsers()]
+    const foundUser = allUsers.find((u) => u.email === email)
+    if (!foundUser) {
+      return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" }
+    }
+    setCookie(COOKIE_USER, JSON.stringify(foundUser), 7)
+    setUser(foundUser)
+    router.push(getDashboardPath(foundUser.role))
+    return { success: true }
   }, [router])
 
-  const register = useCallback(async (name: string, email: string, password: string, role: UserRole) => {
-    try {
-      const res = await fetch(`${API_URL}/v1/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: name, email, password, role }),
-      })
-      if (res.status === 201 || res.ok) {
-        router.push("/verify-email-sent")
-        return { success: true }
-      }
-      if (res.status === 409) {
-        return { success: false, error: "البريد الإلكتروني مسجل بالفعل" }
-      }
-      let message = "حدث خطأ أثناء التسجيل"
-      try {
-        const err = await res.json()
-        if (err?.message && typeof err.message === "string") message = err.message
-      } catch {
-        // use default message
-      }
-      return { success: false, error: message }
-    } catch {
-      return { success: false, error: "تعذر الاتصال بالخادم، يرجى المحاولة لاحقاً" }
+  const register = useCallback(async (name: string, email: string, _password: string, role: UserRole) => {
+    const allUsers = [...mockUsers, ...getRegisteredUsers()]
+    const exists = allUsers.find((u) => u.email === email)
+    if (exists) {
+      return { success: false, error: "البريد الإلكتروني مسجل بالفعل" }
     }
+    const newUser: User = {
+      id: String(Date.now()),
+      name,
+      email,
+      role,
+      avatar: name.split(" ").map((n) => n[0]).join("").slice(0, 2),
+      phone: "",
+      location: "",
+      createdAt: new Date().toISOString().split("T")[0],
+    }
+    saveRegisteredUser(newUser)
+    setCookie(COOKIE_USER, JSON.stringify(newUser), 7)
+    setUser(newUser)
+    router.push(getDashboardPath(role))
+    return { success: true }
   }, [router])
 
   const logout = useCallback(() => {
