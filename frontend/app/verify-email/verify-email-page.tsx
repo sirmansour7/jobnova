@@ -1,6 +1,6 @@
-\"use client\"
+"use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { CheckCircle2, Loader2, XCircle } from "lucide-react"
@@ -10,7 +10,7 @@ import { api } from "@/src/lib/api"
 
 type Status = "idle" | "loading" | "success" | "error"
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<Status>("idle")
 
@@ -28,12 +28,7 @@ export default function VerifyEmailPage() {
           method: "POST",
           body: JSON.stringify({ token }),
         })
-
-        if (!res.ok) {
-          setStatus("error")
-          return
-        }
-
+        if (!res.ok) { setStatus("error"); return }
         setStatus("success")
       } catch {
         setStatus("error")
@@ -52,14 +47,13 @@ export default function VerifyEmailPage() {
             <CardDescription>نقوم الآن بالتحقق من رابط التفعيل الخاص بك</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {status === "loading" || status === "idle" ? (
+            {(status === "loading" || status === "idle") && (
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">جاري التحقق من بريدك الإلكتروني...</p>
               </div>
-            ) : null}
-
-            {status === "success" ? (
+            )}
+            {status === "success" && (
               <div className="flex flex-col items-center gap-4">
                 <CheckCircle2 className="h-12 w-12 text-emerald-500" />
                 <p className="text-sm font-medium text-emerald-500">تم التحقق من بريدك الإلكتروني بنجاح ✓</p>
@@ -67,9 +61,8 @@ export default function VerifyEmailPage() {
                   <Link href="/login">تسجيل الدخول</Link>
                 </Button>
               </div>
-            ) : null}
-
-            {status === "error" ? (
+            )}
+            {status === "error" && (
               <div className="flex flex-col items-center gap-4">
                 <XCircle className="h-12 w-12 text-destructive" />
                 <p className="text-sm font-medium text-destructive">الرابط غير صالح أو منتهي الصلاحية</p>
@@ -77,7 +70,7 @@ export default function VerifyEmailPage() {
                   <Link href="/">العودة للرئيسية</Link>
                 </Button>
               </div>
-            ) : null}
+            )}
           </CardContent>
         </Card>
       </div>
@@ -85,3 +78,14 @@ export default function VerifyEmailPage() {
   )
 }
 
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
+  )
+}

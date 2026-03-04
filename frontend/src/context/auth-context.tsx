@@ -20,7 +20,7 @@ const COOKIE_TOKEN = "jobnova_token"   // raw JWT for Authorization header
 const COOKIE_USER = "jobnova_user"     // JSON user for session restore & middleware role
 const STORAGE_KEY = "jobnova_registered_users"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production.up.railway.app"
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
 
 /** Backend auth login response user shape */
 interface BackendAuthUser {

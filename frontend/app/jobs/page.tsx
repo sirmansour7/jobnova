@@ -4,18 +4,16 @@ import { useState, useEffect } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, MapPin, Clock, Users, RefreshCw } from "lucide-react"
+import { Search, MapPin, Clock, Users } from "lucide-react"
 import type { Job } from "@/src/data/jobs"
 import { jobTypes, experienceLevels, jobCategories } from "@/src/data/jobs"
 import { governorates } from "@/src/data/governorates"
 import Link from "next/link"
-import { Skeleton } from "@/components/ui/skeleton"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production.up.railway.app"
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -26,7 +24,6 @@ export default function JobsPage() {
   const [selectedGov, setSelectedGov] = useState<string>("all")
   const [selectedExp, setSelectedExp] = useState<string>("all")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [retryTrigger, setRetryTrigger] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -75,15 +72,15 @@ export default function JobsPage() {
           category: j.category ?? "",
         }))
         setJobs(mapped)
-      } catch {
-        if (!cancelled) setError("تعذر الاتصال بالخادم، يرجى المحاولة لاحقاً")
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "حدث خطأ")
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
     load()
     return () => { cancelled = true }
-  }, [retryTrigger])
+  }, [])
 
   const filtered = jobs.filter((job) => {
     const matchSearch = search === "" || job.title.includes(search) || job.companyName.includes(search)
@@ -153,43 +150,11 @@ export default function JobsPage() {
           {/* Results */}
           <div className="space-y-3">
             {loading ? (
-              <>
-                <p className="text-sm text-muted-foreground">جاري التحميل...</p>
-                <div className="space-y-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <Card key={i} className="border-border bg-card">
-                      <CardContent className="p-4">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="flex gap-3">
-                            <Skeleton className="h-12 w-12 shrink-0 rounded-lg" />
-                            <div className="flex-1 space-y-2">
-                              <Skeleton className="h-5 w-48" />
-                              <Skeleton className="h-4 w-32" />
-                              <div className="flex gap-3">
-                                <Skeleton className="h-4 w-24" />
-                                <Skeleton className="h-4 w-20" />
-                                <Skeleton className="h-4 w-16" />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex flex-col gap-2 sm:items-end">
-                            <Skeleton className="h-6 w-24" />
-                            <Skeleton className="h-4 w-28" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </>
+              <p className="text-sm text-muted-foreground">جاري التحميل...</p>
             ) : error ? (
               <Card className="border-border bg-card">
-                <CardContent className="flex flex-col items-center justify-center gap-4 py-12">
+                <CardContent className="flex flex-col items-center justify-center py-12">
                   <p className="text-lg font-medium text-destructive">{error}</p>
-                  <Button variant="outline" onClick={() => setRetryTrigger((t) => t + 1)}>
-                    <RefreshCw className="ml-2 h-4 w-4" />
-                    إعادة المحاولة
-                  </Button>
                 </CardContent>
               </Card>
             ) : (
