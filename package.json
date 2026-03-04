@@ -1,13 +1,6 @@
 {
-  "name": "jobnova-monorepo",
-  "private": true,
   "dependencies": {
     "@prisma/client": "^7.4.1",
     "prisma": "^7.4.1"
-  },
-  "scripts": {
-    "build": "corepack pnpm -C frontend build",
-    "dev": "corepack pnpm -C frontend dev",
-    "start": "corepack pnpm -C frontend start"
   }
 }
