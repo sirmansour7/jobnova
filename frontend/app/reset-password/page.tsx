@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { CheckCircle2, Loader2 } from "lucide-react"
@@ -12,7 +12,7 @@ import { api } from "@/src/lib/api"
 
 type Step = "form" | "success"
 
-function ResetPasswordContent() {
+export default function ResetPasswordPage() {
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
 
@@ -146,10 +146,3 @@ function ResetPasswordContent() {
   )
 }
 
-export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <ResetPasswordContent />
-    </Suspense>
-  )
-}
