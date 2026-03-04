@@ -89,32 +89,17 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
+              <div className="flex justify-end -mt-2">
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                  نسيت كلمة المرور؟
+                </Link>
+              </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="shadow-blue-glow w-full" disabled={loading}>
                 {loading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
                 تسجيل الدخول
               </Button>
             </form>
-
-            <div className="mt-6 space-y-3 rounded-lg border border-border bg-secondary/50 p-4">
-              <p className="text-center text-xs font-medium text-muted-foreground">حسابات تجريبية</p>
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <div className="flex items-center justify-between">
-                  <span>باحث عن عمل:</span>
-                  <code className="rounded bg-secondary px-2 py-0.5 text-foreground" dir="ltr">ahmed@example.com</code>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>مسؤول توظيف:</span>
-                  <code className="rounded bg-secondary px-2 py-0.5 text-foreground" dir="ltr">sara@fawry.com</code>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>مدير النظام:</span>
-                  <code className="rounded bg-secondary px-2 py-0.5 text-foreground" dir="ltr">admin@jobnova.com</code>
-                </div>
-              </div>
-              <p className="text-center text-xs text-muted-foreground">كلمة المرور: أي شيء</p>
-            </div>
-
             <p className="mt-6 text-center text-sm text-muted-foreground">
               ليس لديك حساب؟{" "}
               <Link href="/register" className="text-primary hover:underline">
