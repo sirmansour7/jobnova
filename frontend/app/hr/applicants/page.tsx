@@ -63,6 +63,9 @@ export default function ApplicantsPage() {
   const [allApplicants, setAllApplicants] = useState<ApplicantRow[]>([])
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const LIMIT = 10
   const router = useRouter()
 
   useEffect(() => {
@@ -99,7 +102,7 @@ export default function ApplicantsPage() {
         const collected: ApplicantRow[] = []
 
         for (const job of orgJobs) {
-          const appsRes = await api(`/v1/applications/job/${job.id}`)
+          const appsRes = await api(`/v1/applications/job/${job.id}?page=${page}&limit=${LIMIT}`)
 
           if (appsRes.status === 401) {
             router.push("/login")
@@ -109,6 +112,7 @@ export default function ApplicantsPage() {
 
           const data = await appsRes.json()
           const apps = data?.items ?? (Array.isArray(data) ? data : [])
+          setTotalPages(data?.totalPages ?? 1)
 
           for (const app of apps) {
             const candidate = app.candidate ?? {}
@@ -136,7 +140,7 @@ export default function ApplicantsPage() {
     }
 
     fetchApplicants()
-  }, [router])
+  }, [router, page])
 
   const handleStatusChange = async (applicationId: string, currentLabel: string) => {
     const currentEnum = statusEnumByLabel[currentLabel] ?? "APPLIED"
@@ -183,6 +187,13 @@ export default function ApplicantsPage() {
     const matchStatus = statusFilter === "all" || a.status === statusFilter
     return matchSearch && matchStatus
   })
+
+  useEffect(() => {
+    const resetPage = () => {
+      setPage(1)
+    }
+    resetPage()
+  }, [search, statusFilter])
 
   const allowedRoles = useMemo(() => ["hr"] as const, [])
 
@@ -266,6 +277,29 @@ export default function ApplicantsPage() {
                   ))}
                 </TableBody>
               </Table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4" dir="rtl">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-muted disabled:opacity-40"
+                  >
+                    السابق
+                  </button>
+
+                  <span className="text-sm text-muted-foreground">
+                    {page} / {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-muted disabled:opacity-40"
+                  >
+                    التالي
+                  </button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
