@@ -10,18 +10,38 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2 } from "lucide-react"
-import { jobTypes, experienceLevels, jobCategories } from "@/src/data/jobs"
-import { governorates } from "@/src/data/governorates"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { api } from "@/src/lib/api"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
-
-function getAuthToken(): string | null {
-  if (typeof document === "undefined") return null
-  const match = document.cookie.match(/jobnova_token=([^;]+)/)
-  return match ? decodeURIComponent(match[1]) : null
-}
+const jobTypes = ["دوام كامل", "دوام جزئي", "تدريب", "عمل حر", "عن بعد", "هايبرد"]
+const experienceLevels = ["حديث تخرج", "1-3 سنوات", "3-5 سنوات", "5+ سنوات"]
+const jobCategories = [
+  "تكنولوجيا المعلومات",
+  "المالية والمحاسبة",
+  "التسويق والمبيعات",
+  "الموارد البشرية",
+  "الهندسة",
+  "خدمة العملاء",
+  "الصحة والطب",
+  "التعليم",
+  "القانون",
+  "الإدارة",
+]
+const governorates = [
+  { id: "cairo",    name: "القاهرة" },
+  { id: "giza",     name: "الجيزة" },
+  { id: "alex",     name: "الإسكندرية" },
+  { id: "dakahlia", name: "الدقهلية" },
+  { id: "sharqia",  name: "الشرقية" },
+  { id: "qalyubia", name: "القليوبية" },
+  { id: "gharbia",  name: "الغربية" },
+  { id: "monufia",  name: "المنوفية" },
+  { id: "beheira",  name: "البحيرة" },
+  { id: "ismailia", name: "الإسماعيلية" },
+  { id: "suez",     name: "السويس" },
+  { id: "portsaid", name: "بورسعيد" },
+]
 
 export default function CreateJobPage() {
   const [skills, setSkills] = useState<string[]>([])
@@ -33,6 +53,11 @@ export default function CreateJobPage() {
   const [governorateValue, setGovernorateValue] = useState("")
   const [city] = useState("")
   const [description, setDescription] = useState("")
+  const [jobType, setJobType] = useState("")
+  const [salaryMin, setSalaryMin] = useState("")
+  const [salaryMax, setSalaryMax] = useState("")
+  const [currency, setCurrency] = useState("EGP")
+  const [expiresAt, setExpiresAt] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const router = useRouter()
@@ -52,25 +77,11 @@ export default function CreateJobPage() {
   }
 
   const handlePublish = async () => {
-    if (!API_URL) return
-
-    const token = getAuthToken()
-    if (!token) {
-      router.push("/login")
-      return
-    }
-
     if (!title.trim()) return
 
     setIsSubmitting(true)
     try {
-      const headers: HeadersInit = {
-        Authorization: `Bearer ${token}`,
-      }
-
-      const orgRes = await fetch(`${API_URL}/v1/orgs/my`, {
-        headers,
-      })
+      const orgRes = await api("/v1/orgs/my")
 
       if (orgRes.status === 401) {
         router.push("/login")
@@ -93,14 +104,15 @@ export default function CreateJobPage() {
         governorate: governorateValue || undefined,
         city: city || undefined,
         category: category || undefined,
+        jobType: jobType || undefined,
+        salaryMin: salaryMin ? parseInt(salaryMin, 10) : undefined,
+        salaryMax: salaryMax ? parseInt(salaryMax, 10) : undefined,
+        currency: currency || "EGP",
+        expiresAt: expiresAt || undefined,
       }
 
-      const res = await fetch(`${API_URL}/v1/jobs`, {
+      const res = await api("/v1/jobs", {
         method: "POST",
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(body),
       })
 
@@ -118,8 +130,10 @@ export default function CreateJobPage() {
     }
   }
 
+  const allowedRoles = useMemo(() => ["hr"] as const, [])
+
   return (
-    <ProtectedRoute allowedRoles={["hr"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="mx-auto max-w-3xl space-y-6">
           <div>
@@ -150,7 +164,7 @@ export default function CreateJobPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>نوع العمل</Label>
-                  <Select>
+                  <Select value={jobType} onValueChange={setJobType}>
                     <SelectTrigger><SelectValue placeholder="اختر نوع العمل" /></SelectTrigger>
                     <SelectContent>
                       {jobTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
@@ -200,7 +214,7 @@ export default function CreateJobPage() {
               </div>
               <div className="space-y-2">
                 <Label>آخر موعد للتقديم</Label>
-                <Input type="date" dir="ltr" className="text-left" />
+                <Input type="date" dir="ltr" className="text-left" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
               </div>
             </CardContent>
           </Card>

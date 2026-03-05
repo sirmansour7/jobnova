@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jobnova_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jobnova
+      POSTGRES_PASSWORD: jobnova_dev
+      POSTGRES_DB: jobnova
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobnova"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jobnova_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://jobnova:jobnova_dev@postgres:5432/jobnova?schema=public
+      PORT: 3000
+      NODE_ENV: development
+    env_file:
+      - ./backend/.env
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jobnova_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    env_file:
+      - ./frontend/.env.local
+    ports:
+      - "3001:3000"
+
+volumes:
+  postgres_data:

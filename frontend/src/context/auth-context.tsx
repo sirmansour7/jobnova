@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import type { UserRole, User } from "@/src/data/users"
-import { mockUsers } from "@/src/data/users"
+import type { UserRole, User } from "@/src/types/auth"
+import { getCookie, setCookie, deleteCookie } from "@/src/lib/cookies"
 
 interface AuthContextType {
   user: User | null
@@ -18,9 +18,8 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 const COOKIE_TOKEN = "jobnova_token"   // raw JWT for Authorization header
 const COOKIE_USER = "jobnova_user"     // JSON user for session restore & middleware role
-const STORAGE_KEY = "jobnova_registered_users"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production.up.railway.app"
 
 /** Backend auth login response user shape */
 interface BackendAuthUser {
@@ -42,42 +41,6 @@ function mapBackendUserToUser(b: BackendAuthUser): User {
     location: "",
     createdAt: new Date().toISOString().split("T")[0],
   }
-}
-
-function getCookie(name: string): string | null {
-  if (typeof document === "undefined") return null
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? decodeURIComponent(match[2]) : null
-}
-
-function setCookie(name: string, value: string, days: number) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`
-}
-
-function deleteCookie(name: string) {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
-}
-
-function getRegisteredUsers(): User[] {
-  if (typeof window === "undefined") return []
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
-  }
-}
-
-function saveRegisteredUser(user: User) {
-  if (typeof window === "undefined") return
-  const existing = getRegisteredUsers()
-  existing.push(user)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(existing))
-}
-
-function findUserById(id: string): User | undefined {
-  return mockUsers.find((u) => u.id === id) ?? getRegisteredUsers().find((u) => u.id === id)
 }
 
 function getDashboardPath(role: string): string {
@@ -104,9 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (parsed?.email && (parsed.name ?? parsed.role)) {
           queueMicrotask(() => setUser(parsed))
         } else {
-          const foundUser = findUserById(parsed?.id)
-          if (foundUser) queueMicrotask(() => setUser(foundUser))
-          else deleteCookie(COOKIE_USER)
+          deleteCookie(COOKIE_USER)
         }
       } catch {
         deleteCookie(COOKIE_USER)
@@ -115,64 +76,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queueMicrotask(() => setIsLoading(false))
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      const res = await fetch(`${API_URL}/v1/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
-      if (res.ok) {
-        const data = (await res.json()) as { accessToken: string; refreshToken?: string; user: BackendAuthUser }
-        const accessToken = data.accessToken
-        const user = mapBackendUserToUser(data.user)
-        setCookie(COOKIE_TOKEN, accessToken, 7)
-        setCookie(COOKIE_USER, JSON.stringify(user), 7)
-        setUser(user)
-        router.push(getDashboardPath(user.role))
+  const login = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const res = await fetch(`${API_URL}/v1/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        })
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          const msg = (data as { message?: string }).message
+          return { success: false, error: msg ?? "البريد الإلكتروني أو كلمة المرور غير صحيحة" }
+        }
+        const data = (await res.json()) as {
+          accessToken: string
+          refreshToken?: string
+          user: BackendAuthUser
+        }
+        const mappedUser = mapBackendUserToUser(data.user)
+        setCookie(COOKIE_TOKEN, data.accessToken, 1)
+        if (data.refreshToken) {
+          setCookie("jobnova_refresh", data.refreshToken, 7)
+        }
+        setCookie(COOKIE_USER, JSON.stringify(mappedUser), 7)
+        setUser(mappedUser)
+        router.push(getDashboardPath(mappedUser.role))
         return { success: true }
+      } catch {
+        return { success: false, error: "خطأ في الاتصال بالخادم" }
       }
-    } catch {
-      // Fall through to mock auth
-    }
+    },
+    [router]
+  )
 
-    const allUsers = [...mockUsers, ...getRegisteredUsers()]
-    const foundUser = allUsers.find((u) => u.email === email)
-    if (!foundUser) {
-      return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" }
-    }
-    setCookie(COOKIE_USER, JSON.stringify(foundUser), 7)
-    setUser(foundUser)
-    router.push(getDashboardPath(foundUser.role))
-    return { success: true }
-  }, [router])
-
-  const register = useCallback(async (name: string, email: string, _password: string, role: UserRole) => {
-    const allUsers = [...mockUsers, ...getRegisteredUsers()]
-    const exists = allUsers.find((u) => u.email === email)
-    if (exists) {
-      return { success: false, error: "البريد الإلكتروني مسجل بالفعل" }
-    }
-    const newUser: User = {
-      id: String(Date.now()),
-      name,
-      email,
-      role,
-      avatar: name.split(" ").map((n) => n[0]).join("").slice(0, 2),
-      phone: "",
-      location: "",
-      createdAt: new Date().toISOString().split("T")[0],
-    }
-    saveRegisteredUser(newUser)
-    setCookie(COOKIE_USER, JSON.stringify(newUser), 7)
-    setUser(newUser)
-    router.push(getDashboardPath(role))
-    return { success: true }
-  }, [router])
+  const register = useCallback(
+    async (name: string, email: string, password: string, role: UserRole) => {
+      try {
+        const res = await fetch(`${API_URL}/v1/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName: name, email, password, role }),
+        })
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          const msg = (data as { message?: string | string[] }).message
+          return {
+            success: false,
+            error: Array.isArray(msg) ? msg[0] : msg ?? "حدث خطأ أثناء إنشاء الحساب",
+          }
+        }
+        return { success: true }
+      } catch {
+        return { success: false, error: "خطأ في الاتصال بالخادم" }
+      }
+    },
+    []
+  )
 
   const logout = useCallback(() => {
     deleteCookie(COOKIE_TOKEN)
     deleteCookie(COOKIE_USER)
+    deleteCookie("jobnova_refresh")
     setUser(null)
     router.push("/")
   }, [router])

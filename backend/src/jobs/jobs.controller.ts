@@ -14,6 +14,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import { JobsService } from './jobs.service';
+import { JobMatchService } from './job-match.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -29,15 +30,36 @@ const VP = new ValidationPipe({
 
 @Controller('jobs')
 export class JobsController {
-  constructor(private readonly jobsService: JobsService) {}
+  constructor(
+    private readonly jobsService: JobsService,
+    private readonly jobMatchService: JobMatchService,
+  ) {}
 
   // Public — anyone can browse jobs
   @Get()
   findAll(
     @Query('category') category?: string,
     @Query('governorate') governorate?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.jobsService.findAll({ category, governorate });
+    return this.jobsService.findAll({
+      category,
+      governorate,
+      search,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  @Get(':id/match')
+  @UseGuards(JwtAuthGuard)
+  matchJob(
+    @Param('id') id: string,
+    @Req() req: Request & { user: { sub: string } },
+  ) {
+    return this.jobMatchService.matchCvToJob(req.user.sub, id);
   }
 
   @Get(':id')

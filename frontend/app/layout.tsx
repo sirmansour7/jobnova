@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Noto_Sans_Arabic } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/src/context/auth-context"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 const notoArabic = Noto_Sans_Arabic({
@@ -31,6 +32,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Toaster />
         <Analytics />
       </body>
     </html>

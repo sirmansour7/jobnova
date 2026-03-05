@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Search, MoreVertical, Ban, ShieldCheck, Trash2, Eye } from "lucide-react"
-import { mockUsers } from "@/src/data/users"
+import { apiJson } from "@/src/lib/api"
 
 const roleLabels: Record<string, string> = {
   candidate: "مرشح",
@@ -26,23 +26,55 @@ const roleBadgeStyles: Record<string, string> = {
   admin: "bg-chart-4/10 text-chart-4 border-chart-4/20",
 }
 
+interface AdminUser {
+  id: string
+  fullName: string
+  email: string
+  role: string
+  emailVerified: boolean
+  createdAt: string
+  phone?: string
+  location?: string
+}
+
 export default function ManageUsersPage() {
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
+  const [allUsers, setAllUsers] = useState<AdminUser[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const limit = 20
 
-  const filtered = mockUsers.filter((u) => {
-    const matchSearch = search === "" || u.name.includes(search) || u.email.includes(search)
+  useEffect(() => {
+    apiJson<{ items: AdminUser[]; total: number; totalPages: number }>(
+      `/v1/admin/users?page=${page}&limit=${limit}`,
+    )
+      .then((data) => {
+        setAllUsers(data.items ?? [])
+        setTotal(data.total ?? 0)
+        setTotalPages(data.totalPages ?? 1)
+        setLoadingUsers(false)
+      })
+      .catch(() => setLoadingUsers(false))
+  }, [page])
+
+  const filtered = allUsers.filter((u) => {
+    const matchSearch = search === "" || u.fullName.includes(search) || u.email.includes(search)
     const matchRole = roleFilter === "all" || u.role === roleFilter
     return matchSearch && matchRole
   })
 
+  const allowedRoles = useMemo(() => ["admin"] as const, [])
+
   return (
-    <ProtectedRoute allowedRoles={["admin"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">إدارة المستخدمين</h1>
-            <p className="text-muted-foreground">{mockUsers.length} مستخدم مسجل على المنصة</p>
+            <p className="text-muted-foreground">{loadingUsers ? "..." : total} مستخدم مسجل على المنصة</p>
           </div>
 
           {/* Filters */}
@@ -100,10 +132,12 @@ export default function ManageUsersPage() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarFallback className="bg-primary/20 text-primary text-xs">{user.avatar}</AvatarFallback>
+                              <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                                {user.fullName.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium text-foreground">{user.name}</p>
+                              <p className="font-medium text-foreground">{user.fullName}</p>
                               <p className="text-xs text-muted-foreground" dir="ltr">{user.email}</p>
                             </div>
                           </div>
@@ -135,6 +169,31 @@ export default function ManageUsersPage() {
                 </TableBody>
               </Table>
             </CardContent>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-border px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  صفحة {page} من {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    السابق
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    التالي
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
       </DashboardLayout>

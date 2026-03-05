@@ -64,6 +64,8 @@ model User {
   applications     Application[]
   auditLogs        AuditLog[]
   cv               Cv?
+  conversations    ConversationParticipant[]
+  sentMessages     Message[]
 }
 
 model AuditLog {
@@ -117,9 +119,15 @@ model Job {
   governorate    String?
   city           String?
   category       String?
+  jobType        String?
+  salaryMin      Int?
+  salaryMax      Int?
+  currency       String?   @default("EGP")
+  expiresAt      DateTime?
   isActive       Boolean @default(true)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   applications Application[]
@@ -127,6 +135,8 @@ model Job {
   @@index([organizationId])
   @@index([isActive])
   @@index([category])
+  @@index([title])
+  @@index([expiresAt])
 }
 
 model CandidateProfile {
@@ -146,6 +156,8 @@ model Application {
   candidateId String
   status      ApplicationStatus @default(APPLIED)
   coverLetter String?
+  screeningAnswers     Json?
+  screeningCompletedAt DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
@@ -162,6 +174,7 @@ model ImportBatch {
   id        String   @id @default(cuid())
   source    String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   raws JobRaw[]
 }
@@ -182,6 +195,7 @@ model JobRaw {
   tagsCsv     String?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
@@ -200,3 +214,40 @@ model Cv {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String @id @default(cuid())
+  conversationId String
+  userId         String
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+}

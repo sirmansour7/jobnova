@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, MailCheck } from "lucide-react"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production.up.railway.app"
+import { apiJson } from "@/src/lib/api"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -22,19 +21,14 @@ export default function ForgotPasswordPage() {
     setLoading(true)
     setError("")
     try {
-      const res = await fetch(`${API_URL}/v1/auth/forgot-password`, {
+      await apiJson("/v1/auth/forgot-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setError(data?.message ?? "حدث خطأ، يرجى المحاولة لاحقاً")
-      } else {
-        setSent(true)
-      }
-    } catch {
-      setError("تعذر الاتصال بالخادم، يرجى المحاولة لاحقاً")
+      setSent(true)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "حدث خطأ، يرجى المحاولة لاحقاً"
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -94,4 +88,3 @@ export default function ForgotPasswordPage() {
     </div>
   )
 }
-

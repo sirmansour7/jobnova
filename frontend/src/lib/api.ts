@@ -1,15 +1,90 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"
+import { getCookie, setCookie, deleteCookie } from "./cookies"
 
-export async function api(path: string, options: RequestInit = {}) {
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production.up.railway.app"
+
+function getToken(): string | null {
+  return getCookie("jobnova_token")
+}
+
+let isRefreshing = false
+let refreshPromise: Promise<string | null> | null = null
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = getCookie("jobnova_refresh")
+  if (!refreshToken) return null
+  try {
+    const res = await fetch(`${API_URL}/v1/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    })
+    if (!res.ok) {
+      deleteCookie("jobnova_token")
+      deleteCookie("jobnova_refresh")
+      deleteCookie("jobnova_user")
+      return null
+    }
+    const data = (await res.json()) as { accessToken: string; refreshToken?: string }
+    setCookie("jobnova_token", data.accessToken, 1)
+    if (data.refreshToken) {
+      setCookie("jobnova_refresh", data.refreshToken, 7)
+    }
+    return data.accessToken
+  } catch {
+    deleteCookie("jobnova_token")
+    deleteCookie("jobnova_refresh")
+    deleteCookie("jobnova_user")
+    return null
+  }
+}
+
+export async function api(path: string, options: RequestInit = {}): Promise<Response> {
+  const token = getToken()
   const url = `${API_URL}${path}`
 
-  const response = await fetch(url, {
+  const res = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers ?? {}),
     },
   })
 
-  return response
+  if (res.status === 401) {
+    if (!isRefreshing) {
+      isRefreshing = true
+      refreshPromise = refreshAccessToken().finally(() => {
+        isRefreshing = false
+      })
+    }
+    const newToken = await refreshPromise
+    if (newToken) {
+      return fetch(url, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${newToken}`,
+          ...(options.headers ?? {}),
+        },
+      })
+    }
+    if (typeof window !== "undefined") {
+      window.location.href = "/login"
+      throw new Error("Session expired. Please log in again.")
+    }
+  }
+
+  return res
+}
+
+export async function apiJson<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await api(path, options)
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    const message: string = (body as { message?: string }).message ?? `HTTP ${res.status}`
+    throw new Error(message)
+  }
+  return res.json() as Promise<T>
 }

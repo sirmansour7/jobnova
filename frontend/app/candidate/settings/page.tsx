@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,8 +11,9 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 
 export default function CandidateSettingsPage() {
+  const allowedRoles = useMemo(() => ["candidate"] as const, [])
   return (
-    <ProtectedRoute allowedRoles={["candidate"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="mx-auto max-w-2xl space-y-6">
           <div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,14 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreVertical, Edit, Pause, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
-
-function getAuthToken(): string | null {
-  if (typeof document === "undefined") return null
-  const match = document.cookie.match(/jobnova_token=([^;]+)/)
-  return match ? decodeURIComponent(match[1]) : null
-}
+import { api } from "@/src/lib/api"
 
 type HRJob = {
   id: string
@@ -48,21 +41,8 @@ export default function ManageJobsPage() {
 
   useEffect(() => {
     const fetchJobs = async () => {
-      const token = getAuthToken()
-      if (!token) {
-        router.push("/login")
-        return
-      }
-      if (!API_URL) return
-
       try {
-        const headers: HeadersInit = {
-          Authorization: `Bearer ${token}`,
-        }
-
-        const orgRes = await fetch(`${API_URL}/v1/orgs/my`, {
-          headers,
-        })
+        const orgRes = await api("/v1/orgs/my")
 
         if (orgRes.status === 401) {
           router.push("/login")
@@ -77,9 +57,7 @@ export default function ManageJobsPage() {
 
         if (!orgId) return
 
-        const jobsRes = await fetch(`${API_URL}/v1/jobs`, {
-          headers,
-        })
+        const jobsRes = await api("/v1/jobs")
 
         if (jobsRes.status === 401) {
           router.push("/login")
@@ -117,22 +95,12 @@ export default function ManageJobsPage() {
   }, [router])
 
   const handleDelete = async (jobId: string) => {
-    const token = getAuthToken()
-    if (!token) {
-      router.push("/login")
-      return
-    }
-    if (!API_URL) return
-
     const confirmed = window.confirm("هل أنت متأكد من حذف هذه الوظيفة؟")
     if (!confirmed) return
 
     try {
-      const res = await fetch(`${API_URL}/v1/jobs/${jobId}`, {
+      const res = await api(`/v1/jobs/${jobId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       })
 
       if (res.status === 401) {
@@ -147,8 +115,10 @@ export default function ManageJobsPage() {
     }
   }
 
+  const allowedRoles = useMemo(() => ["hr"] as const, [])
+
   return (
-    <ProtectedRoute allowedRoles={["hr"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">

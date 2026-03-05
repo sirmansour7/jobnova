@@ -1,52 +1,31 @@
 "use client"
 
+import { useState, useEffect, useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
+import { useAuth } from "@/src/context/auth-context"
+import { ErrorBoundary } from "@/components/shared/error-boundary"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Users, Briefcase, Building2, MapPin, ShieldCheck, TrendingUp } from "lucide-react"
-import { mockUsers } from "@/src/data/users"
-import { jobs } from "@/src/data/jobs"
-import { companies } from "@/src/data/companies"
-import { governorates } from "@/src/data/governorates"
 import Link from "next/link"
+import { apiJson } from "@/src/lib/api"
 
-const statCards = [
-  {
-    label: "المستخدمون",
-    value: String(mockUsers.length),
-    icon: <Users className="h-5 w-5" />,
-    color: "text-primary",
-    href: "/admin/users",
-    sub: `${mockUsers.filter((u) => u.role === "candidate").length} مرشح - ${mockUsers.filter((u) => u.role === "hr").length} HR`,
-  },
-  {
-    label: "الوظائف",
-    value: String(jobs.length),
-    icon: <Briefcase className="h-5 w-5" />,
-    color: "text-chart-3",
-    href: "/admin/moderate-jobs",
-    sub: `${jobs.filter((j) => j.isActive).length} نشطة`,
-  },
-  {
-    label: "الشركات",
-    value: String(companies.length),
-    icon: <Building2 className="h-5 w-5" />,
-    color: "text-chart-2",
-    href: "/admin/companies",
-    sub: `${companies.reduce((s, c) => s + c.jobCount, 0)} وظيفة إجمالي`,
-  },
-  {
-    label: "المحافظات",
-    value: String(governorates.length),
-    icon: <MapPin className="h-5 w-5" />,
-    color: "text-chart-4",
-    href: "/admin/governorates",
-    sub: `${governorates.reduce((s, g) => s + g.cities.length, 0)} مدينة`,
-  },
-]
+interface AdminStats {
+  totalUsers: number
+  totalJobs: number
+  totalApplications: number
+  totalOrgs: number
+}
 
-const recentUsers = mockUsers.slice().reverse().slice(0, 5)
+interface AdminUser {
+  id: string
+  fullName: string
+  email: string
+  role: string
+  emailVerified: boolean
+  createdAt: string
+}
 
 const roleLabels: Record<string, string> = {
   candidate: "مرشح",
@@ -61,13 +40,67 @@ const roleBadgeStyles: Record<string, string> = {
 }
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, totalJobs: 0, totalApplications: 0, totalOrgs: 0 })
+  const [recentUsers, setRecentUsers] = useState<AdminUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+
+  useEffect(() => {
+    Promise.all([
+      apiJson<AdminStats>("/v1/admin/stats").catch(() => ({ totalUsers: 0, totalJobs: 0, totalApplications: 0, totalOrgs: 0 })),
+      apiJson<{ items: AdminUser[]; total: number; totalPages: number }>("/v1/admin/users").catch(() => ({ items: [], total: 0, totalPages: 0 })),
+    ]).then(([s, data]) => {
+      setStats(s)
+      setRecentUsers(data.items.slice(0, 5))
+      setLoading(false)
+    })
+  }, [])
+
+  const statCards = [
+    {
+      label: "المستخدمون",
+      value: loading ? "..." : String(stats.totalUsers),
+      icon: <Users className="h-5 w-5" />,
+      color: "text-primary",
+      href: "/admin/users",
+      sub: "إجمالي المستخدمين",
+    },
+    {
+      label: "الوظائف",
+      value: loading ? "..." : String(stats.totalJobs),
+      icon: <Briefcase className="h-5 w-5" />,
+      color: "text-chart-3",
+      href: "/admin/moderate-jobs",
+      sub: "إجمالي الوظائف",
+    },
+    {
+      label: "الشركات",
+      value: loading ? "..." : String(stats.totalOrgs),
+      icon: <Building2 className="h-5 w-5" />,
+      color: "text-chart-2",
+      href: "/admin/companies",
+      sub: "المنظمات المسجلة",
+    },
+    {
+      label: "التقديمات",
+      value: loading ? "..." : String(stats.totalApplications),
+      icon: <TrendingUp className="h-5 w-5" />,
+      color: "text-chart-4",
+      href: "/admin/moderate-jobs",
+      sub: "إجمالي التقديمات",
+    },
+  ]
+
+  const allowedRoles = useMemo(() => ["admin"] as const, [])
+
   return (
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <DashboardLayout>
+    <ErrorBoundary>
+      <ProtectedRoute allowedRoles={allowedRoles}>
+        <DashboardLayout>
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">لوحة تحكم المدير</h1>
-            <p className="text-muted-foreground">مرحبًا، محمد. إليك نظرة عامة على المنصة</p>
+            <p className="text-muted-foreground">مرحبًا، {user?.name ?? ""}. إليك نظرة عامة على المنصة</p>
           </div>
 
           {/* Stat Cards */}
@@ -80,7 +113,7 @@ export default function AdminDashboard() {
                       {stat.icon}
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                      <span className="text-2xl font-bold text-foreground block">{stat.value}</span>
                       <p className="text-xs text-muted-foreground">{stat.label}</p>
                       <p className="text-xs text-muted-foreground">{stat.sub}</p>
                     </div>
@@ -102,10 +135,10 @@ export default function AdminDashboard() {
                   <div key={u.id} className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                        {u.avatar}
+                        {u.fullName.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">{u.name}</p>
+                        <p className="text-sm font-medium text-foreground">{u.fullName}</p>
                         <p className="text-xs text-muted-foreground" dir="ltr">{u.email}</p>
                       </div>
                     </div>
@@ -124,36 +157,30 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-3">
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="h-5 w-5 text-chart-3" />
-                    <span className="text-sm text-foreground">الوظائف المعتمدة</span>
+                    <span className="text-sm text-foreground">إجمالي الوظائف</span>
                   </div>
-                  <span className="text-sm font-bold text-chart-3">{jobs.filter((j) => j.isActive).length}/{jobs.length}</span>
+                  <span className="text-sm font-bold text-chart-3">{loading ? "..." : stats.totalJobs}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-3">
                   <div className="flex items-center gap-3">
                     <TrendingUp className="h-5 w-5 text-primary" />
                     <span className="text-sm text-foreground">إجمالي التقديمات</span>
                   </div>
-                  <span className="text-sm font-bold text-primary">{jobs.reduce((s, j) => s + j.applicants, 0)}</span>
+                  <span className="text-sm font-bold text-primary">{loading ? "..." : stats.totalApplications}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-3">
                   <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-chart-2" />
-                    <span className="text-sm text-foreground">مسؤولي التوظيف</span>
+                    <Building2 className="h-5 w-5 text-chart-2" />
+                    <span className="text-sm text-foreground">المنظمات المسجلة</span>
                   </div>
-                  <span className="text-sm font-bold text-chart-2">{mockUsers.filter((u) => u.role === "hr").length}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-3">
-                  <div className="flex items-center gap-3">
-                    <Building2 className="h-5 w-5 text-chart-4" />
-                    <span className="text-sm text-foreground">الشركات المسجلة</span>
-                  </div>
-                  <span className="text-sm font-bold text-chart-4">{companies.length}</span>
+                  <span className="text-sm font-bold text-chart-2">{loading ? "..." : stats.totalOrgs}</span>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
-      </DashboardLayout>
-    </ProtectedRoute>
+        </DashboardLayout>
+      </ProtectedRoute>
+    </ErrorBoundary>
   )
 }

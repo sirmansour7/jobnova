@@ -1,0 +1,2 @@
+/** Shared application-wide constants */
+export const BCRYPT_ROUNDS = 12;

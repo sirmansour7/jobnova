@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,14 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Search, Mail, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
-
-function getAuthToken(): string | null {
-  if (typeof document === "undefined") return null
-  const match = document.cookie.match(/jobnova_token=([^;]+)/)
-  return match ? decodeURIComponent(match[1]) : null
-}
+import { api } from "@/src/lib/api"
+import { STATUS_COLOR } from "@/src/services/applications.service"
 
 type ApplicantRow = {
   id: string
@@ -30,14 +24,6 @@ type ApplicantRow = {
   status: string
   appliedAt: string
   experience: string
-}
-
-const statusColors: Record<string, string> = {
-  "قيد المراجعة": "bg-chart-4/10 text-chart-4 border-chart-4/20",
-  "مقبول مبدئيًا": "bg-chart-2/10 text-chart-2 border-chart-2/20",
-  "مقابلة": "bg-primary/10 text-primary border-primary/20",
-  "مرفوض": "bg-destructive/10 text-destructive border-destructive/20",
-  "مقبول": "bg-chart-3/10 text-chart-3 border-chart-3/20",
 }
 
 const statusLabelByEnum: Record<string, string> = {
@@ -81,22 +67,8 @@ export default function ApplicantsPage() {
 
   useEffect(() => {
     const fetchApplicants = async () => {
-      if (!API_URL) return
-
-      const token = getAuthToken()
-      if (!token) {
-        router.push("/login")
-        return
-      }
-
       try {
-        const headers: HeadersInit = {
-          Authorization: `Bearer ${token}`,
-        }
-
-        const orgRes = await fetch(`${API_URL}/v1/orgs/my`, {
-          headers,
-        })
+        const orgRes = await api("/v1/orgs/my")
 
         if (orgRes.status === 401) {
           router.push("/login")
@@ -111,9 +83,7 @@ export default function ApplicantsPage() {
 
         if (!orgId) return
 
-        const jobsRes = await fetch(`${API_URL}/v1/jobs`, {
-          headers,
-        })
+        const jobsRes = await api("/v1/jobs")
 
         if (jobsRes.status === 401) {
           router.push("/login")
@@ -129,9 +99,7 @@ export default function ApplicantsPage() {
         const collected: ApplicantRow[] = []
 
         for (const job of orgJobs) {
-          const appsRes = await fetch(`${API_URL}/v1/applications/job/${job.id}`, {
-            headers,
-          })
+          const appsRes = await api(`/v1/applications/job/${job.id}`)
 
           if (appsRes.status === 401) {
             router.push("/login")
@@ -139,8 +107,8 @@ export default function ApplicantsPage() {
           }
           if (!appsRes.ok) continue
 
-          const apps = await appsRes.json()
-          if (!Array.isArray(apps)) continue
+          const data = await appsRes.json()
+          const apps = data?.items ?? (Array.isArray(data) ? data : [])
 
           for (const app of apps) {
             const candidate = app.candidate ?? {}
@@ -171,14 +139,6 @@ export default function ApplicantsPage() {
   }, [router])
 
   const handleStatusChange = async (applicationId: string, currentLabel: string) => {
-    if (!API_URL) return
-
-    const token = getAuthToken()
-    if (!token) {
-      router.push("/login")
-      return
-    }
-
     const currentEnum = statusEnumByLabel[currentLabel] ?? "APPLIED"
     const input = window.prompt(
       "أدخل الحالة الجديدة (APPLIED, SHORTLISTED, REJECTED, HIRED):",
@@ -190,10 +150,9 @@ export default function ApplicantsPage() {
     if (!["APPLIED", "SHORTLISTED", "REJECTED", "HIRED"].includes(next)) return
 
     try {
-      const res = await fetch(`${API_URL}/v1/applications/${applicationId}/status`, {
+      const res = await api(`/v1/applications/${applicationId}/status`, {
         method: "PATCH",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ status: next }),
@@ -225,8 +184,10 @@ export default function ApplicantsPage() {
     return matchSearch && matchStatus
   })
 
+  const allowedRoles = useMemo(() => ["hr"] as const, [])
+
   return (
-    <ProtectedRoute allowedRoles={["hr"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-6">
           <div>
@@ -288,7 +249,7 @@ export default function ApplicantsPage() {
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={statusColors[applicant.status]}
+                          className={STATUS_COLOR[applicant.status] ?? ""}
                           onClick={() => handleStatusChange(applicant.id, applicant.status)}
                         >
                           {applicant.status}

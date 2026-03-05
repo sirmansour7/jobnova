@@ -34,9 +34,19 @@ export class OrgController {
     return this.orgService.create(body, req.user.sub);
   }
 
+  @Get('my/profile')
+  getMyProfile(@Req() req: Request & { user: { sub: string } }) {
+    return this.orgService.getMyFirstOrg(req.user.sub);
+  }
+
   @Get('my')
   myOrgs(@Req() req: Request & { user: { sub: string } }) {
     return this.orgService.myOrgs(req.user.sub);
+  }
+
+  @Get('dashboard-stats')
+  getDashboardStats(@Req() req: Request & { user: { sub: string } }) {
+    return this.orgService.getDashboardStats(req.user.sub);
   }
 
   @Get(':id')

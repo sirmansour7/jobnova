@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useAuth } from "@/src/context/auth-context"
+import { useRouter } from "next/navigation"
 import { Logo } from "@/components/shared/logo"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import type { UserRole } from "@/src/data/users"
 import { api } from "@/src/lib/api"
 
+type UserRole = "candidate" | "hr" | "admin"
+
 export default function RegisterPage() {
-  const { register } = useAuth()
+  const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -29,19 +30,26 @@ export default function RegisterPage() {
     setError("")
 
     try {
-      await api("/v1/auth/register", {
+      const res = await api("/v1/auth/register", {
         method: "POST",
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ fullName: name, email, password, role }),
       })
-    } catch {
-      // Ignore network errors for now; auth-context will still handle local auth logic
-    }
 
-    const result = await register(name, email, password, role)
-    if (!result.success) {
-      setError(result.error ?? "حدث خطأ")
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        const msg = (data as { message?: string | string[] }).message
+        setError(Array.isArray(msg) ? msg[0] : msg ?? "حدث خطأ أثناء إنشاء الحساب")
+        setLoading(false)
+        return
+      }
+
+      // Registration successful — redirect to verification notice page
+      router.push("/verify-email-sent")
+    } catch {
+      setError("خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (

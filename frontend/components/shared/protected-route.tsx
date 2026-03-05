@@ -2,25 +2,29 @@
 
 import { useAuth } from "@/src/context/auth-context"
 import { useRouter } from "next/navigation"
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, startTransition, type ReactNode } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allowedRoles?: string[] }) {
+export function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allowedRoles?: readonly string[] }) {
   const { user, isLoading, isAuthenticated } = useAuth()
   const router = useRouter()
   const [redirecting, setRedirecting] = useState(false)
+  const hasRedirected = useRef(false)
 
   useEffect(() => {
     if (isLoading) return
+    if (hasRedirected.current) return
 
     if (!isAuthenticated) {
-      queueMicrotask(() => setRedirecting(true))
+      hasRedirected.current = true
+      startTransition(() => setRedirecting(true))
       router.replace("/login")
       return
     }
 
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-      queueMicrotask(() => setRedirecting(true))
+      hasRedirected.current = true
+      startTransition(() => setRedirecting(true))
       router.replace("/")
       return
     }

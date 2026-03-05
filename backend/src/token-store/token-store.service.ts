@@ -13,8 +13,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-
-const BCRYPT_ROUNDS = 12;
+import { BCRYPT_ROUNDS } from '../common/constants';
 
 @Injectable()
 export class TokenStoreService {

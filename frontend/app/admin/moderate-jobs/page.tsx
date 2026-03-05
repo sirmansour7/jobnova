@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,25 +11,102 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Search, MoreVertical, CheckCircle, XCircle, Eye, Pause } from "lucide-react"
-import { jobs, jobCategories } from "@/src/data/jobs"
+import { apiJson } from "@/src/lib/api"
+
+const jobCategories = ["تقنية المعلومات", "المبيعات", "التسويق", "الموارد البشرية", "المحاسبة", "الهندسة", "التعليم", "الصحة", "أخرى"]
+
+export interface AdminJob {
+  id: string
+  title: string
+  partnerName?: string
+  category?: string
+  governorate?: string
+  isActive: boolean
+  createdAt: string
+  organization?: { name: string }
+  _count?: { applications: number }
+}
 
 export default function ModerateJobsPage() {
+  const [jobs, setJobs] = useState<AdminJob[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
 
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const data = await apiJson<{ items: AdminJob[] }>("/v1/admin/jobs")
+        if (!cancelled) setJobs(Array.isArray(data.items) ? data.items : [])
+      } catch {
+        if (!cancelled) setJobs([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
+  const companyName = (j: AdminJob) => j.organization?.name ?? j.partnerName ?? "—"
+  const companyLogo = (j: AdminJob) => (j.organization?.name ?? j.partnerName ?? "?").slice(0, 2).toUpperCase()
+  const location = (j: AdminJob) => j.governorate ?? "—"
+  const applicants = (j: AdminJob) => j._count?.applications ?? 0
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })
+    } catch {
+      return iso
+    }
+  }
+
+  async function handleToggle(id: string) {
+    try {
+      await apiJson(`/v1/admin/jobs/${id}/toggle`, { method: "PATCH" })
+      setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, isActive: !j.isActive } : j)))
+    } catch {
+      // ignore or toast
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await apiJson(`/v1/admin/jobs/${id}`, { method: "DELETE" })
+      setJobs((prev) => prev.filter((j) => j.id !== id))
+    } catch {
+      // ignore or toast
+    }
+  }
+
   const filtered = jobs.filter((j) => {
-    const matchSearch = search === "" || j.title.includes(search) || j.companyName.includes(search)
+    const matchSearch = search === "" || j.title.includes(search) || companyName(j).includes(search)
     const matchStatus =
       statusFilter === "all" ||
       (statusFilter === "active" && j.isActive) ||
       (statusFilter === "inactive" && !j.isActive)
-    const matchCategory = categoryFilter === "all" || j.category === categoryFilter
+    const matchCategory = categoryFilter === "all" || (j.category ?? "") === categoryFilter
     return matchSearch && matchStatus && matchCategory
   })
 
+  const allowedRoles = useMemo(() => ["admin"] as const, [])
+
+  if (loading) {
+    return (
+      <ProtectedRoute allowedRoles={allowedRoles}>
+        <DashboardLayout>
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="text-muted-foreground">جاري التحميل...</p>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    )
+  }
+
   return (
-    <ProtectedRoute allowedRoles={["admin"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-6">
           <div>
@@ -126,22 +203,22 @@ export default function ModerateJobsPage() {
                         <TableCell>
                           <div>
                             <p className="font-medium text-foreground">{job.title}</p>
-                            <p className="text-xs text-muted-foreground">{job.location}</p>
+                            <p className="text-xs text-muted-foreground">{location(job)}</p>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10 text-xs font-bold text-primary">
-                              {job.companyLogo}
+                              {companyLogo(job)}
                             </div>
-                            <span className="text-sm text-foreground">{job.companyName}</span>
+                            <span className="text-sm text-foreground">{companyName(job)}</span>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="border-border text-xs">{job.category}</Badge>
+                          <Badge variant="outline" className="border-border text-xs">{job.category ?? "—"}</Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{job.type}</TableCell>
-                        <TableCell className="text-sm font-medium text-foreground">{job.applicants}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                        <TableCell className="text-sm font-medium text-foreground">{applicants(job)}</TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
@@ -150,7 +227,7 @@ export default function ModerateJobsPage() {
                             {job.isActive ? "نشطة" : "متوقفة"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{job.postedAt}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{formatDate(job.createdAt)}</TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -158,9 +235,15 @@ export default function ModerateJobsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
                               <DropdownMenuItem><Eye className="ml-2 h-4 w-4" /> عرض التفاصيل</DropdownMenuItem>
-                              <DropdownMenuItem><CheckCircle className="ml-2 h-4 w-4" /> اعتماد</DropdownMenuItem>
-                              <DropdownMenuItem><Pause className="ml-2 h-4 w-4" /> تعليق</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive"><XCircle className="ml-2 h-4 w-4" /> رفض</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggle(job.id)}>
+                                <CheckCircle className="ml-2 h-4 w-4" /> اعتماد
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggle(job.id)}>
+                                <Pause className="ml-2 h-4 w-4" /> تعليق
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(job.id)}>
+                                <XCircle className="ml-2 h-4 w-4" /> رفض
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

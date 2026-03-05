@@ -1,22 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useAuth } from "@/src/context/auth-context"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
+import { ErrorBoundary } from "@/components/shared/error-boundary"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Briefcase, FileText, MessageSquare, Eye } from "lucide-react"
 import Link from "next/link"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production.up.railway.app"
-
-function getToken(): string | null {
-  if (typeof document === "undefined") return null
-  const match = document.cookie.match(/jobnova_token=([^;]+)/)
-  return match ? decodeURIComponent(match[1]) : null
-}
+import { apiJson } from "@/src/lib/api"
+import { STATUS_LABEL, STATUS_COLOR } from "@/src/services/applications.service"
 
 interface RecentApplication {
   id: string
@@ -45,33 +40,21 @@ export default function CandidateDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = getToken()
-    const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }
-
     Promise.all([
-      fetch(`${API_URL}/v1/applications/my`, { headers }).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_URL}/v1/jobs?isActive=true`, { headers }).then((r) => (r.ok ? r.json() : [])),
+      apiJson<RecentApplication[] | { items: RecentApplication[] }>("/v1/applications/my?page=1&limit=4")
+        .then((r) => (Array.isArray(r) ? r : r.items ?? []).slice(0, 4))
+        .catch(() => [] as RecentApplication[]),
+      apiJson<RecentJob[] | { items: RecentJob[] }>("/v1/jobs?limit=3")
+        .then((r) => (Array.isArray(r) ? r : r.items ?? []).slice(0, 3))
+        .catch(() => [] as RecentJob[]),
     ])
       .then(([apps, jobsList]) => {
-        setApplications(Array.isArray(apps) ? apps.slice(0, 4) : [])
-        setJobs(Array.isArray(jobsList) ? jobsList.slice(0, 3) : [])
+        setApplications(apps)
+        setJobs(jobsList)
         setLoading(false)
       })
       .catch(() => setLoading(false))
   }, [])
-
-  const statusLabelMap: Record<string, string> = {
-    APPLIED: "قيد المراجعة",
-    SHORTLISTED: "مقبول مبدئيًا",
-    REJECTED: "مرفوض",
-    HIRED: "مقبول",
-  }
-  const statusColors: Record<string, string> = {
-    "قيد المراجعة": "bg-chart-4/10 text-chart-4 border-chart-4/20",
-    "مقبول مبدئيًا": "bg-chart-2/10 text-chart-2 border-chart-2/20",
-    "مرفوض": "bg-destructive/10 text-destructive border-destructive/20",
-    "مقبول": "bg-chart-3/10 text-chart-3 border-chart-3/20",
-  }
 
   const statCards = [
     { label: "الطلبات المرسلة", value: loading ? <Skeleton className="h-8 w-16" /> : applications.length, icon: <FileText className="h-5 w-5" />, color: "text-primary" },
@@ -80,9 +63,12 @@ export default function CandidateDashboard() {
     { label: "مرات الاطلاع", value: loading ? <Skeleton className="h-8 w-16" /> : applications.length * 5, icon: <Eye className="h-5 w-5" />, color: "text-chart-4" },
   ]
 
+  const allowedRoles = useMemo(() => ["candidate"] as const, [])
+
   return (
-    <ProtectedRoute allowedRoles={["candidate"]}>
-      <DashboardLayout>
+    <ErrorBoundary>
+      <ProtectedRoute allowedRoles={allowedRoles}>
+        <DashboardLayout>
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">مرحبًا، {user?.name ?? "..."}</h1>
@@ -98,7 +84,7 @@ export default function CandidateDashboard() {
                     {stat.icon}
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                    <span className="text-2xl font-bold text-foreground block">{stat.value}</span>
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                   </div>
                 </CardContent>
@@ -120,7 +106,8 @@ export default function CandidateDashboard() {
                   <p className="text-center py-4 text-sm text-muted-foreground">لا توجد طلبات بعد</p>
                 ) : (
                   applications.map((app) => {
-                    const statusLabel = statusLabelMap[app.status] ?? app.status
+                    const statusLabel =
+                      STATUS_LABEL[app.status as keyof typeof STATUS_LABEL] ?? app.status
                     const logo = (app.job.organization?.name ?? app.job.partnerName ?? "?").slice(0, 2).toUpperCase()
                     return (
                       <div key={app.id} className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-3">
@@ -133,7 +120,7 @@ export default function CandidateDashboard() {
                             <p className="text-xs text-muted-foreground">{app.job.organization?.name ?? app.job.partnerName}</p>
                           </div>
                         </div>
-                        <Badge variant="outline" className={statusColors[statusLabel] ?? ""}>
+                        <Badge variant="outline" className={STATUS_COLOR[statusLabel] ?? ""}>
                           {statusLabel}
                         </Badge>
                       </div>
@@ -180,7 +167,8 @@ export default function CandidateDashboard() {
             </Card>
           </div>
         </div>
-      </DashboardLayout>
-    </ProtectedRoute>
+        </DashboardLayout>
+      </ProtectedRoute>
+    </ErrorBoundary>
   )
 }

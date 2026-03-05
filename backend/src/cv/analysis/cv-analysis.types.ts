@@ -13,9 +13,32 @@ export type CvContentInput = {
   summary?: string;
   objective?: string;
   title?: string;
+  fullName?: string;
   experience?: unknown[];
   experiences?: unknown[];
+  education?: unknown[];
   skills?: unknown[];
   links?: { linkedin?: string; github?: string; portfolio?: string };
   [key: string]: unknown;
+};
+
+/** API response shape for POST /v1/cv/me/analyze (bilingual, job-title aware). */
+export type CvAnalysisApiResponse = {
+  language: 'ar' | 'en' | 'mixed';
+  overallScore: number;
+  roleFitScore: number;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  ats: {
+    missingKeywords: string[];
+    formatIssues: string[];
+    lengthAssessment: 'short' | 'ok' | 'long';
+  };
+  roleMatch: {
+    targetRoleTitle: string;
+    matchedKeywords: string[];
+    missingKeywords: string[];
+    suggestions: string[];
+  };
 };

@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,8 +47,9 @@ const stages = [
 ]
 
 export default function PipelinePage() {
+  const allowedRoles = useMemo(() => ["hr"] as const, [])
   return (
-    <ProtectedRoute allowedRoles={["hr"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-6">
           <div>

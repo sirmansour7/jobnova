@@ -5,6 +5,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
@@ -25,8 +26,11 @@ export class AdminController {
   }
 
   @Get('users')
-  getUsers() {
-    return this.adminService.getUsers();
+  getUsers(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.adminService.getUsers(
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Patch('users/:id/role')
@@ -40,17 +44,33 @@ export class AdminController {
   }
 
   @Get('jobs')
-  getJobs() {
-    return this.adminService.getJobs();
+  getJobs(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.adminService.getJobs(
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Patch('jobs/:id/toggle')
   toggleJob(@Param('id') id: string) {
-    return this.adminService.toggleJob(id);
+    return this.adminService.toggleJobActive(id);
   }
 
   @Delete('jobs/:id')
   deleteJob(@Param('id') id: string) {
     return this.adminService.deleteJob(id);
+  }
+
+  @Get('orgs')
+  getOrgs(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.adminService.getOrgs(
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
+  }
+
+  @Delete('orgs/:id')
+  deleteOrg(@Param('id') id: string) {
+    return this.adminService.deleteOrg(id);
   }
 }

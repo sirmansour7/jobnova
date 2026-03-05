@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,16 +10,34 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, MessageSquare } from "lucide-react"
-import { hrConversations } from "@/src/data/messages"
+import { useMessages } from "@/src/hooks/useMessages"
 
 export default function HRMessagesPage() {
-  const [selectedConv, setSelectedConv] = useState<string>(hrConversations[0]?.id ?? "")
+  const { conversations, loading, error, activeConvId, selectConversation, sendMessage, sending } = useMessages()
   const [newMessage, setNewMessage] = useState("")
 
-  const conversation = hrConversations.find((c) => c.id === selectedConv)
+  const conversation = conversations.find((c) => c.id === activeConvId)
+
+  const handleSend = () => {
+    if (!activeConvId || !newMessage.trim()) return
+    sendMessage(activeConvId, newMessage.trim())
+    setNewMessage("")
+  }
+
+  const allowedRoles = useMemo(() => ["hr"] as const, [])
+
+  if (loading) {
+    return (
+      <ProtectedRoute allowedRoles={allowedRoles}>
+        <DashboardLayout>
+          <p className="text-muted-foreground">جاري التحميل...</p>
+        </DashboardLayout>
+      </ProtectedRoute>
+    )
+  }
 
   return (
-    <ProtectedRoute allowedRoles={["hr"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-4">
           <div>
@@ -32,12 +50,12 @@ export default function HRMessagesPage() {
               <div className="border-b border-border md:border-b-0 md:border-e">
                 <ScrollArea className="h-full">
                   <div className="space-y-1 p-2">
-                    {hrConversations.map((conv) => (
+                    {conversations.map((conv) => (
                       <button
                         key={conv.id}
-                        onClick={() => setSelectedConv(conv.id)}
+                        onClick={() => selectConversation(conv.id)}
                         className={`flex w-full items-center gap-3 rounded-lg p-3 text-start transition-colors ${
-                          selectedConv === conv.id ? "bg-primary/10" : "hover:bg-secondary"
+                          activeConvId === conv.id ? "bg-primary/10" : "hover:bg-secondary"
                         }`}
                       >
                         <Avatar className="h-10 w-10 shrink-0">
@@ -70,15 +88,15 @@ export default function HRMessagesPage() {
                     </div>
                     <ScrollArea className="flex-1 p-4">
                       <div className="space-y-4">
-                        {conversation.messages.map((msg) => (
-                          <div key={msg.id} className={`flex gap-3 ${msg.senderId === "2" ? "flex-row-reverse" : ""}`}>
+                        {(conversation.messages ?? []).map((msg) => (
+                          <div key={msg.id} className="flex gap-3">
                             <Avatar className="h-8 w-8 shrink-0">
-                              <AvatarFallback className="bg-primary/20 text-primary text-xs">{msg.senderAvatar}</AvatarFallback>
+                              <AvatarFallback className="bg-primary/20 text-primary text-xs">{msg.senderName.slice(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
-                            <div className={`max-w-[70%] rounded-lg p-3 ${msg.senderId === "2" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}>
+                            <div className="max-w-[70%] rounded-lg p-3 bg-secondary text-foreground">
                               <p className="text-sm">{msg.content}</p>
-                              <p className={`mt-1 text-xs ${msg.senderId === "2" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                                {new Date(msg.timestamp).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {new Date(msg.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
                               </p>
                             </div>
                           </div>
@@ -87,8 +105,8 @@ export default function HRMessagesPage() {
                     </ScrollArea>
                     <div className="border-t border-border p-4">
                       <div className="flex gap-2">
-                        <Input placeholder="اكتب رسالة..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
-                        <Button size="icon" onClick={() => setNewMessage("")}><Send className="h-4 w-4" /></Button>
+                        <Input placeholder="اكتب رسالة..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSend())} />
+                        <Button size="icon" onClick={handleSend} disabled={sending || !newMessage.trim()}><Send className="h-4 w-4" /></Button>
                       </div>
                     </div>
                   </>

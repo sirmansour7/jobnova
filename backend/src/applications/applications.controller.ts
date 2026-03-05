@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
   ValidationPipe,
@@ -12,6 +13,7 @@ import {
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
+import { ScreeningAnswersDto } from './dto/screening-answers.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { Request } from 'express';
 
@@ -35,16 +37,52 @@ export class ApplicationsController {
   }
 
   @Get('my')
-  myApplications(@Req() req: Request & { user: { sub: string } }) {
-    return this.applicationsService.myApplications(req.user.sub);
+  myApplications(
+    @Req() req: Request & { user: { sub: string } },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.applicationsService.myApplications(
+      req.user.sub,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get('job/:jobId')
   jobApplications(
     @Param('jobId') jobId: string,
     @Req() req: Request & { user: { sub: string } },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.applicationsService.jobApplications(jobId, req.user.sub);
+    return this.applicationsService.jobApplications(
+      jobId,
+      req.user.sub,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
+  }
+
+  @Get(':id')
+  findOne(
+    @Param('id') id: string,
+    @Req() req: Request & { user: { sub: string } },
+  ) {
+    return this.applicationsService.findOne(id, req.user.sub);
+  }
+
+  @Patch(':id/screening')
+  submitScreening(
+    @Param('id') id: string,
+    @Body(VP) dto: ScreeningAnswersDto,
+    @Req() req: Request & { user: { sub: string } },
+  ) {
+    return this.applicationsService.submitScreening(
+      id,
+      req.user.sub,
+      dto.screeningAnswers,
+    );
   }
 
   @Patch(':id/status')

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,26 +12,25 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Search, MoreVertical, Edit, Trash2, MapPin, Plus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { governorates } from "@/src/data/governorates"
+
+const governorates = ["القاهرة","الجيزة","الإسكندرية","الدقهلية","البحيرة","الغربية","الشرقية","المنوفية","القليوبية","كفر الشيخ","دمياط","بورسعيد","الإسماعيلية","السويس","شمال سيناء","جنوب سيناء","الفيوم","بني سويف","المنيا","أسيوط","سوهاج","قنا","الأقصر","أسوان","البحر الأحمر","الوادي الجديد","مطروح"]
 
 export default function ManageGovernoratesPage() {
   const [search, setSearch] = useState("")
   const [selectedGov, setSelectedGov] = useState<string | null>(null)
 
-  const filtered = governorates.filter((g) => {
-    return search === "" || g.name.includes(search) || g.cities.some((c) => c.includes(search))
-  })
+  const filtered = governorates.filter((g) => search === "" || g.includes(search))
 
-  const selectedGovernorate = governorates.find((g) => g.id === selectedGov)
+  const allowedRoles = useMemo(() => ["admin"] as const, [])
 
   return (
-    <ProtectedRoute allowedRoles={["admin"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">إدارة المحافظات</h1>
-              <p className="text-muted-foreground">{governorates.length} محافظة - {governorates.reduce((s, g) => s + g.cities.length, 0)} مدينة</p>
+              <p className="text-muted-foreground">{governorates.length} محافظة</p>
             </div>
             <Dialog>
               <DialogTrigger asChild>
@@ -95,20 +94,20 @@ export default function ManageGovernoratesPage() {
                       ) : (
                         filtered.map((gov) => (
                           <TableRow
-                            key={gov.id}
-                            className={`border-border cursor-pointer transition-colors ${selectedGov === gov.id ? "bg-primary/5" : "hover:bg-secondary/50"}`}
-                            onClick={() => setSelectedGov(gov.id)}
+                            key={gov}
+                            className={`border-border cursor-pointer transition-colors ${selectedGov === gov ? "bg-primary/5" : "hover:bg-secondary/50"}`}
+                            onClick={() => setSelectedGov(gov)}
                           >
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <MapPin className="h-4 w-4 text-primary" />
-                                <span className="font-medium text-foreground">{gov.name}</span>
+                                <span className="font-medium text-foreground">{gov}</span>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge variant="secondary">{gov.cities.length} مدينة</Badge>
+                              <Badge variant="secondary">—</Badge>
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground font-mono" dir="ltr">{gov.id}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground font-mono" dir="ltr">—</TableCell>
                             <TableCell>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -136,24 +135,13 @@ export default function ManageGovernoratesPage() {
               <Card className="border-border bg-card">
                 <CardHeader>
                   <CardTitle className="text-sm text-foreground">
-                    {selectedGovernorate ? `مدن ${selectedGovernorate.name}` : "اختر محافظة لعرض مدنها"}
+                    {selectedGov ? selectedGov : "اختر محافظة لعرض مدنها"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {selectedGovernorate ? (
+                  {selectedGov ? (
                     <div className="space-y-2">
-                      {selectedGovernorate.cities.map((city) => (
-                        <div key={city} className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-3 py-2">
-                          <span className="text-sm text-foreground">{city}</span>
-                          <Button variant="ghost" size="icon" className="h-6 w-6">
-                            <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                          </Button>
-                        </div>
-                      ))}
-                      <div className="flex gap-2 pt-2">
-                        <Input placeholder="أضف مدينة..." className="text-sm" />
-                        <Button size="sm" variant="outline"><Plus className="h-3 w-3" /></Button>
-                      </div>
+                      <p className="text-sm text-muted-foreground">لا توجد بيانات مدن متاحة</p>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">

@@ -15,13 +15,12 @@ function VerifyEmailContent() {
   const [status, setStatus] = useState<Status>("idle")
 
   useEffect(() => {
-    const token = searchParams.get("token")
-    if (!token) {
-      setStatus("error")
-      return
-    }
-
     const verify = async () => {
+      const token = searchParams.get("token")
+      if (!token) {
+        setStatus("error")
+        return
+      }
       setStatus("loading")
       try {
         const res = await api("/v1/auth/verify-email", {
@@ -34,8 +33,7 @@ function VerifyEmailContent() {
         setStatus("error")
       }
     }
-
-    verify()
+    void verify()
   }, [searchParams])
 
   return (

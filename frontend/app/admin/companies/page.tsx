@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,17 +11,75 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Search, MoreVertical, Eye, Ban, Trash2, ExternalLink } from "lucide-react"
-import { companies } from "@/src/data/companies"
+import { apiJson } from "@/src/lib/api"
+
+export interface AdminOrg {
+  id: string
+  name: string
+  slug: string
+  createdAt: string
+  _count: { jobs: number; memberships: number }
+}
 
 export default function ManageCompaniesPage() {
+  const [companies, setCompanies] = useState<AdminOrg[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
 
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const data = await apiJson<{ items: AdminOrg[] }>("/v1/admin/orgs")
+        if (!cancelled) setCompanies(Array.isArray(data.items) ? data.items : [])
+      } catch {
+        if (!cancelled) setCompanies([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
   const filtered = companies.filter((c) => {
-    return search === "" || c.name.includes(search) || c.industry.includes(search) || c.location.includes(search)
+    return search === "" || c.name.includes(search) || c.slug.includes(search)
   })
 
+  function formatDate(iso: string) {
+    try {
+      return new Date(iso).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })
+    } catch {
+      return iso
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await apiJson(`/v1/admin/orgs/${id}`, { method: "DELETE" })
+      setCompanies((prev) => prev.filter((c) => c.id !== id))
+    } catch {
+      // ignore or toast
+    }
+  }
+
+  const allowedRoles = useMemo(() => ["admin"] as const, [])
+
+  if (loading) {
+    return (
+      <ProtectedRoute allowedRoles={allowedRoles}>
+        <DashboardLayout>
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="text-muted-foreground">جاري التحميل...</p>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    )
+  }
+
   return (
-    <ProtectedRoute allowedRoles={["admin"]}>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-6">
           <div>
@@ -72,32 +130,34 @@ export default function ManageCompaniesPage() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
-                              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">{company.logo}</AvatarFallback>
+                              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                                {company.name.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
                             </Avatar>
                             <div>
                               <p className="font-medium text-foreground">{company.name}</p>
                               <a
-                                href={`https://${company.website}`}
+                                href={`https://${company.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
                                 dir="ltr"
                               >
-                                {company.website}
+                                {company.slug}
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="border-border">{company.industry}</Badge>
+                          <Badge variant="outline" className="border-border">—</Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-foreground">{company.location}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{company.size}</TableCell>
+                        <TableCell className="text-sm text-foreground">—</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{company._count.memberships} أعضاء</TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{company.jobCount} وظيفة</Badge>
+                          <Badge variant="secondary">{company._count.jobs} وظيفة</Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{company.founded}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{formatDate(company.createdAt)}</TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -106,7 +166,9 @@ export default function ManageCompaniesPage() {
                             <DropdownMenuContent align="start">
                               <DropdownMenuItem><Eye className="ml-2 h-4 w-4" /> عرض التفاصيل</DropdownMenuItem>
                               <DropdownMenuItem><Ban className="ml-2 h-4 w-4" /> تعليق</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive"><Trash2 className="ml-2 h-4 w-4" /> حذف</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(company.id)}>
+                                <Trash2 className="ml-2 h-4 w-4" /> حذف
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

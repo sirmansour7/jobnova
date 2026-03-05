@@ -18,8 +18,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuditEvent, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomBytes, randomUUID } from 'crypto';
+import { BCRYPT_ROUNDS } from '../common/constants';
 
-const BCRYPT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRES = '15m';
 const REFRESH_TOKEN_EXPIRES = '7d';
 const INVALID_CREDENTIALS = 'Invalid credentials';
