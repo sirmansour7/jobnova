@@ -17,7 +17,7 @@ export class EmailService {
       config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
   }
 
-  async sendVerificationEmail(email: string, fullName: string, token: string) {
+  async sendVerificationEmail(email: string, fullName: string, token: string): Promise<boolean> {
     const verifyUrl = `${this.frontendUrl}/verify-email?token=${token}`;
     try {
       await this.resend.emails.send({
@@ -94,6 +94,7 @@ export class EmailService {
 </html>
         `,
       });
+      return true;
     } catch (err) {
       const details =
         err && typeof err === 'object'
@@ -110,10 +111,11 @@ export class EmailService {
         `Failed to send verification email to ${email}`,
         JSON.stringify(details),
       );
+      return false;
     }
   }
 
-  async sendPasswordResetEmail(email: string, fullName: string, token: string) {
+  async sendPasswordResetEmail(email: string, fullName: string, token: string): Promise<boolean> {
     const resetUrl = `${this.frontendUrl}/reset-password?token=${token}`;
     try {
       await this.resend.emails.send({
@@ -193,6 +195,7 @@ export class EmailService {
 </html>
         `,
       });
+      return true;
     } catch (err) {
       const details =
         err && typeof err === 'object'
@@ -208,6 +211,7 @@ export class EmailService {
         `Failed to send password reset email to ${email}`,
         JSON.stringify(details),
       );
+      return false;
     }
   }
 }

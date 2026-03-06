@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const publicPaths = ["/", "/login", "/register", "/jobs"]
+const publicPaths = ["/", "/login", "/register", "/jobs", "/forgot-password", "/reset-password", "/verify-email", "/verify-email-sent"]
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get("jobnova_token")?.value
   const userCookie = request.cookies.get("jobnova_user")?.value

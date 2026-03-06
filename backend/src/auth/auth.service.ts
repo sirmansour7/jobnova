@@ -78,7 +78,7 @@ export class AuthService {
 
     this.audit.log({ event: AuditEvent.REGISTER, userId: user.id });
 
-    await this.emailService.sendVerificationEmail(
+    const emailSent = await this.emailService.sendVerificationEmail(
       user.email,
       user.fullName,
       verificationToken,
@@ -90,6 +90,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       emailVerified: user.emailVerified,
+      ...(emailSent ? {} : { warning: 'Verification email could not be sent. Please contact support.' }),
     };
   }
 
