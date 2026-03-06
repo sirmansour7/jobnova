@@ -17,7 +17,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuditEvent, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { randomBytes, randomUUID } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import { BCRYPT_ROUNDS } from '../common/constants';
 
 const ACCESS_TOKEN_EXPIRES = '15m';
@@ -45,6 +45,7 @@ export class AuthService {
   async register(dto: RegisterDto) {
     const { fullName, email, password, role } = dto;
     const normalizedEmail = email.toLowerCase();
+    const isDev = process.env.NODE_ENV !== 'production';
 
     const existing = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -52,7 +53,7 @@ export class AuthService {
     if (existing) throw new ConflictException('Email already in use');
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const verificationToken = randomBytes(32).toString('hex');
+    const verificationToken = isDev ? null : randomBytes(32).toString('hex');
 
     const requestedRole = role ?? Role.candidate;
 
@@ -72,17 +73,20 @@ export class AuthService {
         email: normalizedEmail,
         passwordHash,
         role: requestedRole,
+        emailVerified: isDev ? true : false,
         verificationToken,
       },
     });
 
     this.audit.log({ event: AuditEvent.REGISTER, userId: user.id });
 
-    await this.emailService.sendVerificationEmail(
-      user.email,
-      user.fullName,
-      verificationToken,
-    );
+    if (!isDev && verificationToken) {
+      await this.emailService.sendVerificationEmail(
+        user.email,
+        user.fullName,
+        verificationToken,
+      );
+    }
 
     return {
       id: user.id,
@@ -282,6 +286,7 @@ export class AuthService {
     }
 
     const resetToken = randomBytes(32).toString('hex');
+    const resetTokenHash = createHash('sha256').update(resetToken).digest('hex');
     const expiry = new Date(
       Date.now() + PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000,
     );
@@ -289,7 +294,7 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        passwordResetToken: resetToken,
+        passwordResetToken: resetTokenHash,
         passwordResetExpiry: expiry,
       },
     });
@@ -316,8 +321,9 @@ export class AuthService {
   // ─────────────────────────────────────────
 
   async resetPassword(dto: ResetPasswordDto, ip?: string) {
+    const resetTokenHash = createHash('sha256').update(dto.token).digest('hex');
     const user = await this.prisma.user.findUnique({
-      where: { passwordResetToken: dto.token },
+      where: { passwordResetToken: resetTokenHash },
     });
 
     if (!user || !user.passwordResetExpiry) {

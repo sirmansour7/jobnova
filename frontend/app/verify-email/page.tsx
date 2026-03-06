@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button"
 import { api } from "@/src/lib/api"
 
-type Status = "idle" | "loading" | "success" | "error"
+type Status = "idle" | "loading" | "success" | "error" | "already"
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams()
@@ -27,7 +27,19 @@ function VerifyEmailContent() {
           method: "POST",
           body: JSON.stringify({ token }),
         })
-        if (!res.ok) { setStatus("error"); return }
+        if (!res.ok) {
+          try {
+            const data = await res.json()
+            if (typeof data?.message === "string" && data.message.includes("already verified")) {
+              setStatus("already")
+              return
+            }
+          } catch {
+            // ignore parse errors, fall through to generic error
+          }
+          setStatus("error")
+          return
+        }
         setStatus("success")
       } catch {
         setStatus("error")
@@ -55,6 +67,15 @@ function VerifyEmailContent() {
               <div className="flex flex-col items-center gap-4">
                 <CheckCircle2 className="h-12 w-12 text-emerald-500" />
                 <p className="text-sm font-medium text-emerald-500">تم التحقق من بريدك الإلكتروني بنجاح ✓</p>
+                <Button asChild className="w-full">
+                  <Link href="/login">تسجيل الدخول</Link>
+                </Button>
+              </div>
+            )}
+            {status === "already" && (
+              <div className="flex flex-col items-center gap-4">
+                <CheckCircle2 className="h-12 w-12 text-emerald-500" />
+                <p className="text-sm font-medium text-emerald-500">بريدك الإلكتروني تم تفعيله بالفعل</p>
                 <Button asChild className="w-full">
                   <Link href="/login">تسجيل الدخول</Link>
                 </Button>
