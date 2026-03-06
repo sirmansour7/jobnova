@@ -95,7 +95,21 @@ export class EmailService {
         `,
       });
     } catch (err) {
-      this.logger.error('Failed to send verification email', err);
+      const details =
+        err && typeof err === 'object'
+          ? {
+              name: (err as any).name,
+              message: (err as any).message,
+              statusCode: (err as any).statusCode,
+              type: (err as any).type,
+              // Some Resend errors include a structured `error` field with more details
+              resendError: (err as any).error,
+            }
+          : { error: String(err) };
+      this.logger.error(
+        `Failed to send verification email to ${email}`,
+        JSON.stringify(details),
+      );
     }
   }
 
@@ -180,7 +194,20 @@ export class EmailService {
         `,
       });
     } catch (err) {
-      this.logger.error('Failed to send password reset email', err);
+      const details =
+        err && typeof err === 'object'
+          ? {
+              name: (err as any).name,
+              message: (err as any).message,
+              statusCode: (err as any).statusCode,
+              type: (err as any).type,
+              resendError: (err as any).error,
+            }
+          : { error: String(err) };
+      this.logger.error(
+        `Failed to send password reset email to ${email}`,
+        JSON.stringify(details),
+      );
     }
   }
 }
