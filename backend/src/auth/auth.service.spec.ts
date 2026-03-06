@@ -77,37 +77,7 @@ describe('AuthService', () => {
       ).rejects.toThrow(ConflictException);
     });
 
-    it('development: should auto-verify and NOT send verification email', async () => {
-      process.env.NODE_ENV = 'test';
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.user.create.mockResolvedValue({
-        id: '1',
-        fullName: 'Test',
-        email: 'test@test.com',
-        role: 'candidate',
-        emailVerified: true,
-      });
-      const result = await service.register({
-        fullName: 'Test',
-        email: 'test@test.com',
-        password: 'password123',
-        role: 'candidate' as any,
-      });
-      expect(result.email).toBe('test@test.com');
-      expect(result.emailVerified).toBe(true);
-      expect(mockPrisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            emailVerified: true,
-            verificationToken: null,
-          }),
-        }),
-      );
-      expect(mockEmail.sendVerificationEmail).not.toHaveBeenCalled();
-    });
-
-    it('production: should require verification and send verification email', async () => {
-      process.env.NODE_ENV = 'production';
+    it('should create user and send verification email', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({
         id: '1',
@@ -116,16 +86,16 @@ describe('AuthService', () => {
         role: 'candidate',
         emailVerified: false,
       });
-      await service.register({
+      const result = await service.register({
         fullName: 'Test',
         email: 'test@test.com',
         password: 'password123',
         role: 'candidate' as any,
       });
+      expect(result.email).toBe('test@test.com');
       expect(mockPrisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            emailVerified: false,
             verificationToken: expect.any(String),
           }),
         }),

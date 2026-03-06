@@ -45,7 +45,6 @@ export class AuthService {
   async register(dto: RegisterDto) {
     const { fullName, email, password, role } = dto;
     const normalizedEmail = email.toLowerCase();
-    const isDev = process.env.NODE_ENV !== 'production';
 
     const existing = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -53,7 +52,7 @@ export class AuthService {
     if (existing) throw new ConflictException('Email already in use');
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const verificationToken = isDev ? null : randomBytes(32).toString('hex');
+    const verificationToken = randomBytes(32).toString('hex');
 
     const requestedRole = role ?? Role.candidate;
 
@@ -73,20 +72,17 @@ export class AuthService {
         email: normalizedEmail,
         passwordHash,
         role: requestedRole,
-        emailVerified: isDev ? true : false,
         verificationToken,
       },
     });
 
     this.audit.log({ event: AuditEvent.REGISTER, userId: user.id });
 
-    if (!isDev && verificationToken) {
-      await this.emailService.sendVerificationEmail(
-        user.email,
-        user.fullName,
-        verificationToken,
-      );
-    }
+    await this.emailService.sendVerificationEmail(
+      user.email,
+      user.fullName,
+      verificationToken,
+    );
 
     return {
       id: user.id,
