@@ -9,6 +9,8 @@
 | Frontend  | Next.js 16 · TypeScript · shadcn/ui |
 | Backend   | NestJS · Prisma · PostgreSQL        |
 | Auth      | JWT · Refresh Token Rotation        |
-| Infra     | Railway · Docker · GitHub Actions   |
+| Infra     | Vercel (frontend) · Render/Railway (backend) · Neon (DB) |
+
+**Production deployment:** see [DEPLOYMENT.md](./DEPLOYMENT.md) for env vars, build commands, and step-by-step Vercel + Render/Railway + Neon setup.
 
 ## Project Structure
