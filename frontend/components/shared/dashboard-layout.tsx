@@ -53,6 +53,7 @@ const hrNav: NavItem[] = [
   { label: "نشر وظيفة", href: "/hr/create-job", icon: <PlusCircle className="h-4 w-4" /> },
   { label: "إدارة الوظائف", href: "/hr/manage-jobs", icon: <Briefcase className="h-4 w-4" /> },
   { label: "المتقدمون", href: "/hr/applicants", icon: <Users className="h-4 w-4" /> },
+  { label: "مقابلات التوظيف", href: "/hr/interviews", icon: <MessageSquare className="h-4 w-4" /> },
   { label: "مراحل التوظيف", href: "/hr/pipeline", icon: <GitBranch className="h-4 w-4" /> },
   { label: "الرسائل", href: "/hr/messages", icon: <MessageSquare className="h-4 w-4" /> },
 ]
