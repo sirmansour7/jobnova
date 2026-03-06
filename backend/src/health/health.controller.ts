@@ -5,6 +5,15 @@ import { PrismaService } from '../prisma/prisma.service';
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Lightweight liveness probe: returns 200 as long as the app is running.
+  @Get('live')
+  live() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   @Get()
   async check() {
     try {

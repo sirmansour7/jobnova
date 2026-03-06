@@ -15,6 +15,7 @@ import { LoggerModule } from './common/logger.module';
 import { envValidationSchema } from './env.validation';
 import { ChatModule } from './chat/chat.module';
 import { InterviewsModule } from './interviews/interviews.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { InterviewsModule } from './interviews/interviews.module';
     MessagingModule,
     ChatModule,
     InterviewsModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
