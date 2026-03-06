@@ -52,11 +52,24 @@ async function bootstrap() {
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
       // Allow server-to-server requests (Postman, curl, internal services)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
         callback(null, true);
-      } else {
-        callback(new Error(`CORS: Origin "${origin}" not allowed`));
+        return;
       }
+
+      // Exact matches from ALLOWED_ORIGINS
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      // Allow all Vercel preview / deployment domains safely
+      if (origin.endsWith('.vercel.app')) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS: Origin "${origin}" not allowed`));
     },
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
