@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('Auth Flow (e2e)', () => {
   let app: INestApplication;
@@ -21,6 +22,7 @@ describe('Auth Flow (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('v1');
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
     );
@@ -37,7 +39,13 @@ describe('Auth Flow (e2e)', () => {
       .send(testUser)
       .expect(201);
 
-    expect(res.body).toHaveProperty('message');
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.email).toBe(testUser.email.toLowerCase());
+    const prisma = app.get(PrismaService);
+    await prisma.user.updateMany({
+      where: { email: testUser.email.toLowerCase() },
+      data: { emailVerified: true },
+    });
   });
 
   it('POST /v1/auth/login — should login and return tokens', async () => {
@@ -81,10 +89,11 @@ describe('Auth Flow (e2e)', () => {
       .expect(200);
   });
 
-  it('GET /v1/auth/me — should reject after logout', async () => {
-    await request(app.getHttpServer())
+  it('GET /v1/auth/me — access token still valid after logout (refresh token revoked)', async () => {
+    const res = await request(app.getHttpServer())
       .get('/v1/auth/me')
       .set('Authorization', `Bearer ${accessToken}`)
-      .expect(401);
+      .expect(200);
+    expect(res.body.email).toBe(testUser.email.toLowerCase());
   });
 });

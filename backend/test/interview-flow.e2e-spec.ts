@@ -45,7 +45,6 @@ describe('Interview Flow (e2e)', () => {
   let jobId: string;
 
   beforeAll(async () => {
-    jest.setTimeout(30000);
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -60,7 +59,7 @@ describe('Interview Flow (e2e)', () => {
       }),
     );
     await app.init();
-  }, 30000);
+  });
 
   afterAll(async () => {
     await app.close();
