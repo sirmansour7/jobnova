@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Logo } from "@/components/shared/logo"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -43,7 +44,11 @@ export default function RegisterPage() {
         return
       }
 
-      // Registration successful — redirect to verification notice page
+      const data = (await res.json().catch(() => ({}))) as { warning?: string }
+      if (typeof data?.warning === "string" && data.warning.trim()) {
+        toast.warning(data.warning.trim())
+      }
+
       router.push("/verify-email-sent")
     } catch {
       setError("خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.")
