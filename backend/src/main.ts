@@ -41,34 +41,29 @@ async function bootstrap() {
   // ✅ Global exception filter — normalizes all errors, no stack trace leaks
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  // ✅ CORS — origins from .env, supports multiple comma-separated values
+  // ✅ CORS — ALLOWED_ORIGINS (comma-separated) + production domains + Vercel previews
   const rawOrigins =
     configService.get<string>('ALLOWED_ORIGINS') ?? 'http://localhost:3001';
-  const allowedOrigins = rawOrigins.split(',').map((o) => o.trim());
+  const allowedOrigins = rawOrigins.split(',').map((o) => o.trim()).filter(Boolean);
+  const productionOrigins = ['https://jobnova.xyz', 'https://www.jobnova.xyz'];
 
   app.enableCors({
     origin: (
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
-      // Allow server-to-server requests (Postman, curl, internal services)
       if (!origin) {
         callback(null, true);
         return;
       }
-
-      // Exact matches from ALLOWED_ORIGINS
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin) || productionOrigins.includes(origin)) {
         callback(null, true);
         return;
       }
-
-      // Allow all Vercel preview / deployment domains safely
       if (origin.endsWith('.vercel.app')) {
         callback(null, true);
         return;
       }
-
       callback(new Error(`CORS: Origin "${origin}" not allowed`));
     },
     credentials: true,
