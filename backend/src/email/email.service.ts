@@ -18,9 +18,12 @@ export class EmailService {
   }
 
   async sendVerificationEmail(email: string, fullName: string, token: string): Promise<boolean> {
+    this.logger.log(
+      `Sending verification email: to=${email} from=${this.from} type=verification`,
+    );
     const verifyUrl = `${this.frontendUrl}/verify-email?token=${token}`;
     try {
-      await this.resend.emails.send({
+      const result = await this.resend.emails.send({
         from: this.from,
         to: email,
         subject: 'Verify your email – JobNova',
@@ -94,21 +97,23 @@ export class EmailService {
 </html>
         `,
       });
+      const id = result?.data?.id;
+      this.logger.log(
+        `Verification email sent: to=${email} resendId=${id ?? 'null'}`,
+      );
       return true;
     } catch (err) {
-      const details =
-        err && typeof err === 'object'
-          ? {
-              name: (err as any).name,
-              message: (err as any).message,
-              statusCode: (err as any).statusCode,
-              type: (err as any).type,
-              // Some Resend errors include a structured `error` field with more details
-              resendError: (err as any).error,
-            }
-          : { error: String(err) };
+      const e = err as { name?: string; message?: string; statusCode?: number; type?: string; error?: unknown; response?: { data?: unknown } };
+      const details: Record<string, unknown> = {
+        name: e?.name,
+        message: e?.message,
+        statusCode: e?.statusCode,
+        type: e?.type,
+        resendError: e?.error,
+      };
+      if (e?.response?.data != null) details.responseBody = e.response.data;
       this.logger.error(
-        `Failed to send verification email to ${email}`,
+        `Failed to send verification email: to=${email} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
         JSON.stringify(details),
       );
       return false;
@@ -116,9 +121,12 @@ export class EmailService {
   }
 
   async sendPasswordResetEmail(email: string, fullName: string, token: string): Promise<boolean> {
+    this.logger.log(
+      `Sending password reset email: to=${email} from=${this.from} type=reset`,
+    );
     const resetUrl = `${this.frontendUrl}/reset-password?token=${token}`;
     try {
-      await this.resend.emails.send({
+      const result = await this.resend.emails.send({
         from: this.from,
         to: email,
         subject: 'Reset your password – JobNova',
@@ -195,20 +203,23 @@ export class EmailService {
 </html>
         `,
       });
+      const id = result?.data?.id;
+      this.logger.log(
+        `Password reset email sent: to=${email} resendId=${id ?? 'null'}`,
+      );
       return true;
     } catch (err) {
-      const details =
-        err && typeof err === 'object'
-          ? {
-              name: (err as any).name,
-              message: (err as any).message,
-              statusCode: (err as any).statusCode,
-              type: (err as any).type,
-              resendError: (err as any).error,
-            }
-          : { error: String(err) };
+      const e = err as { name?: string; message?: string; statusCode?: number; type?: string; error?: unknown; response?: { data?: unknown } };
+      const details: Record<string, unknown> = {
+        name: e?.name,
+        message: e?.message,
+        statusCode: e?.statusCode,
+        type: e?.type,
+        resendError: e?.error,
+      };
+      if (e?.response?.data != null) details.responseBody = e.response.data;
       this.logger.error(
-        `Failed to send password reset email to ${email}`,
+        `Failed to send password reset email: to=${email} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
         JSON.stringify(details),
       );
       return false;
