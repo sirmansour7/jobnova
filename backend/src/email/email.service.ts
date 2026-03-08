@@ -12,7 +12,7 @@ export class EmailService {
   constructor(private readonly config: ConfigService) {
     this.resend = new Resend(config.get<string>('RESEND_API_KEY'));
     this.from =
-      config.get<string>('EMAIL_FROM') ?? 'JobNova <noreply@jobnova.app>';
+      config.get<string>('EMAIL_FROM') ?? 'JobNova <noreply@jobnova.xyz>';
     this.frontendUrl =
       config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
   }
