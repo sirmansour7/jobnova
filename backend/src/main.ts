@@ -72,10 +72,8 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  // Railway provides PORT dynamically; bind to 0.0.0.0 so it is reachable externally.
-  const port = process.env.PORT || '3000';
+  const port = process.env.PORT || 8080;
   await app.listen(Number(port), '0.0.0.0');
-  // Minimal startup log for deployment diagnosis.
   // eslint-disable-next-line no-console
   console.log(`JobNova backend running on port ${port}`);
 }
