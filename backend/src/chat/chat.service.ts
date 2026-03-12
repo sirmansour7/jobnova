@@ -19,10 +19,6 @@ export class ChatService {
     candidateName = 'المرشح',
   ): Promise<string> {
     const apiKey = this.config.get<string>('GROQ_API_KEY');
-    // Debug: verify Groq API key presence (without logging the key)
-
-    console.log('GROQ_API_KEY exists:', !!apiKey);
-
     const systemPrompt = `أنت مساعد توظيف ذكي ومحترف اسمك "نوفا" تعمل لصالح منصة JobNova المصرية.
 تجري الآن مقابلة تعارف مع مرشح اسمه "${candidateName}" لوظيفة "${jobTitle}".
 
@@ -76,11 +72,6 @@ export class ChatService {
       );
 
       const data = await response.json();
-      // Debug: inspect Groq response status and truncated payload
-
-      console.log('Groq response status:', response.status);
-
-      console.log('Groq response data:', JSON.stringify(data).slice(0, 200));
       const text: string | undefined = data?.choices?.[0]?.message?.content;
       if (text) return text;
       return this.getRuleBasedResponse(conversationHistory.length);

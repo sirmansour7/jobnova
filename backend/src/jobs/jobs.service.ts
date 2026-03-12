@@ -11,40 +11,74 @@ export class JobsService {
     private readonly orgAuth: OrgAuthService,
   ) {}
 
-  async findAll(filters?: {
-    category?: string;
-    governorate?: string;
-    isActive?: boolean;
-    search?: string;
-    page?: number;
-    limit?: number;
-  }) {
+  async findAll(
+    filters?: {
+      category?: string;
+      governorate?: string;
+      isActive?: boolean;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
+    user?: { sub: string; role: string },
+  ) {
     const page = Math.max(1, filters?.page ?? 1);
     const limit = Math.min(50, Math.max(1, filters?.limit ?? 20));
     const skip = (page - 1) * limit;
 
-    const where = {
+    let orgId: string | null = null;
+    if (user?.role === 'hr') {
+      const membership = await this.prisma.membership.findFirst({
+        where: { userId: user.sub },
+        select: { organizationId: true },
+      });
+      if (!membership) {
+        return {
+          items: [],
+          total: 0,
+          page,
+          totalPages: 0,
+        };
+      }
+      orgId = membership.organizationId;
+    }
+
+    const searchOr =
+      filters?.search
+        ? [
+            { title: { contains: filters.search, mode: 'insensitive' as const } },
+            {
+              partnerName: {
+                contains: filters.search,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              description: {
+                contains: filters.search,
+                mode: 'insensitive' as const,
+              },
+            },
+          ]
+        : null;
+    const expiryOr =
+      filters?.isActive !== false
+        ? [{ expiresAt: null }, { expiresAt: { gt: new Date() } }]
+        : null;
+
+    const where: Record<string, unknown> = {
       isActive: filters?.isActive ?? true,
       ...(filters?.category && { category: filters.category }),
       ...(filters?.governorate && { governorate: filters.governorate }),
-      ...(filters?.search && {
-        OR: [
-          { title: { contains: filters.search, mode: 'insensitive' as const } },
-          {
-            partnerName: {
-              contains: filters.search,
-              mode: 'insensitive' as const,
-            },
-          },
-          {
-            description: {
-              contains: filters.search,
-              mode: 'insensitive' as const,
-            },
-          },
-        ],
-      }),
+      ...(orgId != null && { organizationId: orgId }),
     };
+    if (searchOr && expiryOr) {
+      where.AND = [{ OR: searchOr }, { OR: expiryOr }];
+    } else if (searchOr) {
+      where.OR = searchOr;
+    } else if (expiryOr) {
+      where.OR = expiryOr;
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.job.findMany({

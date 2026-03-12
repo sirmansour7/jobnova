@@ -4,12 +4,13 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
-import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { ThrottlerGuard, Throttle, SkipThrottle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -18,6 +19,8 @@ import { RefreshDto } from './dto/refresh.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 const VP = new ValidationPipe({
@@ -55,9 +58,16 @@ export class AuthController {
     return this.authService.verifyEmail(body.token, getIp(req));
   }
 
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(@Body(VP) body: ResendVerificationDto) {
+    return this.authService.resendVerification(body.email);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body(VP) body: LoginDto, @Req() req: Request) {
     return this.authService.login(body, getIp(req), getUA(req));
   }
@@ -77,9 +87,9 @@ export class AuthController {
     return this.authService.logout(req.user.sub, getIp(req));
   }
 
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async forgotPassword(@Body(VP) body: ForgotPasswordDto, @Req() req: Request) {
     return this.authService.forgotPassword(body, getIp(req));
   }
@@ -96,5 +106,15 @@ export class AuthController {
   @SkipThrottle()
   async me(@Req() req: Request & { user: { sub: string } }) {
     return this.authService.getMe(req.user.sub);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @SkipThrottle()
+  async updateMe(
+    @Body(VP) body: UpdateProfileDto,
+    @Req() req: Request & { user: { sub: string } },
+  ) {
+    return this.authService.updateProfile(req.user.sub, body);
   }
 }

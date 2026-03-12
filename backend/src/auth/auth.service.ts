@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AuditEvent, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes, randomUUID } from 'crypto';
@@ -29,6 +31,8 @@ const PASSWORD_RESET_EXPIRY_MINUTES = 30;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -119,6 +123,40 @@ export class AuthService {
     this.audit.log({ event: AuditEvent.EMAIL_VERIFIED, userId: user.id, ip });
 
     return { message: 'Email verified successfully' };
+  }
+
+  async resendVerification(email: string) {
+    const normalizedEmail = email.toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user) {
+      return {
+        message: 'If this email exists, a verification email has been sent',
+      };
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    const verificationToken = randomBytes(32).toString('hex');
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { verificationToken },
+    });
+
+    this.logger.log(`Sending verification email for user ${user.id}`);
+    await this.emailService.sendVerificationEmail(
+      user.email,
+      user.fullName,
+      verificationToken,
+    );
+    this.logger.log(`Verification email dispatched for user ${user.id}`);
+
+    return { message: 'Verification email sent' };
   }
 
   // ─────────────────────────────────────────
@@ -371,6 +409,51 @@ export class AuthService {
     });
     if (!user) throw new UnauthorizedException(INVALID_CREDENTIALS);
     return user;
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const updateData: { fullName?: string } = {};
+    if (dto.fullName !== undefined) {
+      updateData.fullName = dto.fullName;
+    }
+
+    let user:
+      | {
+          id: string;
+          fullName: string;
+          email: string;
+          role: Role;
+          emailVerified: boolean;
+        }
+      | null;
+
+    if (Object.keys(updateData).length === 0) {
+      user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          emailVerified: true,
+        },
+      });
+    } else {
+      user = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          emailVerified: true,
+        },
+      });
+    }
+
+    if (!user) throw new UnauthorizedException(INVALID_CREDENTIALS);
+    return this.toAuthUser(user);
   }
 
   // ─────────────────────────────────────────

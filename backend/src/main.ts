@@ -60,10 +60,6 @@ async function bootstrap() {
         callback(null, true);
         return;
       }
-      if (origin.endsWith('.vercel.app')) {
-        callback(null, true);
-        return;
-      }
       callback(new Error(`CORS: Origin "${origin}" not allowed`));
     },
     credentials: true,

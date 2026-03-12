@@ -7,6 +7,7 @@ import { useAuth } from "@/src/context/auth-context"
 import { ErrorBoundary } from "@/components/shared/error-boundary"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Briefcase, Users, FileText, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -37,6 +38,7 @@ function getInitials(name: string): string {
 export default function HRDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [orgName, setOrgName] = useState<string | null>(null)
+  const [hasOrg, setHasOrg] = useState(false)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const { user } = useAuth()
@@ -51,7 +53,9 @@ export default function HRDashboard() {
 
         if (statsData) setStats(statsData)
 
-        const firstOrg = Array.isArray(orgsData) && orgsData.length > 0 ? orgsData[0] : null
+        const list = Array.isArray(orgsData) ? orgsData : []
+        setHasOrg(list.length > 0)
+        const firstOrg = list.length > 0 ? list[0] : null
         const name = firstOrg?.organization?.name ?? (firstOrg as { name?: string })?.name ?? null
         if (name) setOrgName(name)
       } catch {
@@ -117,6 +121,19 @@ export default function HRDashboard() {
       <ProtectedRoute allowedRoles={allowedRoles}>
         <DashboardLayout>
         <div className="space-y-6">
+          {!hasOrg && (
+            <Card className="border-amber-500/50 bg-amber-500/10">
+              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-foreground font-medium">
+                  لم تقم بإنشاء شركتك بعد — لن تتمكن من نشر وظائف حتى تقوم بإنشاء ملف الشركة
+                </p>
+                <Button asChild>
+                  <Link href="/hr/create-org">إنشاء الشركة الآن</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <div>
             <h1 className="text-2xl font-bold text-foreground">لوحة تحكم التوظيف</h1>
             <p className="text-muted-foreground">

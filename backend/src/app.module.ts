@@ -9,6 +9,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { OrgModule } from './org/org.module';
 import { AdminModule } from './admin/admin.module';
+import { HrModule } from './hr/hr.module';
 import { CvModule } from './cv/cv.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { LoggerModule } from './common/logger.module';
@@ -16,6 +17,8 @@ import { envValidationSchema } from './env.validation';
 import { ChatModule } from './chat/chat.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { HealthModule } from './health/health.module';
+import { SavedJobsModule } from './saved-jobs/saved-jobs.module';
+import { GovernoratesModule } from './governorates/governorates.module';
 
 @Module({
   imports: [
@@ -43,11 +46,14 @@ import { HealthModule } from './health/health.module';
     ApplicationsModule,
     OrgModule,
     AdminModule,
+    HrModule,
     CvModule,
     MessagingModule,
     ChatModule,
     InterviewsModule,
     HealthModule,
+    SavedJobsModule,
+    GovernoratesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

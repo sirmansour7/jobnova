@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,73 +11,68 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, MoreVertical, Eye, Ban, Trash2, ExternalLink } from "lucide-react"
+import { Search, MoreVertical, Eye, Trash2, Briefcase, ChevronLeft, ChevronRight } from "lucide-react"
 import { apiJson } from "@/src/lib/api"
+import { toast } from "sonner"
 
 export interface AdminOrg {
   id: string
   name: string
   slug: string
+  industry?: string
+  location?: string
+  size?: string
   createdAt: string
   _count: { jobs: number; memberships: number }
 }
 
+const PAGE_SIZE = 15
+
 export default function ManageCompaniesPage() {
+  const router = useRouter()
   const [companies, setCompanies] = useState<AdminOrg[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
 
   useEffect(() => {
-    let cancelled = false
-    async function load() {
-      setLoading(true)
-      try {
-        const data = await apiJson<{ items: AdminOrg[] }>("/v1/admin/orgs")
-        if (!cancelled) setCompanies(Array.isArray(data.items) ? data.items : [])
-      } catch {
-        if (!cancelled) setCompanies([])
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [])
+    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 350)
+    return () => clearTimeout(t)
+  }, [search])
 
-  const filtered = companies.filter((c) => {
-    return search === "" || c.name.includes(search) || c.slug.includes(search)
-  })
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
+      if (debouncedSearch) params.set("search", debouncedSearch)
+      const data = await apiJson<{ items: AdminOrg[]; total: number; totalPages: number }>(`/v1/admin/orgs?${params}`)
+      setCompanies(Array.isArray(data.items) ? data.items : [])
+      setTotal(data.total ?? 0)
+      setTotalPages(data.totalPages ?? 1)
+    } catch { setCompanies([]) }
+    finally { setLoading(false) }
+  }, [page, debouncedSearch])
+
+  useEffect(() => { load() }, [load])
 
   function formatDate(iso: string) {
-    try {
-      return new Date(iso).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })
-    } catch {
-      return iso
-    }
+    try { return new Date(iso).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" }) }
+    catch { return iso }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`هل تريد حذف شركة "${name}"؟`)) return
     try {
       await apiJson(`/v1/admin/orgs/${id}`, { method: "DELETE" })
-      setCompanies((prev) => prev.filter((c) => c.id !== id))
-    } catch {
-      // ignore or toast
-    }
+      toast.success("تم حذف الشركة بنجاح")
+      load()
+    } catch { toast.error("فشل الحذف") }
   }
 
   const allowedRoles = useMemo(() => ["admin"] as const, [])
-
-  if (loading) {
-    return (
-      <ProtectedRoute allowedRoles={allowedRoles}>
-        <DashboardLayout>
-          <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-muted-foreground">جاري التحميل...</p>
-          </div>
-        </DashboardLayout>
-      </ProtectedRoute>
-    )
-  }
 
   return (
     <ProtectedRoute allowedRoles={allowedRoles}>
@@ -84,10 +80,9 @@ export default function ManageCompaniesPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">إدارة الشركات</h1>
-            <p className="text-muted-foreground">{companies.length} شركة مسجلة على المنصة</p>
+            <p className="text-muted-foreground">{total} شركة مسجلة على المنصة</p>
           </div>
 
-          {/* Search */}
           <Card className="border-border bg-card">
             <CardContent className="p-4">
               <div className="relative">
@@ -102,83 +97,97 @@ export default function ManageCompaniesPage() {
             </CardContent>
           </Card>
 
-          {/* Companies Table */}
           <Card className="border-border bg-card">
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border">
-                    <TableHead className="text-start">الشركة</TableHead>
-                    <TableHead className="text-start">القطاع</TableHead>
-                    <TableHead className="text-start">الموقع</TableHead>
-                    <TableHead className="text-start">الحجم</TableHead>
-                    <TableHead className="text-start">الوظائف</TableHead>
-                    <TableHead className="text-start">تأسست</TableHead>
-                    <TableHead className="text-start">إجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
-                        لا توجد نتائج مطابقة
-                      </TableCell>
+              {loading ? (
+                <div className="flex items-center justify-center py-20 text-muted-foreground">جاري التحميل...</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border">
+                      <TableHead className="text-start">الشركة</TableHead>
+                      <TableHead className="text-start">القطاع</TableHead>
+                      <TableHead className="text-start">الموقع</TableHead>
+                      <TableHead className="text-start">الحجم</TableHead>
+                      <TableHead className="text-start">الأعضاء</TableHead>
+                      <TableHead className="text-start">الوظائف</TableHead>
+                      <TableHead className="text-start">تأسست</TableHead>
+                      <TableHead className="text-start">إجراءات</TableHead>
                     </TableRow>
-                  ) : (
-                    filtered.map((company) => (
-                      <TableRow key={company.id} className="border-border">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-                                {company.name.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-foreground">{company.name}</p>
-                              <a
-                                href={`https://${company.slug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
-                                dir="ltr"
-                              >
-                                {company.slug}
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="border-border">—</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-foreground">—</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{company._count.memberships} أعضاء</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{company._count.jobs} وظيفة</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{formatDate(company.createdAt)}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
-                              <DropdownMenuItem><Eye className="ml-2 h-4 w-4" /> عرض التفاصيل</DropdownMenuItem>
-                              <DropdownMenuItem><Ban className="ml-2 h-4 w-4" /> تعليق</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(company.id)}>
-                                <Trash2 className="ml-2 h-4 w-4" /> حذف
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                  </TableHeader>
+                  <TableBody>
+                    {companies.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="py-12 text-center text-muted-foreground">لا توجد نتائج مطابقة</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      companies.map((company) => (
+                        <TableRow key={company.id} className="border-border hover:bg-secondary/30 transition-colors">
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                                  {company.name.slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-foreground">{company.name}</p>
+                                <p className="text-xs text-muted-foreground font-mono" dir="ltr">{company.slug}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {company.industry
+                              ? <Badge variant="outline" className="border-border text-xs">{company.industry}</Badge>
+                              : <span className="text-muted-foreground text-sm">—</span>}
+                          </TableCell>
+                          <TableCell className="text-sm text-foreground">{company.location ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{company.size ?? "—"}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{company._count.memberships}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{company._count.jobs} وظيفة</Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{formatDate(company.createdAt)}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={() => router.push(`/admin/companies/${company.id}`)}>
+                                  <Eye className="ml-2 h-4 w-4" /> عرض التفاصيل
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push(`/admin/moderate-jobs?org=${company.id}`)}>
+                                  <Briefcase className="ml-2 h-4 w-4" /> إدارة الوظائف
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(company.id, company.name)}>
+                                  <Trash2 className="ml-2 h-4 w-4" /> حذف
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-1">
+              <p className="text-sm text-muted-foreground">صفحة {page} من {totalPages}</p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                  <ChevronRight className="h-4 w-4 ml-1" /> السابق
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+                  التالي <ChevronLeft className="h-4 w-4 mr-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>

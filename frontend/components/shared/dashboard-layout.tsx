@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
   LayoutDashboard,
   Briefcase,
+  Bookmark,
   FileText,
   MessageSquare,
   Settings,
@@ -41,6 +42,7 @@ interface NavItem {
 const candidateNav: NavItem[] = [
   { label: "لوحة التحكم", href: "/candidate/dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
   { label: "الوظائف", href: "/jobs", icon: <Briefcase className="h-4 w-4" /> },
+  { label: "الوظائف المحفوظة", href: "/candidate/saved-jobs", icon: <Bookmark className="h-4 w-4" /> },
   { label: "طلباتي", href: "/candidate/applications", icon: <FileText className="h-4 w-4" /> },
   { label: "السيرة الذاتية", href: "/candidate/cv-builder", icon: <FileText className="h-4 w-4" /> },
   { label: "الرسائل", href: "/candidate/messages", icon: <MessageSquare className="h-4 w-4" /> },

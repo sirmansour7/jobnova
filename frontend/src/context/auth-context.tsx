@@ -4,13 +4,14 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, ty
 import { useRouter } from "next/navigation"
 import type { UserRole, User } from "@/src/types/auth"
 import { getCookie, setCookie, deleteCookie } from "@/src/lib/cookies"
+import { API_URL } from "@/src/lib/api"
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   register: (name: string, email: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>
-  logout: () => void
+  logout: () => void | Promise<void>
   isAuthenticated: boolean
 }
 
@@ -18,8 +19,6 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 const COOKIE_TOKEN = "jobnova_token"   // raw JWT for Authorization header
 const COOKIE_USER = "jobnova_user"     // JSON user for session restore & middleware role
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production.up.railway.app"
 
 /** Backend auth login response user shape */
 interface BackendAuthUser {
@@ -134,7 +133,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   )
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    const token = getCookie(COOKIE_TOKEN)
+    if (token) {
+      try {
+        await fetch(`${API_URL}/v1/auth/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      } catch {
+        // network failure is acceptable — proceed with local logout
+      }
+    }
     deleteCookie(COOKIE_TOKEN)
     deleteCookie(COOKIE_USER)
     deleteCookie("jobnova_refresh")

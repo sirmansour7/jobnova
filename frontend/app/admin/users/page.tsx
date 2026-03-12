@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Search, MoreVertical, Ban, ShieldCheck, Trash2, Eye } from "lucide-react"
+import { toast } from "sonner"
 import { apiJson } from "@/src/lib/api"
 
 const roleLabels: Record<string, string> = {
@@ -35,6 +36,7 @@ interface AdminUser {
   createdAt: string
   phone?: string
   location?: string
+  lockedUntil?: string | null
 }
 
 export default function ManageUsersPage() {
@@ -157,9 +159,79 @@ export default function ManageUsersPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
                               <DropdownMenuItem><Eye className="ml-2 h-4 w-4" /> عرض الملف</DropdownMenuItem>
-                              <DropdownMenuItem><ShieldCheck className="ml-2 h-4 w-4" /> تغيير الدور</DropdownMenuItem>
-                              <DropdownMenuItem><Ban className="ml-2 h-4 w-4" /> حظر</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive"><Trash2 className="ml-2 h-4 w-4" /> حذف</DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  const newRole = window
+                                    .prompt("أدخل الدور الجديد: candidate / hr / admin", user.role)
+                                    ?.trim()
+                                  if (!newRole) return
+                                  const allowedRoles = ["candidate", "hr", "admin"]
+                                  if (!allowedRoles.includes(newRole)) {
+                                    toast.error("دور غير صالح. استخدم candidate أو hr أو admin.")
+                                    return
+                                  }
+                                  try {
+                                    const updated = await apiJson<AdminUser>(
+                                      `/v1/admin/users/${user.id}/role`,
+                                      {
+                                        method: "PATCH",
+                                        body: JSON.stringify({ role: newRole }),
+                                      },
+                                    )
+                                    setAllUsers((prev) =>
+                                      prev.map((u) => (u.id === user.id ? { ...u, role: updated.role } : u)),
+                                    )
+                                    toast.success("تم تغيير الدور")
+                                  } catch (err) {
+                                    const message =
+                                      err instanceof Error ? err.message : "حدث خطأ أثناء تغيير الدور"
+                                    toast.error(message)
+                                  }
+                                }}
+                              >
+                                <ShieldCheck className="ml-2 h-4 w-4" /> تغيير الدور
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    const updated = await apiJson<AdminUser>(
+                                      `/v1/admin/users/${user.id}/ban`,
+                                      { method: "PATCH" },
+                                    )
+                                    setAllUsers((prev) =>
+                                      prev.map((u) => (u.id === user.id ? { ...u, lockedUntil: updated.lockedUntil } : u)),
+                                    )
+                                    toast.success("تم تحديث حالة المستخدم")
+                                  } catch (err) {
+                                    const message =
+                                      err instanceof Error ? err.message : "حدث خطأ أثناء تحديث حالة الحظر"
+                                    toast.error(message)
+                                  }
+                                }}
+                              >
+                                <Ban className="ml-2 h-4 w-4" />{" "}
+                                {user.lockedUntil ? "رفع الحظر" : "حظر"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={async () => {
+                                  const confirmed = window.confirm("هل أنت متأكد من حذف هذا المستخدم؟")
+                                  if (!confirmed) return
+                                  try {
+                                    await apiJson(`/v1/admin/users/${user.id}`, {
+                                      method: "DELETE",
+                                    })
+                                    setAllUsers((prev) => prev.filter((u) => u.id !== user.id))
+                                    toast.success("تم حذف المستخدم")
+                                  } catch (err) {
+                                    const message =
+                                      err instanceof Error ? err.message : "حدث خطأ أثناء حذف المستخدم"
+                                    toast.error(message)
+                                  }
+                                }}
+                              >
+                                <Trash2 className="ml-2 h-4 w-4" /> حذف
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

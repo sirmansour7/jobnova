@@ -7,7 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { MapPin, Clock, Users, Banknote, Calendar, Building2, CheckCircle2, Loader2, Copy, Bookmark, BookmarkCheck } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { MapPin, Clock, Users, Banknote, Calendar, Building2, CheckCircle2, Loader2, Copy, Bookmark, BookmarkCheck, FileText } from "lucide-react"
 import Link from "next/link"
 import { api, apiJson } from "@/src/lib/api"
 import type { JobListItem } from "@/src/services/jobs.service"
@@ -148,6 +163,10 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const [error, setError] = useState<string | null>(null)
   const [applyLoading, setApplyLoading] = useState(false)
   const [applyMessage, setApplyMessage] = useState<string | null>(null)
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false)
+  const [cvs, setCvs] = useState<{ id: string; title: string }[]>([])
+  const [cvSelectValue, setCvSelectValue] = useState<string>("none")
+  const [cvListLoading, setCvListLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
   const [similarJobs, setSimilarJobs] = useState<JobListItem[]>([])
@@ -223,21 +242,54 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     setTimeout(() => setCopied(false), 2000)
   }, [])
 
-  async function handleApply() {
+  // When apply dialog opens, fetch candidate CVs (GET /v1/cv/me)
+  useEffect(() => {
+    if (!applyDialogOpen || !isCandidate) return
+    let cancelled = false
+    setCvListLoading(true)
+    setCvs([])
+    apiJson<{ id: string; userId?: string; data?: { title?: string } } | null>("/v1/cv/me")
+      .then((raw) => {
+        if (cancelled) return
+        if (raw && typeof raw === "object" && "id" in raw) {
+          const title =
+            raw.data && typeof raw.data === "object" && typeof (raw.data as { title?: string }).title === "string"
+              ? (raw.data as { title: string }).title
+              : "سيرتي الذاتية"
+          setCvs([{ id: raw.id, title }])
+        } else {
+          setCvs([])
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCvs([])
+      })
+      .finally(() => {
+        if (!cancelled) setCvListLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [applyDialogOpen, isCandidate])
+
+  const handleApplySubmit = useCallback(async () => {
     setApplyLoading(true)
     setApplyMessage(null)
     try {
+      const cvId = cvSelectValue === "none" ? undefined : cvSelectValue
       const res = await api("/v1/applications", {
         method: "POST",
-        body: JSON.stringify({ jobId: id }),
+        body: JSON.stringify({ jobId: id, ...(cvId ? { cvId } : {}) }),
       })
       const body = await res.json().catch(() => ({}))
       if (res.status === 201) {
         setApplied(true)
         setApplyMessage("تم التقديم بنجاح ✓")
+        setApplyDialogOpen(false)
       } else if (res.status === 409) {
         setApplied(true)
         setApplyMessage("لقد تقدمت لهذه الوظيفة من قبل")
+        setApplyDialogOpen(false)
       } else if (res.status === 401) {
         setApplyMessage("يجب تسجيل الدخول أولاً")
       } else {
@@ -248,7 +300,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     } finally {
       setApplyLoading(false)
     }
-  }
+  }, [id, cvSelectValue])
 
   if (loading) {
     return (
@@ -368,14 +420,14 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                         تم التقديم
                       </Button>
                     ) : (
-                      <Button onClick={handleApply} disabled={applyLoading} className="gap-2">
+                      <Button onClick={() => setApplyDialogOpen(true)} disabled={applyLoading} className="gap-2">
                         {applyLoading ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
                             جاري التقديم...
                           </>
                         ) : (
-                          "تقدم لهذه الوظيفة"
+                          "تقدم الآن"
                         )}
                       </Button>
                     )}
@@ -413,6 +465,70 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               </div>
             </CardContent>
           </Card>
+
+          {/* Apply dialog: CV selection then submit */}
+          <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
+            <DialogContent className="sm:max-w-md" showCloseButton={!applyLoading}>
+              <DialogHeader>
+                <DialogTitle>التقديم على الوظيفة</DialogTitle>
+                <DialogDescription>
+                  اختر السيرة الذاتية المراد إرفاقها بطلبك (اختياري)، ثم اضغط تقديم.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                {cvListLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>جاري تحميل السير الذاتية...</span>
+                  </div>
+                ) : cvs.length === 0 ? (
+                  <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      لم تقم بإنشاء سيرة ذاتية بعد — يمكنك التقديم بدون سيرة أو إنشاء سيرة ذاتية أولاً.
+                    </p>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href="/candidate/cv-builder" className="gap-2">
+                        <FileText className="h-4 w-4" />
+                        إنشاء سيرة ذاتية
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">اختر سيرة ذاتية (اختياري)</label>
+                    <Select value={cvSelectValue} onValueChange={setCvSelectValue}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="اختر سيرة ذاتية" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">بدون سيرة ذاتية</SelectItem>
+                        {cvs.map((cv) => (
+                          <SelectItem key={cv.id} value={cv.id}>
+                            {cv.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setApplyDialogOpen(false)} disabled={applyLoading}>
+                  إلغاء
+                </Button>
+                <Button onClick={handleApplySubmit} disabled={applyLoading}>
+                  {applyLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      جاري التقديم...
+                    </>
+                  ) : (
+                    "تقدم الآن"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Main Content */}

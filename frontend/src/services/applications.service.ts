@@ -23,6 +23,12 @@ export interface JobApplication {
     id: string
     fullName: string
     email: string
+    candidateProfile?: { phone?: string | null; bio?: string | null } | null
+    cv?: {
+      id?: string
+      data?: Record<string, unknown>
+      updatedAt?: string
+    } | null
   }
 }
 
@@ -67,10 +73,12 @@ export async function getJobApplications(jobId: string): Promise<JobApplication[
   return result.items ?? []
 }
 
-export async function applyToJob(jobId: string): Promise<void> {
+export async function applyToJob(jobId: string, cvId?: string | null): Promise<void> {
+  const body: { jobId: string; cvId?: string } = { jobId }
+  if (cvId) body.cvId = cvId
   await apiJson("/v1/applications", {
     method: "POST",
-    body: JSON.stringify({ jobId }),
+    body: JSON.stringify(body),
   })
 }
 
@@ -83,4 +91,3 @@ export async function updateApplicationStatus(
     body: JSON.stringify({ status }),
   })
 }
-

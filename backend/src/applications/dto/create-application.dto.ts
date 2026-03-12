@@ -8,4 +8,8 @@ export class CreateApplicationDto {
   @IsString()
   @IsOptional()
   coverLetter?: string;
+
+  @IsString()
+  @IsOptional()
+  cvId?: string;
 }

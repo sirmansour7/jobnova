@@ -49,7 +49,7 @@ export default function RegisterPage() {
         toast.warning(data.warning.trim())
       }
 
-      router.push("/verify-email-sent")
+      router.push(`/verify-email-sent?email=${encodeURIComponent(email)}`)
     } catch {
       setError("خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.")
     } finally {

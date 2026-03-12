@@ -7,6 +7,8 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { OrgAuthService } from '../org/org-auth.service';
 import { InterviewSummaryService } from './interview-summary.service';
+import { CreateScheduleInterviewDto } from './dto/create-schedule-interview.dto';
+import { UpdateScheduleInterviewDto } from './dto/update-schedule-interview.dto';
 import {
   INTERVIEW_QUESTIONS,
   INTERVIEW_QUESTIONS_COUNT,
@@ -34,6 +36,17 @@ const SESSION_INCLUDE = {
   },
   candidate: {
     select: { id: true, fullName: true, email: true },
+  },
+};
+
+const SCHEDULED_INTERVIEW_INCLUDE = {
+  application: {
+    select: {
+      id: true,
+      status: true,
+      candidate: { select: { id: true, fullName: true, email: true } },
+      job: { select: { id: true, title: true } },
+    },
   },
 };
 
@@ -265,5 +278,87 @@ export class InterviewsService {
       messages: session.messages,
       summary: session.summary,
     };
+  }
+
+  // --- Scheduled Interview (Interview model) ---
+
+  async createInterview(
+    dto: CreateScheduleInterviewDto,
+    organizationId: string,
+  ) {
+    const application = await this.prisma.application.findUnique({
+      where: { id: dto.applicationId },
+      include: { job: { select: { organizationId: true } } },
+    });
+    if (!application) throw new NotFoundException('Application not found');
+    if (application.job.organizationId !== organizationId) {
+      throw new ForbiddenException('Application does not belong to your organization');
+    }
+    const interview = await this.prisma.interview.create({
+      data: {
+        applicationId: dto.applicationId,
+        scheduledAt: new Date(dto.scheduledAt),
+        durationMins: dto.durationMins ?? 60,
+        type: dto.type ?? 'online',
+        location: dto.location ?? null,
+        notes: dto.notes ?? null,
+      },
+      include: SCHEDULED_INTERVIEW_INCLUDE,
+    });
+    return interview;
+  }
+
+  async findInterviewsByOrg(organizationId: string) {
+    const list = await this.prisma.interview.findMany({
+      where: {
+        application: {
+          job: { organizationId },
+        },
+      },
+      include: SCHEDULED_INTERVIEW_INCLUDE,
+      orderBy: { scheduledAt: 'desc' },
+    });
+    return list;
+  }
+
+  async updateInterview(
+    id: string,
+    dto: UpdateScheduleInterviewDto,
+    organizationId: string,
+  ) {
+    const existing = await this.prisma.interview.findUnique({
+      where: { id },
+      include: { application: { include: { job: true } } },
+    });
+    if (!existing) throw new NotFoundException('Interview not found');
+    if (existing.application.job.organizationId !== organizationId) {
+      throw new ForbiddenException('Interview does not belong to your organization');
+    }
+    const interview = await this.prisma.interview.update({
+      where: { id },
+      data: {
+        ...(dto.applicationId != null && { applicationId: dto.applicationId }),
+        ...(dto.scheduledAt != null && { scheduledAt: new Date(dto.scheduledAt) }),
+        ...(dto.durationMins != null && { durationMins: dto.durationMins }),
+        ...(dto.type != null && { type: dto.type }),
+        ...(dto.location !== undefined && { location: dto.location ?? null }),
+        ...(dto.notes !== undefined && { notes: dto.notes ?? null }),
+        ...(dto.status != null && { status: dto.status }),
+      },
+      include: SCHEDULED_INTERVIEW_INCLUDE,
+    });
+    return interview;
+  }
+
+  async removeInterview(id: string, organizationId: string) {
+    const existing = await this.prisma.interview.findUnique({
+      where: { id },
+      include: { application: { include: { job: true } } },
+    });
+    if (!existing) throw new NotFoundException('Interview not found');
+    if (existing.application.job.organizationId !== organizationId) {
+      throw new ForbiddenException('Interview does not belong to your organization');
+    }
+    await this.prisma.interview.delete({ where: { id } });
   }
 }

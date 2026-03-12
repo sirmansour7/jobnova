@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
+import { Role, ApplicationStatus } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -57,10 +57,69 @@ export class AdminService {
     return { message: 'User deleted successfully' };
   }
 
-  async getJobs(page = 1, limit = 20) {
+  async toggleUserBan(id: string) {
+    const existing = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        lockedUntil: true,
+      },
+    });
+    if (!existing) throw new NotFoundException('User not found');
+
+    const now = new Date();
+    const isLocked =
+      existing.lockedUntil != null && existing.lockedUntil > now;
+
+    const hundredYearsMs = 100 * 365 * 24 * 60 * 60 * 1000;
+    const nextLockedUntil = isLocked
+      ? null
+      : new Date(Date.now() + hundredYearsMs);
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: { lockedUntil: nextLockedUntil },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        lockedUntil: true,
+      },
+    });
+
+    return updated;
+  }
+
+  async getJobs(
+    page = 1,
+    limit = 20,
+    search?: string,
+    category?: string,
+    status?: string,
+  ) {
     const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { partnerName: { contains: search, mode: 'insensitive' } },
+        { organization: { name: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+    if (category && category !== 'all') {
+      where.category = category;
+    }
+    if (status === 'active') where.isActive = true;
+    if (status === 'inactive') where.isActive = false;
+
     const [items, total] = await Promise.all([
       this.prisma.job.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -69,14 +128,16 @@ export class AdminService {
           title: true,
           partnerName: true,
           category: true,
+          jobType: true,
           governorate: true,
           isActive: true,
+          expiresAt: true,
           createdAt: true,
           organization: { select: { id: true, name: true } },
           _count: { select: { applications: true } },
         },
       }),
-      this.prisma.job.count(),
+      this.prisma.job.count({ where }),
     ]);
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }
@@ -97,10 +158,19 @@ export class AdminService {
     return { message: 'Job deleted' };
   }
 
-  async getOrgs(page = 1, limit = 20) {
+  async getOrgs(page = 1, limit = 20, search?: string) {
     const skip = (page - 1) * limit;
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { industry: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search, mode: 'insensitive' } },
+      ];
+    }
     const [items, total] = await Promise.all([
       this.prisma.organization.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -108,13 +178,36 @@ export class AdminService {
           id: true,
           name: true,
           slug: true,
+          industry: true,
+          location: true,
+          size: true,
           createdAt: true,
           _count: { select: { jobs: true, memberships: true } },
         },
       }),
-      this.prisma.organization.count(),
+      this.prisma.organization.count({ where }),
     ]);
     return { items, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  async getOneOrg(id: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        industry: true,
+        location: true,
+        size: true,
+        website: true,
+        createdAt: true,
+        _count: { select: { jobs: true, memberships: true } },
+      },
+    });
+    if (!org) throw new NotFoundException('Organization not found');
+    return org;
   }
 
   async deleteOrg(id: string) {
@@ -133,5 +226,116 @@ export class AdminService {
         this.prisma.organization.count(),
       ]);
     return { totalUsers, totalJobs, totalApplications, totalOrgs };
+  }
+
+  async getAnalytics() {
+    const [totalOrgs, totalJobs, totalApplications, totalCandidates] =
+      await Promise.all([
+        this.prisma.organization.count(),
+        this.prisma.job.count(),
+        this.prisma.application.count(),
+        this.prisma.user.count({ where: { role: Role.candidate } }),
+      ]);
+
+    const applicationsByStatusRaw = await this.prisma.application.groupBy({
+      by: ['status'],
+      _count: { _all: true },
+    });
+
+    const applicationsByStatus = applicationsByStatusRaw.map((row) => ({
+      status: row.status,
+      count: row._count._all,
+    }));
+
+    const jobsByCategoryRaw = await this.prisma.job.groupBy({
+      by: ['category'],
+      _count: { _all: true },
+    });
+
+    const jobsByCategory = jobsByCategoryRaw.map((row) => ({
+      category: row.category ?? 'غير مصنفة',
+      count: row._count._all,
+    }));
+
+    // Top organizations by jobs and applications
+    const orgsWithJobs = await this.prisma.organization.findMany({
+      select: {
+        id: true,
+        name: true,
+        jobs: {
+          select: {
+            _count: { select: { applications: true } },
+          },
+        },
+        _count: {
+          select: {
+            jobs: true,
+          },
+        },
+      },
+    });
+
+    const topOrgs = orgsWithJobs
+      .map((org) => ({
+        name: org.name,
+        jobCount: org._count.jobs,
+        applicationCount: org.jobs.reduce(
+          (sum, j) => sum + j._count.applications,
+          0,
+        ),
+      }))
+      .sort((a, b) => b.applicationCount - a.applicationCount)
+      .slice(0, 5);
+
+    // Applications over last 30 days grouped by day
+    const now = new Date();
+    const fromDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - 29,
+    );
+
+    const recentApps = await this.prisma.application.findMany({
+      where: {
+        createdAt: {
+          gte: fromDate,
+        },
+      },
+      select: {
+        createdAt: true,
+      },
+    });
+
+    const countsByDate = new Map<string, number>();
+    for (const app of recentApps) {
+      const d = new Date(app.createdAt);
+      const key = d.toISOString().slice(0, 10);
+      countsByDate.set(key, (countsByDate.get(key) ?? 0) + 1);
+    }
+
+    const applicationsOverTime: { date: string; count: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - i,
+      );
+      const key = d.toISOString().slice(0, 10);
+      applicationsOverTime.push({
+        date: key,
+        count: countsByDate.get(key) ?? 0,
+      });
+    }
+
+    return {
+      totalOrgs,
+      totalJobs,
+      totalCandidates,
+      totalApplications,
+      applicationsByStatus,
+      jobsByCategory,
+      topOrgs,
+      applicationsOverTime,
+    };
   }
 }

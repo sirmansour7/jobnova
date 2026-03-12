@@ -11,10 +11,12 @@ export class EmailService {
 
   constructor(private readonly config: ConfigService) {
     this.resend = new Resend(config.get<string>('RESEND_API_KEY'));
-    this.from =
-      config.get<string>('EMAIL_FROM') ?? 'JobNova <noreply@jobnova.xyz>';
+    const fromAddress = config.get<string>('EMAIL_FROM') ?? 'JobNova <noreply@jobnova.xyz>';
+    this.from = fromAddress;
     this.frontendUrl =
       config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
+    // eslint-disable-next-line no-console
+    console.log('Using from:', fromAddress);
   }
 
   async sendVerificationEmail(email: string, fullName: string, token: string): Promise<boolean> {
@@ -221,6 +223,61 @@ export class EmailService {
       this.logger.error(
         `Failed to send password reset email: to=${email} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
         JSON.stringify(details),
+      );
+      return false;
+    }
+  }
+
+  async sendApplicationStatusEmail(
+    to: string,
+    name: string,
+    jobTitle: string,
+    statusLabel: string,
+  ): Promise<boolean> {
+    this.logger.log(
+      `Sending application status email: to=${to} jobTitle=${jobTitle} status=${statusLabel}`,
+    );
+    const subject = `تحديث حالة طلبك - ${jobTitle}`;
+    const body = `مرحباً ${name}، تم تحديث حالة طلبك لوظيفة "${jobTitle}" إلى: ${statusLabel}`;
+    try {
+      const result = await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        html: `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>${subject}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#0B1220;font-family:Arial,system-ui,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0B1220;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#0F172A;border-radius:10px;border:1px solid #1E293B;">
+            <tr>
+              <td style="padding:24px;">
+                <h1 style="margin:0 0 16px 0;font-size:20px;color:#F8FAFC;">تحديث حالة طلبك</h1>
+                <p style="margin:0;font-size:14px;line-height:1.7;color:#E5E7EB;">${body}</p>
+                <p style="margin:16px 0 0 0;font-size:12px;color:#94A3B8;">JobNova · منصة التوظيف الذكية</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+        `,
+      });
+      const id = result?.data?.id;
+      this.logger.log(`Application status email sent: to=${to} resendId=${id ?? 'null'}`);
+      return true;
+    } catch (err) {
+      const e = err as { name?: string; message?: string };
+      this.logger.error(
+        `Failed to send application status email: to=${to} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
       );
       return false;
     }

@@ -65,10 +65,29 @@ export function useHrPipeline(jobId?: string) {
 
   const moveCandidate = useCallback(
     async (applicationId: string, newStatus: ApplicationStatus) => {
-      await updateApplicationStatus(applicationId, newStatus)
-      await loadApplications()
+      const prevStages = stages.map((s) => ({ ...s, candidates: [...s.candidates] }))
+      setStages((current) => {
+        const fromStage = current.find((s) => s.candidates.some((c) => c.id === applicationId))
+        const toStage = current.find((s) => s.id === newStatus)
+        if (!fromStage || !toStage || fromStage.id === toStage.id) return current
+        const app = fromStage.candidates.find((c) => c.id === applicationId)
+        if (!app) return current
+        return current.map((s) => {
+          if (s.id === fromStage.id)
+            return { ...s, candidates: s.candidates.filter((c) => c.id !== applicationId) }
+          if (s.id === toStage.id)
+            return { ...s, candidates: [...s.candidates, { ...app, status: newStatus }] }
+          return s
+        })
+      })
+      try {
+        await updateApplicationStatus(applicationId, newStatus)
+      } catch (err) {
+        setStages(prevStages)
+        setError(err instanceof Error ? err.message : "فشل تحديث الحالة")
+      }
     },
-    [loadApplications]
+    [stages]
   )
 
   return { jobs, stages, loading, error, moveCandidate }

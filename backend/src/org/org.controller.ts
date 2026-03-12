@@ -13,6 +13,9 @@ import { OrgService } from './org.service';
 import { CreateOrgDto } from './dto/create-org.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 import type { Request } from 'express';
 
 const VP = new ValidationPipe({
@@ -27,6 +30,8 @@ export class OrgController {
   constructor(private readonly orgService: OrgService) {}
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles(Role.hr)
   create(
     @Body(VP) body: CreateOrgDto,
     @Req() req: Request & { user: { sub: string } },
@@ -41,7 +46,7 @@ export class OrgController {
 
   @Get('my')
   myOrgs(@Req() req: Request & { user: { sub: string } }) {
-    return this.orgService.myOrgs(req.user.sub);
+    return this.orgService.getMyOrgs(req.user.sub);
   }
 
   @Get('dashboard-stats')

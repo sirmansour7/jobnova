@@ -33,34 +33,66 @@ interface RecentJob {
   organization?: { id: string; name: string }
 }
 
+interface SavedJobStub {
+  id: string
+  jobId: string
+  job: { id: string }
+}
+
+interface ApplicationsMyResponse {
+  items?: RecentApplication[]
+  total?: number
+  page?: number
+  totalPages?: number
+}
+
 export default function CandidateDashboard() {
   const { user } = useAuth()
   const [applications, setApplications] = useState<RecentApplication[]>([])
+  const [applicationsTotal, setApplicationsTotal] = useState(0)
   const [jobs, setJobs] = useState<RecentJob[]>([])
+  const [savedJobs, setSavedJobs] = useState<SavedJobStub[]>([])
+  const [interviewsCount, setInterviewsCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
-      apiJson<RecentApplication[] | { items: RecentApplication[] }>("/v1/applications/my?page=1&limit=4")
-        .then((r) => (Array.isArray(r) ? r : r.items ?? []).slice(0, 4))
-        .catch(() => [] as RecentApplication[]),
+      apiJson<RecentApplication[] | ApplicationsMyResponse>("/v1/applications/my?page=1&limit=4")
+        .then((r) => {
+          if (Array.isArray(r)) return { items: r.slice(0, 4), total: r.length }
+          const items = (r.items ?? []).slice(0, 4)
+          const total = typeof (r as ApplicationsMyResponse).total === "number" ? (r as ApplicationsMyResponse).total : items.length
+          return { items, total }
+        })
+        .catch(() => ({ items: [] as RecentApplication[], total: 0 })),
       apiJson<RecentJob[] | { items: RecentJob[] }>("/v1/jobs?limit=3")
         .then((r) => (Array.isArray(r) ? r : r.items ?? []).slice(0, 3))
         .catch(() => [] as RecentJob[]),
+      apiJson<SavedJobStub[] | { items?: SavedJobStub[] }>("/v1/saved-jobs")
+        .then((r) => (Array.isArray(r) ? r : r.items ?? []))
+        .catch(() => [] as SavedJobStub[]),
+      apiJson<unknown[]>("/v1/interviews")
+        .then((r) => (Array.isArray(r) ? r.length : 0))
+        .catch(() => 0),
     ])
-      .then(([apps, jobsList]) => {
+      .then(([appsResult, jobsList, saved, interviews]) => {
+        const apps = "items" in appsResult ? appsResult.items : []
+        const total = "total" in appsResult && typeof appsResult.total === "number" ? appsResult.total : apps.length
         setApplications(apps)
+        setApplicationsTotal(total)
         setJobs(jobsList)
+        setSavedJobs(saved)
+        setInterviewsCount(typeof interviews === "number" ? interviews : 0)
         setLoading(false)
       })
       .catch(() => setLoading(false))
   }, [])
 
   const statCards = [
-    { label: "الطلبات المرسلة", value: loading ? <Skeleton className="h-8 w-16" /> : applications.length, icon: <FileText className="h-5 w-5" />, color: "text-primary" },
-    { label: "المقابلات", value: loading ? <Skeleton className="h-8 w-16" /> : applications.filter((a) => a.status === "SHORTLISTED").length, icon: <MessageSquare className="h-5 w-5" />, color: "text-chart-3" },
-    { label: "الوظائف المحفوظة", value: loading ? <Skeleton className="h-8 w-16" /> : jobs.length, icon: <Briefcase className="h-5 w-5" />, color: "text-chart-2" },
-    { label: "مرات الاطلاع", value: loading ? <Skeleton className="h-8 w-16" /> : applications.length * 5, icon: <Eye className="h-5 w-5" />, color: "text-chart-4" },
+    { label: "الطلبات المرسلة", value: loading ? <Skeleton className="h-8 w-16" /> : applicationsTotal, icon: <FileText className="h-5 w-5" />, color: "text-primary" },
+    { label: "المقابلات", value: loading ? <Skeleton className="h-8 w-16" /> : interviewsCount, icon: <MessageSquare className="h-5 w-5" />, color: "text-chart-3" },
+    { label: "الوظائف المحفوظة", value: loading ? <Skeleton className="h-8 w-16" /> : savedJobs.length, icon: <Briefcase className="h-5 w-5" />, color: "text-chart-2" },
+    { label: "مرات الاطلاع", value: loading ? <Skeleton className="h-8 w-16" /> : 0, icon: <Eye className="h-5 w-5" />, color: "text-chart-4" },
   ]
 
   const allowedRoles = useMemo(() => ["candidate"] as const, [])

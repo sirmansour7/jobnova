@@ -12,22 +12,48 @@ import { InviteMemberDto } from './dto/invite-member.dto';
 export class OrgService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Create org — creator becomes OWNER
+  // Create org — creator becomes OWNER (HR only)
   async create(dto: CreateOrgDto, userId: string) {
-    const existing = await this.prisma.organization.findUnique({
-      where: { slug: dto.slug },
+    const existingMembership = await this.prisma.membership.findFirst({
+      where: { userId },
     });
-    if (existing) throw new ConflictException('Slug already in use');
+    if (existingMembership) {
+      throw new ConflictException('Already has an organization');
+    }
+
+    const baseSlug = this.slugify(dto.name);
+    let slug = baseSlug || 'org';
+    let suffix = 0;
+    while (await this.prisma.organization.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${++suffix}`;
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const org = await tx.organization.create({
-        data: { name: dto.name, slug: dto.slug },
+        data: {
+          name: dto.name,
+          slug,
+          description: dto.description ?? undefined,
+          industry: dto.industry ?? undefined,
+          website: dto.website ?? undefined,
+          location: dto.location ?? undefined,
+        },
       });
       await tx.membership.create({
         data: { userId, organizationId: org.id, roleInOrg: 'OWNER' },
       });
       return org;
     });
+  }
+
+  private slugify(value: string): string {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'org';
   }
 
   async getMyFirstOrg(userId: string) {
@@ -95,6 +121,17 @@ export class OrgService {
       totalApplications,
       recentApplications,
     };
+  }
+
+  async getMyOrgs(userId: string) {
+    const memberships = await this.prisma.membership.findMany({
+      where: { userId },
+      include: {
+        organization: true,
+      },
+      orderBy: { organization: { createdAt: 'asc' } },
+    });
+    return memberships.map((m) => m.organization);
   }
 
   // Get my organizations

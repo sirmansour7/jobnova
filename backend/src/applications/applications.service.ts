@@ -6,16 +6,26 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { ApplicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrgAuthService } from '../org/org-auth.service';
+import { EmailService } from '../email/email.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
+
+const STATUS_LABELS_AR: Record<ApplicationStatus, string> = {
+  APPLIED: 'قيد المراجعة',
+  SHORTLISTED: 'مقبول مبدئيًا',
+  REJECTED: 'مرفوض',
+  HIRED: 'مقبول 🎉',
+};
 
 @Injectable()
 export class ApplicationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly orgAuth: OrgAuthService,
+    private readonly emailService: EmailService,
   ) {}
 
   // Candidate: apply for a job
@@ -23,6 +33,16 @@ export class ApplicationsService {
     const job = await this.prisma.job.findUnique({ where: { id: dto.jobId } });
     if (!job || !job.isActive)
       throw new NotFoundException('Job not found or inactive');
+
+    if (job.expiresAt && job.expiresAt < new Date()) {
+      throw new BadRequestException('This job listing has expired');
+    }
+
+    if (dto.cvId) {
+      const cv = await this.prisma.cv.findUnique({ where: { id: dto.cvId } });
+      if (!cv || cv.userId !== candidateId)
+        throw new BadRequestException('Invalid CV');
+    }
 
     const existing = await this.prisma.application.findUnique({
       where: { jobId_candidateId: { jobId: dto.jobId, candidateId } },
@@ -34,6 +54,7 @@ export class ApplicationsService {
         jobId: dto.jobId,
         candidateId,
         coverLetter: dto.coverLetter,
+        cvId: dto.cvId ?? undefined,
       },
     });
   }
@@ -94,7 +115,7 @@ export class ApplicationsService {
     };
   }
 
-  // HR/OWNER: view applications for a job
+  // HR/OWNER: view applications for a job (includes candidate profile + CV data)
   async jobApplications(jobId: string, userId: string, page = 1, limit = 20) {
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });
     if (!job) throw new NotFoundException('Job not found');
@@ -105,7 +126,23 @@ export class ApplicationsService {
       this.prisma.application.findMany({
         where: { jobId },
         include: {
-          candidate: { select: { id: true, fullName: true, email: true } },
+          candidate: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              candidateProfile: {
+                select: { phone: true, bio: true },
+              },
+              cv: {
+                select: {
+                  id: true,
+                  data: true,
+                  updatedAt: true,
+                },
+              },
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -131,10 +168,36 @@ export class ApplicationsService {
 
     await this.orgAuth.assertOrgAccess(userId, application.job.organizationId);
 
-    return this.prisma.application.update({
+    const updated = await this.prisma.application.update({
       where: { id },
       data: { status: dto.status },
     });
+
+    try {
+      const withCandidate = await this.prisma.application.findUnique({
+        where: { id },
+        include: {
+          candidate: { select: { email: true, fullName: true } },
+          job: { select: { title: true } },
+        },
+      });
+      if (
+        withCandidate?.candidate?.email &&
+        withCandidate?.job?.title
+      ) {
+        const statusLabel = STATUS_LABELS_AR[dto.status] ?? dto.status;
+        await this.emailService.sendApplicationStatusEmail(
+          withCandidate.candidate.email,
+          withCandidate.candidate.fullName ?? 'مرشح',
+          withCandidate.job.title,
+          statusLabel,
+        );
+      }
+    } catch {
+      // Email failure must not fail the status update request
+    }
+
+    return updated;
   }
 
   async submitScreening(

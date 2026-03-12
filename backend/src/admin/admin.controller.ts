@@ -13,6 +13,17 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+
+function safePage(val: unknown): number {
+  const n = parseInt(String(val), 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+function safeLimit(val: unknown, max = 100): number {
+  const n = parseInt(String(val), 10);
+  return Number.isFinite(n) && n > 0 ? Math.min(n, max) : 20;
+}
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -25,17 +36,22 @@ export class AdminController {
     return this.adminService.getStats();
   }
 
+  @Get('analytics')
+  getAnalytics() {
+    return this.adminService.getAnalytics();
+  }
+
   @Get('users')
   getUsers(@Query('page') page?: string, @Query('limit') limit?: string) {
     return this.adminService.getUsers(
-      page ? parseInt(page, 10) : undefined,
-      limit ? parseInt(limit, 10) : undefined,
+      safePage(page),
+      safeLimit(limit),
     );
   }
 
   @Patch('users/:id/role')
-  updateUserRole(@Param('id') id: string, @Body('role') role: Role) {
-    return this.adminService.updateUserRole(id, role);
+  updateUserRole(@Param('id') id: string, @Body() dto: UpdateUserRoleDto) {
+    return this.adminService.updateUserRole(id, dto.role);
   }
 
   @Delete('users/:id')
@@ -43,11 +59,25 @@ export class AdminController {
     return this.adminService.deleteUser(id);
   }
 
+  @Patch('users/:id/ban')
+  toggleUserBan(@Param('id') id: string) {
+    return this.adminService.toggleUserBan(id);
+  }
+
   @Get('jobs')
-  getJobs(@Query('page') page?: string, @Query('limit') limit?: string) {
+  getJobs(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('status') status?: string,
+  ) {
     return this.adminService.getJobs(
-      page ? parseInt(page, 10) : undefined,
-      limit ? parseInt(limit, 10) : undefined,
+      safePage(page),
+      safeLimit(limit),
+      search,
+      category,
+      status,
     );
   }
 
@@ -62,11 +92,21 @@ export class AdminController {
   }
 
   @Get('orgs')
-  getOrgs(@Query('page') page?: string, @Query('limit') limit?: string) {
+  getOrgs(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
     return this.adminService.getOrgs(
-      page ? parseInt(page, 10) : undefined,
-      limit ? parseInt(limit, 10) : undefined,
+      safePage(page),
+      safeLimit(limit),
+      search,
     );
+  }
+
+  @Get('orgs/:id')
+  getOneOrg(@Param('id') id: string) {
+    return this.adminService.getOneOrg(id);
   }
 
   @Delete('orgs/:id')

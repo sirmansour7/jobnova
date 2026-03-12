@@ -1,15 +1,31 @@
-import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUrl,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateOrgDto {
   @IsString()
-  @IsNotEmpty()
+  @MinLength(2, { message: 'name must be at least 2 characters' })
+  @MaxLength(100)
   name: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  @MinLength(3)
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'slug must be lowercase letters, numbers, and hyphens only',
-  })
-  slug: string;
+  @MaxLength(500)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  industry?: string;
+
+  @IsOptional()
+  @IsUrl()
+  website?: string;
+
+  @IsOptional()
+  @IsString()
+  location?: string;
 }
