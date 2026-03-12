@@ -10,9 +10,7 @@ export class GovernoratesService {
   constructor(private prisma: PrismaService) {}
 
   async getAll(search?: string) {
-    const where = search
-      ? { name: { contains: search } }
-      : undefined;
+    const where = search ? { name: { contains: search } } : undefined;
 
     const items = await this.prisma.governorate.findMany({
       where,
@@ -87,7 +85,8 @@ export class GovernoratesService {
     const existing = await this.prisma.city.findUnique({
       where: { name_governorateId: { name, governorateId } },
     });
-    if (existing) throw new ConflictException('City already exists in this governorate');
+    if (existing)
+      throw new ConflictException('City already exists in this governorate');
 
     return this.prisma.city.create({ data: { name, governorateId } });
   }

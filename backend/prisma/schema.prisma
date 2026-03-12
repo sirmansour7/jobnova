@@ -121,6 +121,7 @@ model Governorate {
   updatedAt DateTime @updatedAt
 
   cities City[]
+  jobs   Job[]
 }
 
 model City {
@@ -134,6 +135,7 @@ model City {
 
   @@unique([name, governorateId])
   @@index([governorateId])
+  jobs Job[]
 }
 
 model Membership {
@@ -159,6 +161,10 @@ model Job {
   description    String?
   governorate    String?
   city           String?
+  governorateId  String?
+  cityId         String?
+  governorateRel Governorate? @relation(fields: [governorateId], references: [id])
+  cityRel        City?        @relation(fields: [cityId], references: [id])
   category       String?
   jobType        String?
   salaryMin      Int?

@@ -71,8 +71,7 @@ export class AdminService {
     if (!existing) throw new NotFoundException('User not found');
 
     const now = new Date();
-    const isLocked =
-      existing.lockedUntil != null && existing.lockedUntil > now;
+    const isLocked = existing.lockedUntil != null && existing.lockedUntil > now;
 
     const hundredYearsMs = 100 * 365 * 24 * 60 * 60 * 1000;
     const nextLockedUntil = isLocked
@@ -315,11 +314,7 @@ export class AdminService {
 
     const applicationsOverTime: { date: string; count: number }[] = [];
     for (let i = 29; i >= 0; i--) {
-      const d = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - i,
-      );
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const key = d.toISOString().slice(0, 10);
       applicationsOverTime.push({
         date: key,

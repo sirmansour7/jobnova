@@ -10,4 +10,3 @@ import { InterviewsModule } from '../interviews/interviews.module';
   providers: [PrismaService, RolesGuard],
 })
 export class HrModule {}
-

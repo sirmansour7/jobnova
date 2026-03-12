@@ -11,15 +11,20 @@ export class EmailService {
 
   constructor(private readonly config: ConfigService) {
     this.resend = new Resend(config.get<string>('RESEND_API_KEY'));
-    const fromAddress = config.get<string>('EMAIL_FROM') ?? 'JobNova <noreply@jobnova.xyz>';
+    const fromAddress =
+      config.get<string>('EMAIL_FROM') ?? 'JobNova <noreply@jobnova.xyz>';
     this.from = fromAddress;
     this.frontendUrl =
       config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
-    // eslint-disable-next-line no-console
+
     console.log('Using from:', fromAddress);
   }
 
-  async sendVerificationEmail(email: string, fullName: string, token: string): Promise<boolean> {
+  async sendVerificationEmail(
+    email: string,
+    fullName: string,
+    token: string,
+  ): Promise<boolean> {
     this.logger.log(
       `Sending verification email: to=${email} from=${this.from} type=verification`,
     );
@@ -105,7 +110,14 @@ export class EmailService {
       );
       return true;
     } catch (err) {
-      const e = err as { name?: string; message?: string; statusCode?: number; type?: string; error?: unknown; response?: { data?: unknown } };
+      const e = err as {
+        name?: string;
+        message?: string;
+        statusCode?: number;
+        type?: string;
+        error?: unknown;
+        response?: { data?: unknown };
+      };
       const details: Record<string, unknown> = {
         name: e?.name,
         message: e?.message,
@@ -122,7 +134,11 @@ export class EmailService {
     }
   }
 
-  async sendPasswordResetEmail(email: string, fullName: string, token: string): Promise<boolean> {
+  async sendPasswordResetEmail(
+    email: string,
+    fullName: string,
+    token: string,
+  ): Promise<boolean> {
     this.logger.log(
       `Sending password reset email: to=${email} from=${this.from} type=reset`,
     );
@@ -211,7 +227,14 @@ export class EmailService {
       );
       return true;
     } catch (err) {
-      const e = err as { name?: string; message?: string; statusCode?: number; type?: string; error?: unknown; response?: { data?: unknown } };
+      const e = err as {
+        name?: string;
+        message?: string;
+        statusCode?: number;
+        type?: string;
+        error?: unknown;
+        response?: { data?: unknown };
+      };
       const details: Record<string, unknown> = {
         name: e?.name,
         message: e?.message,
@@ -272,7 +295,9 @@ export class EmailService {
         `,
       });
       const id = result?.data?.id;
-      this.logger.log(`Application status email sent: to=${to} resendId=${id ?? 'null'}`);
+      this.logger.log(
+        `Application status email sent: to=${to} resendId=${id ?? 'null'}`,
+      );
       return true;
     } catch (err) {
       const e = err as { name?: string; message?: string };

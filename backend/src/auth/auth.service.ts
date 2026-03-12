@@ -94,7 +94,12 @@ export class AuthService {
       email: user.email,
       role: user.role,
       emailVerified: user.emailVerified,
-      ...(emailSent ? {} : { warning: 'Verification email could not be sent. Please contact support.' }),
+      ...(emailSent
+        ? {}
+        : {
+            warning:
+              'Verification email could not be sent. Please contact support.',
+          }),
     };
   }
 
@@ -321,7 +326,9 @@ export class AuthService {
     }
 
     const resetToken = randomBytes(32).toString('hex');
-    const resetTokenHash = createHash('sha256').update(resetToken).digest('hex');
+    const resetTokenHash = createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
     const expiry = new Date(
       Date.now() + PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000,
     );
@@ -417,15 +424,13 @@ export class AuthService {
       updateData.fullName = dto.fullName;
     }
 
-    let user:
-      | {
-          id: string;
-          fullName: string;
-          email: string;
-          role: Role;
-          emailVerified: boolean;
-        }
-      | null;
+    let user: {
+      id: string;
+      fullName: string;
+      email: string;
+      role: Role;
+      emailVerified: boolean;
+    } | null;
 
     if (Object.keys(updateData).length === 0) {
       user = await this.prisma.user.findUnique({

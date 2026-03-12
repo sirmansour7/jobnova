@@ -7,4 +7,3 @@ export class UpdateProfileDto {
   @MaxLength(100)
   fullName?: string;
 }
-

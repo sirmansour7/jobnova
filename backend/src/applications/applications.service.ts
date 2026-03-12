@@ -181,10 +181,7 @@ export class ApplicationsService {
           job: { select: { title: true } },
         },
       });
-      if (
-        withCandidate?.candidate?.email &&
-        withCandidate?.job?.title
-      ) {
+      if (withCandidate?.candidate?.email && withCandidate?.job?.title) {
         const statusLabel = STATUS_LABELS_AR[dto.status] ?? dto.status;
         await this.emailService.sendApplicationStatusEmail(
           withCandidate.candidate.email,

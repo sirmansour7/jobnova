@@ -243,7 +243,10 @@ describe('AuthService', () => {
       });
       mockPrisma.user.update.mockResolvedValue({});
 
-      await service.resetPassword({ token: rawToken, newPassword: 'newpassword123' });
+      await service.resetPassword({
+        token: rawToken,
+        newPassword: 'newpassword123',
+      });
 
       const updateCall = mockPrisma.user.update.mock.calls[0][0];
       expect(updateCall.where).toEqual({ id: 'u1' });
@@ -252,12 +255,17 @@ describe('AuthService', () => {
       expect(updateCall.data.refreshTokenHash).toBeNull();
 
       expect(typeof updateCall.data.passwordHash).toBe('string');
-      await expect(bcrypt.compare('newpassword123', updateCall.data.passwordHash)).resolves.toBe(true);
+      await expect(
+        bcrypt.compare('newpassword123', updateCall.data.passwordHash),
+      ).resolves.toBe(true);
 
       // token reuse should fail
       mockPrisma.user.findUnique.mockResolvedValue(null);
       await expect(
-        service.resetPassword({ token: rawToken, newPassword: 'newpassword123' }),
+        service.resetPassword({
+          token: rawToken,
+          newPassword: 'newpassword123',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -274,7 +282,10 @@ describe('AuthService', () => {
         passwordResetExpiry: new Date(Date.now() - 60_000),
       });
       await expect(
-        service.resetPassword({ token: 'expired', newPassword: 'newpassword123' }),
+        service.resetPassword({
+          token: 'expired',
+          newPassword: 'newpassword123',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
   });

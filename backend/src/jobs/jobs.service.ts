@@ -43,24 +43,23 @@ export class JobsService {
       orgId = membership.organizationId;
     }
 
-    const searchOr =
-      filters?.search
-        ? [
-            { title: { contains: filters.search, mode: 'insensitive' as const } },
-            {
-              partnerName: {
-                contains: filters.search,
-                mode: 'insensitive' as const,
-              },
+    const searchOr = filters?.search
+      ? [
+          { title: { contains: filters.search, mode: 'insensitive' as const } },
+          {
+            partnerName: {
+              contains: filters.search,
+              mode: 'insensitive' as const,
             },
-            {
-              description: {
-                contains: filters.search,
-                mode: 'insensitive' as const,
-              },
+          },
+          {
+            description: {
+              contains: filters.search,
+              mode: 'insensitive' as const,
             },
-          ]
-        : null;
+          },
+        ]
+      : null;
     const expiryOr =
       filters?.isActive !== false
         ? [{ expiresAt: null }, { expiresAt: { gt: new Date() } }]

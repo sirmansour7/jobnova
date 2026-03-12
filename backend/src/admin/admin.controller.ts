@@ -43,10 +43,7 @@ export class AdminController {
 
   @Get('users')
   getUsers(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.adminService.getUsers(
-      safePage(page),
-      safeLimit(limit),
-    );
+    return this.adminService.getUsers(safePage(page), safeLimit(limit));
   }
 
   @Patch('users/:id/role')
@@ -97,11 +94,7 @@ export class AdminController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
   ) {
-    return this.adminService.getOrgs(
-      safePage(page),
-      safeLimit(limit),
-      search,
-    );
+    return this.adminService.getOrgs(safePage(page), safeLimit(limit), search);
   }
 
   @Get('orgs/:id')

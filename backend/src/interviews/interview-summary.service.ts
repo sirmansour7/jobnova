@@ -24,9 +24,15 @@ export class InterviewSummaryService {
       .filter(Boolean);
 
     const allText = candidateAnswers.join(' ');
-    const yearsExperience = this.extractYearsExperience(allText, candidateAnswers);
+    const yearsExperience = this.extractYearsExperience(
+      allText,
+      candidateAnswers,
+    );
     const availability = this.extractAvailability(allText, candidateAnswers);
-    const salaryExpectation = this.extractSalaryExpectation(allText, candidateAnswers);
+    const salaryExpectation = this.extractSalaryExpectation(
+      allText,
+      candidateAnswers,
+    );
     const skillsExtracted = this.extractSkills(allText, candidateAnswers);
     const communicationScore = this.scoreCommunication(candidateAnswers);
     const jobFit = this.computeJobFit(
@@ -63,7 +69,9 @@ export class InterviewSummaryService {
         yearsExperience: yearsExperience ?? null,
         availability: availability ?? null,
         salaryExpectation: salaryExpectation ?? null,
-        skillsExtracted: skillsExtracted.length ? skillsExtracted : Prisma.JsonNull,
+        skillsExtracted: skillsExtracted.length
+          ? skillsExtracted
+          : Prisma.JsonNull,
         communicationScore,
         jobFit,
         recommendation,
@@ -72,29 +80,44 @@ export class InterviewSummaryService {
     });
   }
 
-  private extractYearsExperience(allText: string, answers: string[]): string | null {
+  private extractYearsExperience(
+    allText: string,
+    answers: string[],
+  ): string | null {
     const lower = allText.toLowerCase();
-    const yearsMatch = allText.match(/(\d+)\s*سنة|(\d+)\s*سنين|(\d+)\s*year|خبرة\s*(\d+)|(\d+)\s*-\s*(\d+)/i);
+    const yearsMatch = allText.match(
+      /(\d+)\s*سنة|(\d+)\s*سنين|(\d+)\s*year|خبرة\s*(\d+)|(\d+)\s*-\s*(\d+)/i,
+    );
     if (yearsMatch) {
       const n = yearsMatch.slice(1).find(Boolean);
       return n ? `${n} سنوات` : null;
     }
     if (/\d+/.test(lower) && (lower.includes('سنة') || lower.includes('خبرة')))
-      return allText.match(/\d+/)?.[0] ? `${allText.match(/\d+/)?.[0]} سنوات` : null;
-    return answers.length >= 2 ? (answers[1].slice(0, 80) || null) : null;
+      return allText.match(/\d+/)?.[0]
+        ? `${allText.match(/\d+/)?.[0]} سنوات`
+        : null;
+    return answers.length >= 2 ? answers[1].slice(0, 80) || null : null;
   }
 
-  private extractAvailability(allText: string, answers: string[]): string | null {
+  private extractAvailability(
+    allText: string,
+    answers: string[],
+  ): string | null {
     const lower = allText.toLowerCase();
     if (/فور[اى]|مباشر|دلوقتي|الآن|متاح\s*الآن|immediately|now/i.test(lower))
       return 'متاح فوراً';
     if (/شهر|بعد\s*شهر|شهرين|أسبوع|اسبوع/i.test(lower))
-      return allText.match(/(بعد\s*)?\d*\s*(شهر|أسبوع)[^\s.]*/i)?.[0] ?? 'خلال شهر';
+      return (
+        allText.match(/(بعد\s*)?\d*\s*(شهر|أسبوع)[^\s.]*/i)?.[0] ?? 'خلال شهر'
+      );
     if (/متاح|أي\s*وقت|اي\s*وقت/i.test(lower)) return 'متاح';
     return answers.length >= 5 ? answers[4].slice(0, 60) || null : null;
   }
 
-  private extractSalaryExpectation(allText: string, _answers: string[]): string | null {
+  private extractSalaryExpectation(
+    allText: string,
+    _answers: string[],
+  ): string | null {
     const numbers = allText.match(/\d{4,}/g);
     if (numbers && numbers.length > 0) {
       const num = numbers.map((n) => parseInt(n, 10)).filter((n) => n > 1000);
@@ -135,11 +158,17 @@ export class InterviewSummaryService {
     ];
     for (const w of words) {
       const lower = w.toLowerCase();
-      if (known.some((k) => lower.includes(k) || k.includes(lower)) && !skills.includes(w))
+      if (
+        known.some((k) => lower.includes(k) || k.includes(lower)) &&
+        !skills.includes(w)
+      )
         skills.push(w);
     }
     if (skills.length === 0 && thirdAnswer) {
-      const parts = thirdAnswer.split(/[,،]/).map((p) => p.trim()).filter((p) => p.length > 2 && p.length < 30);
+      const parts = thirdAnswer
+        .split(/[,،]/)
+        .map((p) => p.trim())
+        .filter((p) => p.length > 2 && p.length < 30);
       skills.push(...parts.slice(0, 5));
     }
     return [...new Set(skills)].slice(0, 10);
@@ -165,16 +194,21 @@ export class InterviewSummaryService {
     skills: string[],
     communicationScore: number,
   ): 'high' | 'medium' | 'low' {
-    const hasExperience = Boolean(yearsExperience && yearsExperience.length > 0);
+    const hasExperience = Boolean(
+      yearsExperience && yearsExperience.length > 0,
+    );
     const hasSkills = skills.length >= 2;
     const completeAnswers = answers.length >= INTERVIEW_QUESTIONS_COUNT;
     const goodComm = communicationScore >= 6;
-    if (completeAnswers && hasExperience && hasSkills && goodComm) return 'high';
+    if (completeAnswers && hasExperience && hasSkills && goodComm)
+      return 'high';
     if ((hasExperience || hasSkills) && goodComm) return 'medium';
     return 'low';
   }
 
-  private recommendationFromJobFit(jobFit: string): 'shortlist' | 'review' | 'reject' {
+  private recommendationFromJobFit(
+    jobFit: string,
+  ): 'shortlist' | 'review' | 'reject' {
     if (jobFit === 'high') return 'shortlist';
     if (jobFit === 'medium') return 'review';
     return 'reject';
@@ -195,8 +229,12 @@ export class InterviewSummaryService {
     if (salaryExpectation) parts.push(`الراتب المتوقع: ${salaryExpectation}`);
     if (skills.length > 0) parts.push(`المهارات: ${skills.join('، ')}`);
     parts.push(`تقييم التواصل: ${communicationScore}/10`);
-    parts.push(`ملاءمة الوظيفة: ${jobFit === 'high' ? 'عالية' : jobFit === 'medium' ? 'متوسطة' : 'منخفضة'}`);
-    parts.push(`التوصية: ${recommendation === 'shortlist' ? 'قائمة مختصرة' : recommendation === 'review' ? 'مراجعة' : 'رفض'}`);
+    parts.push(
+      `ملاءمة الوظيفة: ${jobFit === 'high' ? 'عالية' : jobFit === 'medium' ? 'متوسطة' : 'منخفضة'}`,
+    );
+    parts.push(
+      `التوصية: ${recommendation === 'shortlist' ? 'قائمة مختصرة' : recommendation === 'review' ? 'مراجعة' : 'رفض'}`,
+    );
     return parts.join('. ');
   }
 }

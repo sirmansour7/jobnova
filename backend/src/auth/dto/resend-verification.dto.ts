@@ -5,4 +5,3 @@ export class ResendVerificationDto {
   @IsNotEmpty()
   email: string;
 }
-

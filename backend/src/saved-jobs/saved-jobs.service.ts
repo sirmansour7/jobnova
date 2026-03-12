@@ -5,7 +5,10 @@ import { PrismaService } from '../prisma/prisma.service';
 export class SavedJobsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async toggle(candidateId: string, jobId: string): Promise<{ saved: boolean }> {
+  async toggle(
+    candidateId: string,
+    jobId: string,
+  ): Promise<{ saved: boolean }> {
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });
     if (!job) throw new NotFoundException('Job not found');
 
@@ -50,10 +53,18 @@ export class SavedJobsService {
         },
       },
     });
-    return saved.map((s) => ({ id: s.id, jobId: s.jobId, createdAt: s.createdAt, job: s.job }));
+    return saved.map((s) => ({
+      id: s.id,
+      jobId: s.jobId,
+      createdAt: s.createdAt,
+      job: s.job,
+    }));
   }
 
-  async isSaved(candidateId: string, jobId: string): Promise<{ saved: boolean }> {
+  async isSaved(
+    candidateId: string,
+    jobId: string,
+  ): Promise<{ saved: boolean }> {
     const saved = await this.prisma.savedJob.findUnique({
       where: {
         candidateId_jobId: { candidateId, jobId },

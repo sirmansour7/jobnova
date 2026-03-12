@@ -120,7 +120,10 @@ describe('Interview Flow (e2e)', () => {
 
       const otherRes = await request(app.getHttpServer())
         .post('/v1/auth/login')
-        .send({ email: otherCandidate.email, password: otherCandidate.password })
+        .send({
+          email: otherCandidate.email,
+          password: otherCandidate.password,
+        })
         .expect(200);
       otherCandidateToken = otherRes.body.accessToken;
     });
@@ -293,7 +296,9 @@ describe('Interview Flow (e2e)', () => {
 
       expect(res.body).toHaveProperty('items');
       expect(Array.isArray(res.body.items)).toBe(true);
-      const found = res.body.items.find((s: { id: string }) => s.id === sessionId);
+      const found = res.body.items.find(
+        (s: { id: string }) => s.id === sessionId,
+      );
       expect(found).toBeDefined();
     });
 

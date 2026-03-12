@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InterviewsService } from './interviews.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrgAuthService } from '../org/org-auth.service';
@@ -60,7 +64,9 @@ describe('InterviewsService', () => {
         currentStep: 0,
         startedAt: new Date(),
         completedAt: null,
-        messages: [{ id: 'm1', role: 'bot', content: 'Q1', createdAt: new Date() }],
+        messages: [
+          { id: 'm1', role: 'bot', content: 'Q1', createdAt: new Date() },
+        ],
         summary: null,
       };
       mockPrisma.application.findUnique.mockResolvedValue({

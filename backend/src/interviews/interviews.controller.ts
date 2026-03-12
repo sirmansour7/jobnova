@@ -35,7 +35,10 @@ export class InterviewsController {
     @Body(VP) dto: StartInterviewDto,
     @Req() req: Request & { user: { sub: string } },
   ) {
-    return this.interviewsService.startInterview(dto.applicationId, req.user.sub);
+    return this.interviewsService.startInterview(
+      dto.applicationId,
+      req.user.sub,
+    );
   }
 
   @Post(':id/answer')
@@ -44,7 +47,11 @@ export class InterviewsController {
     @Body(VP) dto: AnswerInterviewDto,
     @Req() req: Request & { user: { sub: string } },
   ) {
-    return this.interviewsService.answerInterview(id, req.user.sub, dto.content);
+    return this.interviewsService.answerInterview(
+      id,
+      req.user.sub,
+      dto.content,
+    );
   }
 
   @Get(':id')
@@ -81,6 +88,10 @@ export class HrInterviewsController {
     @Body(VP) dto: UpdateInterviewDecisionDto,
     @Req() req: Request & { user: { sub: string } },
   ) {
-    return this.interviewsService.updateDecision(id, req.user.sub, dto.decision);
+    return this.interviewsService.updateDecision(
+      id,
+      req.user.sub,
+      dto.decision,
+    );
   }
 }

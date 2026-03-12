@@ -61,7 +61,9 @@ export class InterviewsService {
   async startInterview(applicationId: string, candidateId: string) {
     const application = await this.prisma.application.findUnique({
       where: { id: applicationId },
-      include: { job: { select: { id: true, title: true, organizationId: true } } },
+      include: {
+        job: { select: { id: true, title: true, organizationId: true } },
+      },
     });
     if (!application) throw new NotFoundException('Application not found');
     if (application.candidateId !== candidateId)
@@ -97,10 +99,14 @@ export class InterviewsService {
         include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
       });
     });
-    return this.toSessionResponse(session!);
+    return this.toSessionResponse(session);
   }
 
-  async answerInterview(sessionId: string, candidateId: string, content: string) {
+  async answerInterview(
+    sessionId: string,
+    candidateId: string,
+    content: string,
+  ) {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
       include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
@@ -113,7 +119,9 @@ export class InterviewsService {
 
     const contentTrimmed = (content ?? '').trim();
     if (!contentTrimmed)
-      throw new BadRequestException('Answer cannot be empty or whitespace-only');
+      throw new BadRequestException(
+        'Answer cannot be empty or whitespace-only',
+      );
 
     const nextStep = session.currentStep + 1;
     const isLastQuestion = nextStep >= INTERVIEW_QUESTIONS_COUNT;
@@ -126,7 +134,11 @@ export class InterviewsService {
       if (isLastQuestion) {
         await tx.interviewSession.update({
           where: { id: sessionId },
-          data: { status: 'completed', completedAt: new Date(), currentStep: nextStep },
+          data: {
+            status: 'completed',
+            completedAt: new Date(),
+            currentStep: nextStep,
+          },
         });
       } else {
         await tx.interviewSession.update({
@@ -229,7 +241,12 @@ export class InterviewsService {
     currentStep: number;
     startedAt: Date;
     completedAt: Date | null;
-    messages: Array<{ id: string; role: string; content: string; createdAt: Date }>;
+    messages: Array<{
+      id: string;
+      role: string;
+      content: string;
+      createdAt: Date;
+    }>;
     summary: unknown;
   }) {
     return {
@@ -292,7 +309,9 @@ export class InterviewsService {
     });
     if (!application) throw new NotFoundException('Application not found');
     if (application.job.organizationId !== organizationId) {
-      throw new ForbiddenException('Application does not belong to your organization');
+      throw new ForbiddenException(
+        'Application does not belong to your organization',
+      );
     }
     const interview = await this.prisma.interview.create({
       data: {
@@ -332,13 +351,17 @@ export class InterviewsService {
     });
     if (!existing) throw new NotFoundException('Interview not found');
     if (existing.application.job.organizationId !== organizationId) {
-      throw new ForbiddenException('Interview does not belong to your organization');
+      throw new ForbiddenException(
+        'Interview does not belong to your organization',
+      );
     }
     const interview = await this.prisma.interview.update({
       where: { id },
       data: {
         ...(dto.applicationId != null && { applicationId: dto.applicationId }),
-        ...(dto.scheduledAt != null && { scheduledAt: new Date(dto.scheduledAt) }),
+        ...(dto.scheduledAt != null && {
+          scheduledAt: new Date(dto.scheduledAt),
+        }),
         ...(dto.durationMins != null && { durationMins: dto.durationMins }),
         ...(dto.type != null && { type: dto.type }),
         ...(dto.location !== undefined && { location: dto.location ?? null }),
@@ -357,7 +380,9 @@ export class InterviewsService {
     });
     if (!existing) throw new NotFoundException('Interview not found');
     if (existing.application.job.organizationId !== organizationId) {
-      throw new ForbiddenException('Interview does not belong to your organization');
+      throw new ForbiddenException(
+        'Interview does not belong to your organization',
+      );
     }
     await this.prisma.interview.delete({ where: { id } });
   }

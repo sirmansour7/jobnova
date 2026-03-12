@@ -21,7 +21,11 @@ import { InterviewsService } from '../interviews/interviews.service';
 import { CreateScheduleInterviewDto } from '../interviews/dto/create-schedule-interview.dto';
 import { UpdateScheduleInterviewDto } from '../interviews/dto/update-schedule-interview.dto';
 
-const VP = new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true });
+const VP = new ValidationPipe({
+  whitelist: true,
+  forbidNonWhitelisted: true,
+  transform: true,
+});
 
 @Controller('hr')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -85,14 +89,13 @@ export class HrController {
       }),
     ]);
 
-    const applicationsByStatusRaw =
-      await this.prisma.application.groupBy({
-        by: ['status'],
-        where: {
-          job: { organizationId },
-        },
-        _count: { _all: true },
-      });
+    const applicationsByStatusRaw = await this.prisma.application.groupBy({
+      by: ['status'],
+      where: {
+        job: { organizationId },
+      },
+      _count: { _all: true },
+    });
 
     const applicationsByStatus = applicationsByStatusRaw.map((row) => ({
       status: row.status,
@@ -144,11 +147,7 @@ export class HrController {
 
     const applicationsOverTime: { date: string; count: number }[] = [];
     for (let i = 29; i >= 0; i--) {
-      const d = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - i,
-      );
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const key = d.toISOString().slice(0, 10);
       applicationsOverTime.push({
         date: key,
@@ -177,7 +176,9 @@ export class HrController {
   }
 
   @Get('interviews/schedule')
-  async listScheduledInterviews(@Req() req: Request & { user: { sub: string } }) {
+  async listScheduledInterviews(
+    @Req() req: Request & { user: { sub: string } },
+  ) {
     const organizationId = await this.getHrOrganizationId(req.user.sub);
     if (!organizationId) return [];
     return this.interviewsService.findInterviewsByOrg(organizationId);
@@ -204,4 +205,3 @@ export class HrController {
     await this.interviewsService.removeInterview(id, organizationId);
   }
 }
-

@@ -44,7 +44,10 @@ async function bootstrap() {
   // ✅ CORS — ALLOWED_ORIGINS (comma-separated) + production domains + Vercel previews
   const rawOrigins =
     configService.get<string>('ALLOWED_ORIGINS') ?? 'http://localhost:3001';
-  const allowedOrigins = rawOrigins.split(',').map((o) => o.trim()).filter(Boolean);
+  const allowedOrigins = rawOrigins
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
   const productionOrigins = ['https://jobnova.xyz', 'https://www.jobnova.xyz'];
 
   app.enableCors({
@@ -56,7 +59,10 @@ async function bootstrap() {
         callback(null, true);
         return;
       }
-      if (allowedOrigins.includes(origin) || productionOrigins.includes(origin)) {
+      if (
+        allowedOrigins.includes(origin) ||
+        productionOrigins.includes(origin)
+      ) {
         callback(null, true);
         return;
       }
@@ -70,7 +76,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 8080;
   await app.listen(Number(port), '0.0.0.0');
-  // eslint-disable-next-line no-console
+
   console.log(`JobNova backend running on port ${port}`);
 }
 void bootstrap().catch((err) => {
