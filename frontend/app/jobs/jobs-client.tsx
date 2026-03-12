@@ -14,8 +14,6 @@ import Link from "next/link"
 import { useAuth } from "@/src/context/auth-context"
 import { apiJson } from "@/src/lib/api"
 
-const governorates = ["القاهرة","الجيزة","الإسكندرية","الدقهلية","البحيرة","الغربية","الشرقية","المنوفية","القليوبية","كفر الشيخ","دمياط","بورسعيد","الإسماعيلية","السويس","شمال سيناء","جنوب سيناء","الفيوم","بني سويف","المنيا","أسيوط","سوهاج","قنا","الأقصر","أسوان","البحر الأحمر","الوادي الجديد","مطروح"]
-
 const jobTypes = ["دوام كامل", "دوام جزئي", "تدريب", "عمل حر", "عن بعد", "هايبرد"]
 const experienceLevels = ["حديث تخرج", "1-3 سنوات", "3-5 سنوات", "5+ سنوات"]
 const jobCategories = [
@@ -54,6 +52,7 @@ export default function JobsClient() {
   const { user } = useAuth()
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1)
 
+  const [governorates, setGovernorates] = useState<string[]>([])
   const [search, setSearch] = useState("")
   const [selectedType, setSelectedType] = useState<string>("all")
   const [selectedGov, setSelectedGov] = useState<string>("all")
@@ -61,6 +60,12 @@ export default function JobsClient() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
   const [togglingId, setTogglingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    apiJson<{ items: { name: string }[] }>("/v1/governorates?limit=100")
+      .then((res) => setGovernorates(res.items.map((g) => g.name)))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (user?.role !== "candidate") return

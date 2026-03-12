@@ -29,5 +29,5 @@ export class UpdateScheduleInterviewDto {
 
   @IsOptional()
   @IsString()
-  status?: string;
+  status?: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
 }

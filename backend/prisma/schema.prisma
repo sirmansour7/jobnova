@@ -39,6 +39,18 @@ enum AuditEvent {
   SUSPICIOUS_ACTIVITY
 }
 
+enum InterviewSessionStatus {
+  active
+  completed
+  reviewed
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id           String @id @default(cuid())
   fullName     String
@@ -306,7 +318,7 @@ model InterviewSession {
   applicationId String   @unique
   candidateId  String
   jobId        String
-  status       String   @default("active")
+  status       InterviewSessionStatus   @default(active)
   currentStep  Int      @default(0)
   startedAt    DateTime @default(now())
   completedAt  DateTime?
@@ -360,7 +372,7 @@ model Interview {
   type         String   @default("online")
   location     String?
   notes        String?
-  status       String   @default("SCHEDULED")
+  status       InterviewStatus   @default(SCHEDULED)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

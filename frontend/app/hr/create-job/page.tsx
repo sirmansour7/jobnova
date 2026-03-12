@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2 } from "lucide-react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { api } from "@/src/lib/api"
+import { api, apiJson } from "@/src/lib/api"
 
 const jobTypes = ["دوام كامل", "دوام جزئي", "تدريب", "عمل حر", "عن بعد", "هايبرد"]
 const experienceLevels = ["حديث تخرج", "1-3 سنوات", "3-5 سنوات", "5+ سنوات"]
@@ -28,20 +28,6 @@ const jobCategories = [
   "القانون",
   "الإدارة",
 ]
-const governorates = [
-  { id: "cairo",    name: "القاهرة" },
-  { id: "giza",     name: "الجيزة" },
-  { id: "alex",     name: "الإسكندرية" },
-  { id: "dakahlia", name: "الدقهلية" },
-  { id: "sharqia",  name: "الشرقية" },
-  { id: "qalyubia", name: "القليوبية" },
-  { id: "gharbia",  name: "الغربية" },
-  { id: "monufia",  name: "المنوفية" },
-  { id: "beheira",  name: "البحيرة" },
-  { id: "ismailia", name: "الإسماعيلية" },
-  { id: "suez",     name: "السويس" },
-  { id: "portsaid", name: "بورسعيد" },
-]
 
 export default function CreateJobPage() {
   const [skills, setSkills] = useState<string[]>([])
@@ -50,6 +36,7 @@ export default function CreateJobPage() {
   const [newReq, setNewReq] = useState("")
   const [title, setTitle] = useState("")
   const [category, setCategory] = useState("")
+  const [governorates, setGovernorates] = useState<{ id: string; name: string }[]>([])
   const [governorateValue, setGovernorateValue] = useState("")
   const [city] = useState("")
   const [description, setDescription] = useState("")
@@ -61,6 +48,12 @@ export default function CreateJobPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const router = useRouter()
+
+  useEffect(() => {
+    apiJson<{ items: { id: string; name: string }[] }>("/v1/governorates?limit=100")
+      .then((res) => setGovernorates(res.items))
+      .catch(() => {})
+  }, [])
 
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
