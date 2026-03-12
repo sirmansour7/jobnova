@@ -25,7 +25,8 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY prisma ./prisma
 
 EXPOSE 8080
-
-CMD ["node", "dist/src/main.js"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget -qO- http://localhost:8080/health || exit 1
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
 
 # cache bust
