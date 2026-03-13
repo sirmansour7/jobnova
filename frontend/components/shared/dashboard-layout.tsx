@@ -32,6 +32,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { NotificationBell } from "@/components/shared/notification-bell"
 
 interface NavItem {
   label: string
@@ -182,6 +183,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </h2>
           </div>
 
+          <div className="flex items-center gap-2">
+          <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-secondary">
@@ -208,6 +211,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </header>
 
         {/* Page content */}
