@@ -139,7 +139,6 @@ async function main() {
         title,
         partnerName: company,
         description: jobTemplate.description,
-        governorate: gov,
         city,
         category,
         jobType,

@@ -160,8 +160,6 @@ model Job {
   title          String
   partnerName    String
   description    String?
-  governorate    String?
-  city           String?
   governorateId  String?
   cityId         String?
   governorateRel Governorate? @relation(fields: [governorateId], references: [id])

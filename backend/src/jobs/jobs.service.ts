@@ -68,7 +68,7 @@ export class JobsService {
     const where: Record<string, unknown> = {
       isActive: filters?.isActive ?? true,
       ...(filters?.category && { category: filters.category }),
-      ...(filters?.governorate && { governorate: filters.governorate }),
+      ...(filters?.governorate && { governorateRel: { name: filters.governorate } }),
       ...(orgId != null && { organizationId: orgId }),
     };
     if (searchOr && expiryOr) {
@@ -87,8 +87,10 @@ export class JobsService {
           title: true,
           partnerName: true,
           description: true,
-          governorate: true,
-          city: true,
+          governorateId: true,
+          cityId: true,
+          governorateRel: { select: { name: true } },
+          cityRel: { select: { name: true } },
           category: true,
           jobType: true,
           salaryMin: true,
@@ -136,8 +138,9 @@ export class JobsService {
         title: dto.title,
         partnerName: dto.partnerName,
         description: dto.description,
-        governorate: dto.governorate,
-        city: dto.city,
+        governorateId: dto.governorate
+          ? (await this.prisma.governorate.findUnique({ where: { name: dto.governorate } }))?.id ?? undefined
+          : undefined,
         category: dto.category,
         jobType: dto.jobType,
         salaryMin: dto.salaryMin,

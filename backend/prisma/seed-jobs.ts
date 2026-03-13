@@ -68,7 +68,6 @@ async function main() {
         title: item.jobTitle ?? item.title ?? item.job_title ?? item.وظيفة ?? 'وظيفة',
         partnerName: item.companyName ?? item.partnerName ?? item.partner_name ?? item.شركة ?? org.name,
         description: item.description ?? item.وصف ?? null,
-        governorate: item.governorate ?? item.محافظة ?? null,
         city: item.city ?? item.مدينة ?? null,
         category: item.category ?? item.تخصص ?? item.القطاع ?? null,
         isActive: true,
