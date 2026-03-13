@@ -1,6 +1,6 @@
-"use client"
+﻿"use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { MailCheck, Loader2 } from "lucide-react"
@@ -8,10 +8,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button"
 import { api } from "@/src/lib/api"
 
-export default function VerifyEmailSentPage() {
+function VerifyEmailSentContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email")
-
   const [loading, setLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [success, setSuccess] = useState<string | null>(null)
@@ -37,15 +36,11 @@ export default function VerifyEmailSentPage() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const message =
-          (data as { message?: string | string[] }).message ??
-          "حدث خطأ أثناء إعادة إرسال البريد الإلكتروني"
+        const message = (data as { message?: string | string[] }).message ?? "حدث خطأ أثناء إعادة إرسال البريد الإلكتروني"
         setError(Array.isArray(message) ? message[0] : message)
         return
       }
-      const message =
-        (data as { message?: string }).message ?? "تم إرسال البريد الإلكتروني بنجاح ✓"
-      setSuccess(message)
+      setSuccess((data as { message?: string }).message ?? "تم إرسال البريد الإلكتروني بنجاح ✔")
       setCountdown(60)
     } catch {
       setError("خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.")
@@ -69,25 +64,16 @@ export default function VerifyEmailSentPage() {
                 أرسلنا رابط تأكيد إلى بريدك الإلكتروني. يرجى فتح الرسالة والضغط على رابط التفعيل.
               </p>
             </div>
-
             {email && (
               <div className="space-y-2">
-                <Button
-                  type="button"
-                  className="w-full"
-                  disabled={loading || countdown > 0}
-                  onClick={handleResend}
-                >
+                <Button type="button" className="w-full" disabled={loading || countdown > 0} onClick={handleResend}>
                   {loading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                  {countdown > 0
-                    ? `إعادة الإرسال بعد ${countdown}s`
-                    : "إعادة إرسال بريد التفعيل"}
+                  {countdown > 0 ? `إعادة الإرسال بعد ${countdown}s` : "إعادة إرسال بريد التفعيل"}
                 </Button>
                 {success && <p className="text-xs text-emerald-500">{success}</p>}
                 {error && <p className="text-xs text-destructive">{error}</p>}
               </div>
             )}
-
             <Button asChild variant="outline" className="w-full">
               <Link href="/login">العودة لتسجيل الدخول</Link>
             </Button>
@@ -98,3 +84,10 @@ export default function VerifyEmailSentPage() {
   )
 }
 
+export default function VerifyEmailSentPage() {
+  return (
+    <Suspense>
+      <VerifyEmailSentContent />
+    </Suspense>
+  )
+}
