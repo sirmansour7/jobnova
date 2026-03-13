@@ -11,13 +11,15 @@ export class EmailService {
 
   constructor(private readonly config: ConfigService) {
     this.resend = new Resend(config.get<string>('RESEND_API_KEY'));
+
     const fromAddress =
-      config.get<string>('EMAIL_FROM') ?? 'JobNova <noreply@jobnova.xyz>';
+      config.get<string>('EMAIL_FROM') ?? 'JobNova <onboarding@resend.dev>';
+
     this.from = fromAddress;
     this.frontendUrl =
       config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
 
-    console.log('Using from:', fromAddress);
+    this.logger.log(`Email sender configured: ${fromAddress}`);
   }
 
   async sendVerificationEmail(
@@ -28,7 +30,9 @@ export class EmailService {
     this.logger.log(
       `Sending verification email: to=${email} from=${this.from} type=verification`,
     );
+
     const verifyUrl = `${this.frontendUrl}/verify-email?token=${token}`;
+
     try {
       const result = await this.resend.emails.send({
         from: this.from,
@@ -104,10 +108,17 @@ export class EmailService {
 </html>
         `,
       });
+
       const id = result?.data?.id;
-      this.logger.log(
-        `Verification email sent: to=${email} resendId=${id ?? 'null'}`,
-      );
+
+      if (!id) {
+        this.logger.error(
+          `Verification email send returned no id: to=${email} response=${JSON.stringify(result)}`,
+        );
+        return false;
+      }
+
+      this.logger.log(`Verification email sent: to=${email} resendId=${id}`);
       return true;
     } catch (err) {
       const e = err as {
@@ -118,6 +129,7 @@ export class EmailService {
         error?: unknown;
         response?: { data?: unknown };
       };
+
       const details: Record<string, unknown> = {
         name: e?.name,
         message: e?.message,
@@ -125,11 +137,16 @@ export class EmailService {
         type: e?.type,
         resendError: e?.error,
       };
-      if (e?.response?.data != null) details.responseBody = e.response.data;
+
+      if (e?.response?.data != null) {
+        details.responseBody = e.response.data;
+      }
+
       this.logger.error(
         `Failed to send verification email: to=${email} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
         JSON.stringify(details),
       );
+
       return false;
     }
   }
@@ -142,7 +159,9 @@ export class EmailService {
     this.logger.log(
       `Sending password reset email: to=${email} from=${this.from} type=reset`,
     );
+
     const resetUrl = `${this.frontendUrl}/reset-password?token=${token}`;
+
     try {
       const result = await this.resend.emails.send({
         from: this.from,
@@ -221,10 +240,17 @@ export class EmailService {
 </html>
         `,
       });
+
       const id = result?.data?.id;
-      this.logger.log(
-        `Password reset email sent: to=${email} resendId=${id ?? 'null'}`,
-      );
+
+      if (!id) {
+        this.logger.error(
+          `Password reset email send returned no id: to=${email} response=${JSON.stringify(result)}`,
+        );
+        return false;
+      }
+
+      this.logger.log(`Password reset email sent: to=${email} resendId=${id}`);
       return true;
     } catch (err) {
       const e = err as {
@@ -235,6 +261,7 @@ export class EmailService {
         error?: unknown;
         response?: { data?: unknown };
       };
+
       const details: Record<string, unknown> = {
         name: e?.name,
         message: e?.message,
@@ -242,11 +269,16 @@ export class EmailService {
         type: e?.type,
         resendError: e?.error,
       };
-      if (e?.response?.data != null) details.responseBody = e.response.data;
+
+      if (e?.response?.data != null) {
+        details.responseBody = e.response.data;
+      }
+
       this.logger.error(
         `Failed to send password reset email: to=${email} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
         JSON.stringify(details),
       );
+
       return false;
     }
   }
@@ -258,10 +290,12 @@ export class EmailService {
     statusLabel: string,
   ): Promise<boolean> {
     this.logger.log(
-      `Sending application status email: to=${to} jobTitle=${jobTitle} status=${statusLabel}`,
+      `Sending application status email: to=${to} from=${this.from} jobTitle=${jobTitle} status=${statusLabel}`,
     );
+
     const subject = `تحديث حالة طلبك - ${jobTitle}`;
     const body = `مرحباً ${name}، تم تحديث حالة طلبك لوظيفة "${jobTitle}" إلى: ${statusLabel}`;
+
     try {
       const result = await this.resend.emails.send({
         from: this.from,
@@ -294,16 +328,47 @@ export class EmailService {
 </html>
         `,
       });
+
       const id = result?.data?.id;
+
+      if (!id) {
+        this.logger.error(
+          `Application status email send returned no id: to=${to} response=${JSON.stringify(result)}`,
+        );
+        return false;
+      }
+
       this.logger.log(
-        `Application status email sent: to=${to} resendId=${id ?? 'null'}`,
+        `Application status email sent: to=${to} resendId=${id}`,
       );
       return true;
     } catch (err) {
-      const e = err as { name?: string; message?: string };
+      const e = err as {
+        name?: string;
+        message?: string;
+        statusCode?: number;
+        type?: string;
+        error?: unknown;
+        response?: { data?: unknown };
+      };
+
+      const details: Record<string, unknown> = {
+        name: e?.name,
+        message: e?.message,
+        statusCode: e?.statusCode,
+        type: e?.type,
+        resendError: e?.error,
+      };
+
+      if (e?.response?.data != null) {
+        details.responseBody = e.response.data;
+      }
+
       this.logger.error(
         `Failed to send application status email: to=${to} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
+        JSON.stringify(details),
       );
+
       return false;
     }
   }
