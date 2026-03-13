@@ -18,7 +18,13 @@ export class NotificationsService {
       this.prisma.notification.count({ where: { userId } }),
       this.prisma.notification.count({ where: { userId, read: false } }),
     ]);
-    return { items, total, unreadCount, page, totalPages: Math.ceil(total / limit) };
+    return {
+      items,
+      total,
+      unreadCount,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async markRead(userId: string, id: string) {
@@ -43,7 +49,13 @@ export class NotificationsService {
     meta?: Record<string, unknown>,
   ) {
     return this.prisma.notification.create({
-      data: { userId, type, title, body, meta: (meta ?? Prisma.JsonNull) as Prisma.InputJsonValue },
+      data: {
+        userId,
+        type,
+        title,
+        body,
+        meta: (meta ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+      },
     });
   }
 }

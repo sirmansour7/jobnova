@@ -307,7 +307,10 @@ export class AdminService {
     for (let i = 29; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const key = d.toISOString().slice(0, 10);
-      applicationsOverTime.push({ date: key, count: countsByDate.get(key) ?? 0 });
+      applicationsOverTime.push({
+        date: key,
+        count: countsByDate.get(key) ?? 0,
+      });
     }
 
     return {

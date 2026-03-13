@@ -50,7 +50,7 @@ Respond ONLY with valid JSON, no markdown, no explanation.`;
       throw new Error(`Groq API error: ${response.status} ${err}`);
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       choices: { message: { content: string } }[];
     };
     const raw = data.choices?.[0]?.message?.content ?? '{}';
@@ -66,8 +66,12 @@ Respond ONLY with valid JSON, no markdown, no explanation.`;
       score: Number(parsed.score ?? 50),
       strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
       gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
-      keywordsMissing: Array.isArray(parsed.keywordsMissing) ? parsed.keywordsMissing : [],
-      suggestedImprovements: Array.isArray(parsed.suggestedImprovements) ? parsed.suggestedImprovements : [],
+      keywordsMissing: Array.isArray(parsed.keywordsMissing)
+        ? parsed.keywordsMissing
+        : [],
+      suggestedImprovements: Array.isArray(parsed.suggestedImprovements)
+        ? parsed.suggestedImprovements
+        : [],
       atsNotes: Array.isArray(parsed.atsNotes) ? parsed.atsNotes : [],
     };
   }
