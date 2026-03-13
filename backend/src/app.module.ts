@@ -19,6 +19,7 @@ import { InterviewsModule } from './interviews/interviews.module';
 import { HealthModule } from './health/health.module';
 import { SavedJobsModule } from './saved-jobs/saved-jobs.module';
 import { GovernoratesModule } from './governorates/governorates.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { GovernoratesModule } from './governorates/governorates.module';
     HealthModule,
     SavedJobsModule,
     GovernoratesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

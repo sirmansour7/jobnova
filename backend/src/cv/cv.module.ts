@@ -1,4 +1,5 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { CvController } from './cv.controller';
 import { CvService } from './cv.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,6 +7,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { RulesAnalysisProvider } from './analysis/rules-analysis.provider';
 import { OpenAiAnalysisProvider } from './analysis/openai-analysis.provider';
 @Module({
+  imports: [ConfigModule],
   controllers: [CvController],
   providers: [
     CvService,

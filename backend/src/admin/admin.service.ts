@@ -240,7 +240,6 @@ export class AdminService {
       by: ['status'],
       _count: { _all: true },
     });
-
     const applicationsByStatus = applicationsByStatusRaw.map((row) => ({
       status: row.status,
       count: row._count._all,
@@ -250,31 +249,26 @@ export class AdminService {
       by: ['category'],
       _count: { _all: true },
     });
-
     const jobsByCategory = jobsByCategoryRaw.map((row) => ({
       category: row.category ?? 'غير مصنفة',
       count: row._count._all,
     }));
 
-    // Top organizations by jobs and applications
-    const orgsWithJobs = await this.prisma.organization.findMany({
+    // Top 5 orgs by application count — pure DB aggregation
+    const topOrgsRaw = await this.prisma.organization.findMany({
       select: {
-        id: true,
         name: true,
+        _count: { select: { jobs: true } },
         jobs: {
           select: {
             _count: { select: { applications: true } },
           },
         },
-        _count: {
-          select: {
-            jobs: true,
-          },
-        },
       },
+      orderBy: { jobs: { _count: 'desc' } },
+      take: 20,
     });
-
-    const topOrgs = orgsWithJobs
+    const topOrgs = topOrgsRaw
       .map((org) => ({
         name: org.name,
         jobCount: org._count.jobs,
@@ -286,7 +280,7 @@ export class AdminService {
       .sort((a, b) => b.applicationCount - a.applicationCount)
       .slice(0, 5);
 
-    // Applications over last 30 days grouped by day
+    // Applications over last 30 days — grouped in DB
     const now = new Date();
     const fromDate = new Date(
       now.getFullYear(),
@@ -294,32 +288,25 @@ export class AdminService {
       now.getDate() - 29,
     );
 
-    const recentApps = await this.prisma.application.findMany({
-      where: {
-        createdAt: {
-          gte: fromDate,
-        },
-      },
-      select: {
-        createdAt: true,
-      },
-    });
+    const recentAppsGrouped = await this.prisma.$queryRaw<
+      { date: string; count: bigint }[]
+    >`
+      SELECT DATE("createdAt")::text AS date, COUNT(*)::bigint AS count
+      FROM "Application"
+      WHERE "createdAt" >= ${fromDate}
+      GROUP BY DATE("createdAt")
+      ORDER BY DATE("createdAt")
+    `;
 
-    const countsByDate = new Map<string, number>();
-    for (const app of recentApps) {
-      const d = new Date(app.createdAt);
-      const key = d.toISOString().slice(0, 10);
-      countsByDate.set(key, (countsByDate.get(key) ?? 0) + 1);
-    }
+    const countsByDate = new Map<string, number>(
+      recentAppsGrouped.map((r) => [r.date, Number(r.count)]),
+    );
 
     const applicationsOverTime: { date: string; count: number }[] = [];
     for (let i = 29; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const key = d.toISOString().slice(0, 10);
-      applicationsOverTime.push({
-        date: key,
-        count: countsByDate.get(key) ?? 0,
-      });
+      applicationsOverTime.push({ date: key, count: countsByDate.get(key) ?? 0 });
     }
 
     return {
