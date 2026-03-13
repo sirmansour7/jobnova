@@ -70,7 +70,7 @@ export function NotificationBell() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-80 p-0" dir="rtl">
+      <DropdownMenuContent align="start" className="w-80 p-0">
         <div className="border-b border-border px-4 py-3">
           <p className="text-sm font-semibold">الإشعارات</p>
         </div>
