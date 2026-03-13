@@ -14,34 +14,6 @@ async function main() {
   });
 
   console.log('Note: governorate/city string columns removed. Script complete.');
-  return;
-
-  console.log(`Found ${jobs.length} jobs to process`);
-
-  let linked = 0;
-  let skipped = 0;
-
-  for (const job of jobs) {
-    if (!job.governorate) { skipped++; continue; }
-
-    const gov = govMap.get(job.governorate);
-    if (!gov) { skipped++; continue; }
-
-    const city = job.city
-      ? gov.cities.find((c) => c.name === job.city) ?? null
-      : null;
-
-    await prisma.job.update({
-      where: { id: job.id },
-      data: {
-        governorateId: gov.id,
-        cityId: city?.id ?? null,
-      },
-    });
-    linked++;
-  }
-
-  console.log(`Done. Linked: ${linked}, Skipped: ${skipped}`);
 }
 
 main()

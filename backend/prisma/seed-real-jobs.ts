@@ -139,7 +139,6 @@ async function main() {
         title,
         partnerName: company,
         description: jobTemplate.description,
-        city,
         category,
         jobType,
         salaryMin: salary.min,
