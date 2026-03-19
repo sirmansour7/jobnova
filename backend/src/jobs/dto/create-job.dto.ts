@@ -1,11 +1,16 @@
 import {
+  ArrayMaxSize,
+  IsArray,
   IsDateString,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
 } from 'class-validator';
+import { JobCategory, JobType } from '@prisma/client';
 
 export class CreateJobDto {
   @IsString()
@@ -32,13 +37,27 @@ export class CreateJobDto {
   @IsOptional()
   city?: string;
 
-  @IsString()
+  @IsEnum(JobCategory)
   @IsOptional()
-  category?: string;
+  category?: JobCategory;
 
-  @IsString()
+  @IsEnum(JobType)
   @IsOptional()
-  jobType?: string;
+  jobType?: JobType;
+
+  /** Required skills for the role (e.g. ["React", "Node.js"]). Max 30 entries. */
+  @IsArray()
+  @IsOptional()
+  @ArrayMaxSize(30)
+  @IsString({ each: true })
+  @MaxLength(60, { each: true })
+  skills?: string[];
+
+  /** Minimum years of experience required for this role. */
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  minExperience?: number;
 
   @IsInt()
   @IsOptional()

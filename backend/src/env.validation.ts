@@ -15,4 +15,5 @@ export const envValidationSchema = Joi.object({
   THROTTLE_TTL: Joi.number().default(60000),
   THROTTLE_LIMIT: Joi.number().default(100),
   SENTRY_DSN: Joi.string().uri().optional(),
+  REDIS_URL: Joi.string().uri().optional(),
 });

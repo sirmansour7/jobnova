@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -36,7 +37,8 @@ enum AuditEvent {
   EMAIL_VERIFIED
   PASSWORD_RESET_REQUESTED
   PASSWORD_RESET_SUCCESS
-  SUSPICIOUS_ACTIVITY
+  TOKEN_REUSED
+  SUSPICIOUS_ACTIVITY // kept for backward compatibility with existing log rows
 }
 
 enum InterviewSessionStatus {
@@ -51,6 +53,43 @@ enum InterviewStatus {
   CANCELLED
 }
 
+enum HrDecision {
+  SHORTLISTED
+  REJECTED
+  NEEDS_REVIEW
+}
+
+enum InterviewType {
+  ONLINE
+  IN_PERSON
+  PHONE
+}
+
+enum JobCategory {
+  TECHNOLOGY
+  MARKETING
+  FINANCE
+  HEALTHCARE
+  EDUCATION
+  ENGINEERING
+  SALES
+  DESIGN
+  OPERATIONS
+  LEGAL
+  HR
+  CUSTOMER_SERVICE
+  OTHER
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+  REMOTE
+}
+
 model User {
   id           String @id @default(cuid())
   fullName     String
@@ -61,6 +100,7 @@ model User {
   emailVerified     Boolean @default(false)
   verificationToken String? @unique
   refreshTokenHash  String?
+  tokenVersion      Int     @default(0)
 
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
@@ -68,8 +108,9 @@ model User {
   passwordResetToken  String?   @unique
   passwordResetExpiry DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   memberships      Membership[]
   candidateProfile CandidateProfile?
@@ -81,6 +122,8 @@ model User {
   interviewSessions InterviewSession[]
   savedJobs         SavedJob[]
   notifications     Notification[]
+
+  @@index([deletedAt])
 }
 
 model AuditLog {
@@ -94,25 +137,28 @@ model AuditLog {
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@index([userId])
+  @@index([userId, createdAt])
   @@index([event])
   @@index([createdAt])
 }
 
 model Organization {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String    @unique
   description String?
   industry    String?
   website     String?
   location    String?
   size        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   memberships Membership[]
   jobs        Job[]
+
+  @@index([deletedAt])
 }
 
 model Governorate {
@@ -164,16 +210,19 @@ model Job {
   cityId         String?
   governorateRel Governorate? @relation(fields: [governorateId], references: [id])
   cityRel        City?        @relation(fields: [cityId], references: [id])
-  category       String?
-  jobType        String?
+  category       JobCategory?
+  jobType        JobType?
+  skills         String[]
+  minExperience  Int?
   salaryMin      Int?
   salaryMax      Int?
   currency       String?   @default("EGP")
   expiresAt      DateTime?
-  isActive       Boolean @default(true)
+  isActive       Boolean   @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   applications     Application[]
@@ -183,8 +232,10 @@ model Job {
   @@index([organizationId])
   @@index([isActive])
   @@index([category])
+  @@index([jobType])
   @@index([title])
   @@index([expiresAt])
+  @@index([deletedAt])
 }
 
 model SavedJob {
@@ -288,6 +339,8 @@ model Conversation {
 
   participants ConversationParticipant[]
   messages     Message[]
+
+  @@index([updatedAt])
 }
 
 model ConversationParticipant {
@@ -299,6 +352,7 @@ model ConversationParticipant {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId])
+  @@index([conversationId])
   @@index([userId])
 }
 
@@ -323,11 +377,11 @@ model InterviewSession {
   applicationId String   @unique
   candidateId  String
   jobId        String
-  status       InterviewSessionStatus   @default(active)
-  currentStep  Int      @default(0)
-  startedAt    DateTime @default(now())
+  status       InterviewSessionStatus @default(active)
+  currentStep  Int                    @default(0)
+  startedAt    DateTime               @default(now())
   completedAt  DateTime?
-  hrDecision   String?
+  hrDecision   HrDecision?
   hrDecisionAt DateTime?
 
   application Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
@@ -373,8 +427,8 @@ model Interview {
   id           String   @id @default(cuid())
   applicationId String
   scheduledAt DateTime
-  durationMins Int      @default(60)
-  type         String   @default("online")
+  durationMins Int           @default(60)
+  type         InterviewType @default(ONLINE)
   location     String?
   notes        String?
   status       InterviewStatus   @default(SCHEDULED)

@@ -8,7 +8,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TokenStoreModule } from '../token-store/token-store.module';
 import { AuditModule } from '../audit/audit.module';
-import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -24,7 +23,6 @@ import { EmailModule } from '../email/email.module';
     }),
     TokenStoreModule,
     AuditModule,
-    EmailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, PrismaService, JwtStrategy],

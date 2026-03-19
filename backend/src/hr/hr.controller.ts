@@ -18,6 +18,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { InterviewsService } from '../interviews/interviews.service';
+import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
 import { CreateScheduleInterviewDto } from '../interviews/dto/create-schedule-interview.dto';
 import { UpdateScheduleInterviewDto } from '../interviews/dto/update-schedule-interview.dto';
 
@@ -186,7 +187,7 @@ export class HrController {
 
   @Patch('interviews/schedule/:id')
   async updateScheduledInterview(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Body(VP) dto: UpdateScheduleInterviewDto,
     @Req() req: Request & { user: { sub: string } },
   ) {
@@ -197,7 +198,7 @@ export class HrController {
 
   @Delete('interviews/schedule/:id')
   async deleteScheduledInterview(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     const organizationId = await this.getHrOrganizationId(req.user.sub);

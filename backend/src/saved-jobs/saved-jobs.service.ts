@@ -10,7 +10,7 @@ export class SavedJobsService {
     jobId: string,
   ): Promise<{ saved: boolean }> {
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });
-    if (!job) throw new NotFoundException('Job not found');
+    if (!job || job.deletedAt) throw new NotFoundException('Job not found');
 
     const existing = await this.prisma.savedJob.findUnique({
       where: {

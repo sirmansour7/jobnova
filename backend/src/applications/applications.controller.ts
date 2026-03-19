@@ -15,6 +15,7 @@ import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { ScreeningAnswersDto } from './dto/screening-answers.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
 import type { Request } from 'express';
 
 const VP = new ValidationPipe({
@@ -51,7 +52,7 @@ export class ApplicationsController {
 
   @Get('job/:jobId')
   jobApplications(
-    @Param('jobId') jobId: string,
+    @Param('jobId', ParseCuidPipe) jobId: string,
     @Req() req: Request & { user: { sub: string } },
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -66,7 +67,7 @@ export class ApplicationsController {
 
   @Get(':id')
   findOne(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.applicationsService.findOne(id, req.user.sub);
@@ -74,7 +75,7 @@ export class ApplicationsController {
 
   @Patch(':id/screening')
   submitScreening(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Body(VP) dto: ScreeningAnswersDto,
     @Req() req: Request & { user: { sub: string } },
   ) {
@@ -87,7 +88,7 @@ export class ApplicationsController {
 
   @Patch(':id/status')
   updateStatus(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Body(VP) body: UpdateApplicationStatusDto,
     @Req() req: Request & { user: { sub: string } },
   ) {

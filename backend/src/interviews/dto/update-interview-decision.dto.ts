@@ -1,7 +1,7 @@
-import { IsString, IsIn } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { HrDecision } from '@prisma/client';
 
 export class UpdateInterviewDecisionDto {
-  @IsString()
-  @IsIn(['shortlist', 'reject', 'needs review'])
-  decision: string;
+  @IsEnum(HrDecision)
+  decision: HrDecision;
 }

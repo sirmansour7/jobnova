@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { InterviewsService } from './interviews.service';
+import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
 import { StartInterviewDto } from './dto/start-interview.dto';
 import { AnswerInterviewDto } from './dto/answer-interview.dto';
 import { UpdateInterviewDecisionDto } from './dto/update-interview-decision.dto';
@@ -43,7 +44,7 @@ export class InterviewsController {
 
   @Post(':id/answer')
   answer(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Body(VP) dto: AnswerInterviewDto,
     @Req() req: Request & { user: { sub: string } },
   ) {
@@ -56,7 +57,7 @@ export class InterviewsController {
 
   @Get(':id')
   getSession(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.interviewsService.getSession(id, req.user.sub);
@@ -76,7 +77,7 @@ export class HrInterviewsController {
 
   @Get(':id')
   getOne(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.interviewsService.getForHr(id, req.user.sub);
@@ -84,7 +85,7 @@ export class HrInterviewsController {
 
   @Patch(':id/decision')
   updateDecision(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Body(VP) dto: UpdateInterviewDecisionDto,
     @Req() req: Request & { user: { sub: string } },
   ) {

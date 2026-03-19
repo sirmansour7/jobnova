@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
 
 @Controller('governorates')
 export class GovernoratesController {
@@ -26,12 +27,12 @@ export class GovernoratesController {
   }
 
   @Get(':id')
-  getOne(@Param('id') id: string) {
+  getOne(@Param('id', ParseCuidPipe) id: string) {
     return this.govService.getOne(id);
   }
 
   @Get(':id/cities')
-  getCities(@Param('id') id: string, @Query('search') search?: string) {
+  getCities(@Param('id', ParseCuidPipe) id: string, @Query('search') search?: string) {
     return this.govService.getCities(id, search);
   }
 
@@ -46,14 +47,14 @@ export class GovernoratesController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  updateGovernorate(@Param('id') id: string, @Body('name') name: string) {
+  updateGovernorate(@Param('id', ParseCuidPipe) id: string, @Body('name') name: string) {
     return this.govService.updateGovernorate(id, name);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  deleteGovernorate(@Param('id') id: string) {
+  deleteGovernorate(@Param('id', ParseCuidPipe) id: string) {
     return this.govService.deleteGovernorate(id);
   }
 
@@ -67,14 +68,14 @@ export class GovernoratesController {
   @Patch('cities/:cityId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  updateCity(@Param('cityId') cityId: string, @Body('name') name: string) {
+  updateCity(@Param('cityId', ParseCuidPipe) cityId: string, @Body('name') name: string) {
     return this.govService.updateCity(cityId, name);
   }
 
   @Delete('cities/:cityId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  deleteCity(@Param('cityId') cityId: string) {
+  deleteCity(@Param('cityId', ParseCuidPipe) cityId: string) {
     return this.govService.deleteCity(cityId);
   }
 }

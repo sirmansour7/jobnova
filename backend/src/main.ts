@@ -11,9 +11,14 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
 
   // ✅ Read config via ConfigService — consistent, not process.env directly
   const configService = app.get(ConfigService);
+
+  // Trust the first proxy hop so req.ip reflects the real client IP.
+  // Required when deployed behind Nginx, Railway, Vercel, etc.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.use(compression());
 

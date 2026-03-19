@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Patch,
+  Post,
   Delete,
   Param,
   Body,
@@ -14,6 +15,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
 
 function safePage(val: unknown): number {
   const n = parseInt(String(val), 10);
@@ -47,13 +49,18 @@ export class AdminController {
   }
 
   @Patch('users/:id/role')
-  updateUserRole(@Param('id') id: string, @Body() dto: UpdateUserRoleDto) {
+  updateUserRole(@Param('id', ParseCuidPipe) id: string, @Body() dto: UpdateUserRoleDto) {
     return this.adminService.updateUserRole(id, dto.role);
   }
 
   @Delete('users/:id')
   deleteUser(@Param('id') id: string) {
     return this.adminService.deleteUser(id);
+  }
+
+  @Post('users/:id/restore')
+  restoreUser(@Param('id') id: string) {
+    return this.adminService.restoreUser(id);
   }
 
   @Patch('users/:id/ban')
@@ -88,6 +95,11 @@ export class AdminController {
     return this.adminService.deleteJob(id);
   }
 
+  @Post('jobs/:id/restore')
+  restoreJob(@Param('id') id: string) {
+    return this.adminService.restoreJob(id);
+  }
+
   @Get('orgs')
   getOrgs(
     @Query('page') page?: string,
@@ -105,5 +117,10 @@ export class AdminController {
   @Delete('orgs/:id')
   deleteOrg(@Param('id') id: string) {
     return this.adminService.deleteOrg(id);
+  }
+
+  @Post('orgs/:id/restore')
+  restoreOrg(@Param('id') id: string) {
+    return this.adminService.restoreOrg(id);
   }
 }

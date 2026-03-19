@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { IpThrottlerGuard } from './common/guards/throttler.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -20,6 +22,7 @@ import { HealthModule } from './health/health.module';
 import { SavedJobsModule } from './saved-jobs/saved-jobs.module';
 import { GovernoratesModule } from './governorates/governorates.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { QueuesModule } from './queues/queues.module';
 
 @Module({
   imports: [
@@ -31,15 +34,21 @@ import { NotificationsModule } from './notifications/notifications.module';
 
     LoggerModule,
 
+    // In-memory cache — swap store to Redis by adding `store` + `url` here
+    CacheModule.register({ isGlobal: true }),
+
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          ttl: config.get<number>('THROTTLE_TTL') ?? 60000,
-          limit: config.get<number>('THROTTLE_LIMIT') ?? 100,
-        },
-      ],
+      useFactory: (config: ConfigService) => ({
+        // Real client IP is extracted in IpThrottlerGuard via X-Forwarded-For
+        throttlers: [
+          {
+            ttl: config.get<number>('THROTTLE_TTL') ?? 60000,
+            limit: config.get<number>('THROTTLE_LIMIT') ?? 20,
+          },
+        ],
+      }),
     }),
 
     AuthModule,
@@ -56,8 +65,9 @@ import { NotificationsModule } from './notifications/notifications.module';
     SavedJobsModule,
     GovernoratesModule,
     NotificationsModule,
+    QueuesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [AppService, { provide: APP_GUARD, useClass: IpThrottlerGuard }],
 })
 export class AppModule {}

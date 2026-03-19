@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { MessagingService } from './messaging.service';
+import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
 import type { Request } from 'express';
 
 @Controller('conversations')
@@ -24,7 +25,7 @@ export class MessagingController {
 
   @Patch(':id/read')
   markAsRead(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.messagingService.markAsRead(id, req.user.sub);
@@ -32,7 +33,7 @@ export class MessagingController {
 
   @Get(':id/messages')
   getMessages(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.messagingService.getMessages(id, req.user.sub);
@@ -40,7 +41,7 @@ export class MessagingController {
 
   @Post(':id/messages')
   sendMessage(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Body('content') content: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
@@ -49,7 +50,7 @@ export class MessagingController {
 
   @Post('with/:otherUserId')
   getOrCreate(
-    @Param('otherUserId') otherUserId: string,
+    @Param('otherUserId', ParseCuidPipe) otherUserId: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.messagingService.getOrCreateConversation(

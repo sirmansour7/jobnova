@@ -1,6 +1,7 @@
 import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -8,10 +9,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../token-store/token-store.service';
 import { AuditService } from '../audit/audit.service';
-import { EmailService } from '../email/email.service';
+import { EmailProducer } from '../queues/email/email.producer';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -28,6 +31,16 @@ const INVALID_CREDENTIALS = 'Invalid credentials';
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 const PASSWORD_RESET_EXPIRY_MINUTES = 30;
+const FORGOT_PASSWORD_MAX_REQUESTS = 3;
+const FORGOT_PASSWORD_WINDOW_MS = 15 * 60 * 1000;
+
+// Pre-computed bcrypt hash used solely to equalize response timing when a
+// looked-up user does not exist. bcrypt.compare() is always called so an
+// attacker cannot distinguish "email not found" from "wrong password" by
+// measuring latency. This hash is intentionally public — it is never matched
+// against any real credential.
+const DUMMY_HASH =
+  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 
 @Injectable()
 export class AuthService {
@@ -39,7 +52,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly tokenStore: TokenStoreService,
     private readonly audit: AuditService,
-    private readonly emailService: EmailService,
+    private readonly emailProducer: EmailProducer,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   // ─────────────────────────────────────────
@@ -61,11 +75,10 @@ export class AuthService {
     const requestedRole = role ?? Role.candidate;
 
     if (requestedRole === Role.admin) {
-      const nodeEnv = this.configService.get<string>('NODE_ENV');
       const allowAdminRegister =
         this.configService.get<string>('ALLOW_ADMIN_REGISTER') === 'true';
 
-      if (nodeEnv === 'production' && !allowAdminRegister) {
+      if (!allowAdminRegister) {
         throw new ForbiddenException('Admin registration is disabled');
       }
     }
@@ -82,7 +95,7 @@ export class AuthService {
 
     this.audit.log({ event: AuditEvent.REGISTER, userId: user.id });
 
-    const emailSent = await this.emailService.sendVerificationEmail(
+    await this.emailProducer.sendVerificationEmail(
       user.email,
       user.fullName,
       verificationToken,
@@ -94,12 +107,6 @@ export class AuthService {
       email: user.email,
       role: user.role,
       emailVerified: user.emailVerified,
-      ...(emailSent
-        ? {}
-        : {
-            warning:
-              'Verification email could not be sent. Please contact support.',
-          }),
     };
   }
 
@@ -112,7 +119,7 @@ export class AuthService {
       where: { verificationToken: token },
     });
 
-    if (!user)
+    if (!user || user.deletedAt)
       throw new BadRequestException('Invalid or expired verification token');
     if (user.emailVerified)
       throw new BadRequestException('Email already verified');
@@ -153,13 +160,13 @@ export class AuthService {
       data: { verificationToken },
     });
 
-    this.logger.log(`Sending verification email for user ${user.id}`);
-    await this.emailService.sendVerificationEmail(
+    this.logger.log(`Queuing verification email for user ${user.id}`);
+    await this.emailProducer.sendVerificationEmail(
       user.email,
       user.fullName,
       verificationToken,
     );
-    this.logger.log(`Verification email dispatched for user ${user.id}`);
+    this.logger.log(`Verification email queued for user ${user.id}`);
 
     return { message: 'Verification email sent' };
   }
@@ -174,7 +181,11 @@ export class AuthService {
       where: { email: normalizedEmail },
     });
 
-    if (!user) {
+    // ✅ FIX: Always run bcrypt.compare to prevent timing-based email enumeration.
+    // When the user does not exist (or is soft-deleted) we compare against a
+    // dummy hash so response time is indistinguishable from a real failed attempt.
+    if (!user || user.deletedAt) {
+      await bcrypt.compare(dto.password, DUMMY_HASH);
       this.audit.log({
         event: AuditEvent.LOGIN_FAILED,
         ip,
@@ -196,6 +207,15 @@ export class AuthService {
       throw new ForbiddenException(
         `Account locked. Try again after ${user.lockedUntil.toISOString()}`,
       );
+    }
+
+    // ✅ FIX: Check emailVerified BEFORE password comparison.
+    // Previously, failed attempts on unverified accounts incremented the lockout
+    // counter — an attacker could lock out a new user before they ever verified.
+    // We still call bcrypt.compare here so response time stays consistent.
+    if (!user.emailVerified) {
+      await bcrypt.compare(dto.password, user.passwordHash);
+      throw new ForbiddenException('Email not verified');
     }
 
     const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
@@ -225,17 +245,13 @@ export class AuthService {
       throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
 
-    if (!user.emailVerified) {
-      throw new ForbiddenException('Email not verified');
-    }
-
     // ✅ Reset failed attempts on successful login
     await this.prisma.user.update({
       where: { id: user.id },
       data: { failedLoginAttempts: 0, lockedUntil: null },
     });
 
-    const { accessToken, refreshToken } = this.issueTokens(user.id, user.role);
+    const { accessToken, refreshToken } = this.issueTokens(user.id, user.role, user.tokenVersion);
     await this.tokenStore.store(user.id, refreshToken);
 
     this.audit.log({
@@ -266,7 +282,7 @@ export class AuthService {
     if (!isValid) {
       await this.tokenStore.revoke(payload.sub);
       this.audit.log({
-        event: AuditEvent.SUSPICIOUS_ACTIVITY,
+        event: AuditEvent.TOKEN_REUSED,
         userId: payload.sub,
         ip,
         meta: { reason: 'refresh_token_reuse' },
@@ -282,6 +298,7 @@ export class AuthService {
         email: true,
         role: true,
         emailVerified: true,
+        tokenVersion: true,
       },
     });
     if (!user) throw new UnauthorizedException(INVALID_CREDENTIALS);
@@ -289,6 +306,7 @@ export class AuthService {
     const { accessToken, refreshToken: newRefreshToken } = this.issueTokens(
       user.id,
       user.role,
+      user.tokenVersion,
     );
     await this.tokenStore.store(user.id, newRefreshToken);
 
@@ -316,12 +334,25 @@ export class AuthService {
   // ─────────────────────────────────────────
 
   async forgotPassword(dto: ForgotPasswordDto, ip?: string) {
+    const normalizedEmail = dto.email.toLowerCase();
+
+    // ✅ Per-email rate limit: max 3 requests per 15 minutes.
+    // Key hashes the email so PII is never stored in the cache layer.
+    // Always return the same response — don't reveal rate-limit status.
+    const emailHash = createHash('sha256').update(normalizedEmail).digest('hex');
+    const rlKey = `rl:fp:${emailHash}`;
+    const attempts = (await this.cache.get<number>(rlKey)) ?? 0;
+    if (attempts >= FORGOT_PASSWORD_MAX_REQUESTS) {
+      return { message: 'If this email exists, a reset link has been sent' };
+    }
+    await this.cache.set(rlKey, attempts + 1, FORGOT_PASSWORD_WINDOW_MS);
+
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+      where: { email: normalizedEmail },
     });
 
-    // ✅ Always return same response — don't reveal if email exists
-    if (!user) {
+    // ✅ Always return same response — don't reveal if email exists or is deleted
+    if (!user || user.deletedAt) {
       return { message: 'If this email exists, a reset link has been sent' };
     }
 
@@ -347,7 +378,7 @@ export class AuthService {
       ip,
     });
 
-    await this.emailService.sendPasswordResetEmail(
+    await this.emailProducer.sendPasswordResetEmail(
       user.email,
       user.fullName,
       resetToken,
@@ -368,7 +399,7 @@ export class AuthService {
       where: { passwordResetToken: resetTokenHash },
     });
 
-    if (!user || !user.passwordResetExpiry) {
+    if (!user || user.deletedAt || !user.passwordResetExpiry) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
@@ -384,7 +415,8 @@ export class AuthService {
         passwordHash,
         passwordResetToken: null,
         passwordResetExpiry: null,
-        refreshTokenHash: null, // Force logout all sessions
+        refreshTokenHash: null,    // invalidate refresh token
+        tokenVersion: { increment: 1 }, // invalidate all outstanding access tokens
         failedLoginAttempts: 0,
         lockedUntil: null,
       },
@@ -412,10 +444,12 @@ export class AuthService {
         email: true,
         role: true,
         emailVerified: true,
+        deletedAt: true,
       },
     });
-    if (!user) throw new UnauthorizedException(INVALID_CREDENTIALS);
-    return user;
+    if (!user || user.deletedAt) throw new UnauthorizedException(INVALID_CREDENTIALS);
+    const { deletedAt: _deleted, ...rest } = user;
+    return rest;
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
@@ -465,16 +499,16 @@ export class AuthService {
   // Helpers
   // ─────────────────────────────────────────
 
-  private issueTokens(userId: string, role: Role) {
+  private issueTokens(userId: string, role: Role, tokenVersion: number) {
     const accessToken = this.jwtService.sign(
-      { sub: userId, role },
+      { sub: userId, role, tokenVersion },
       {
         secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
         expiresIn: ACCESS_TOKEN_EXPIRES,
       },
     );
     const refreshToken = this.jwtService.sign(
-      { sub: userId, role, jti: randomUUID() },
+      { sub: userId, role, tokenVersion, jti: randomUUID() },
       {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
         expiresIn: REFRESH_TOKEN_EXPIRES,

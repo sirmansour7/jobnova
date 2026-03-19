@@ -13,6 +13,7 @@ import { OrgService } from './org.service';
 import { CreateOrgDto } from './dto/create-org.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
@@ -56,7 +57,7 @@ export class OrgController {
 
   @Get(':id')
   findOne(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.orgService.findOne(id, req.user.sub);
@@ -64,7 +65,7 @@ export class OrgController {
 
   @Post(':id/members')
   inviteMember(
-    @Param('id') id: string,
+    @Param('id', ParseCuidPipe) id: string,
     @Body(VP) body: InviteMemberDto,
     @Req() req: Request & { user: { sub: string } },
   ) {
@@ -73,8 +74,8 @@ export class OrgController {
 
   @Delete(':id/members/:memberId')
   removeMember(
-    @Param('id') id: string,
-    @Param('memberId') memberId: string,
+    @Param('id', ParseCuidPipe) id: string,
+    @Param('memberId', ParseCuidPipe) memberId: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.orgService.removeMember(id, memberId, req.user.sub);

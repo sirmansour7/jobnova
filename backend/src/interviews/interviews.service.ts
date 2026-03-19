@@ -4,9 +4,10 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { HrDecision, InterviewType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrgAuthService } from '../org/org-auth.service';
-import { InterviewSummaryService } from './interview-summary.service';
+import { AiProducer } from '../queues/ai/ai.producer';
 import { CreateScheduleInterviewDto } from './dto/create-schedule-interview.dto';
 import { UpdateScheduleInterviewDto } from './dto/update-schedule-interview.dto';
 import {
@@ -55,7 +56,7 @@ export class InterviewsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly orgAuth: OrgAuthService,
-    private readonly summaryService: InterviewSummaryService,
+    private readonly aiProducer: AiProducer,
   ) {}
 
   async startInterview(applicationId: string, candidateId: string) {
@@ -161,12 +162,9 @@ export class InterviewsService {
     });
 
     if (isLastQuestion) {
-      await this.summaryService.generate(sessionId);
-      const withSummary = await this.prisma.interviewSession.findUnique({
-        where: { id: sessionId },
-        include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
-      });
-      return this.toSessionResponse(withSummary!);
+      // Queue summary generation so the response returns immediately.
+      // The client can poll GET /interviews/sessions/:id for the summary.
+      await this.aiProducer.queueInterviewSummary(sessionId);
     }
 
     return this.toSessionResponse(updated);
@@ -212,7 +210,7 @@ export class InterviewsService {
     return this.toHrSessionResponse(session);
   }
 
-  async updateDecision(sessionId: string, userId: string, decision: string) {
+  async updateDecision(sessionId: string, userId: string, decision: HrDecision) {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
       include: { job: true },
@@ -271,7 +269,7 @@ export class InterviewsService {
     currentStep: number;
     startedAt: Date;
     completedAt: Date | null;
-    hrDecision: string | null;
+    hrDecision: HrDecision | null;
     hrDecisionAt: Date | null;
     application: unknown;
     job: unknown;
@@ -318,7 +316,7 @@ export class InterviewsService {
         applicationId: dto.applicationId,
         scheduledAt: new Date(dto.scheduledAt),
         durationMins: dto.durationMins ?? 60,
-        type: dto.type ?? 'online',
+        type: dto.type ?? InterviewType.ONLINE,
         location: dto.location ?? null,
         notes: dto.notes ?? null,
       },

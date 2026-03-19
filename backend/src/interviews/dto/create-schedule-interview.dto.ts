@@ -1,11 +1,13 @@
 import {
-  IsString,
   IsDateString,
+  IsEnum,
   IsOptional,
   IsInt,
+  IsString,
   Min,
   Max,
 } from 'class-validator';
+import { InterviewType } from '@prisma/client';
 
 export class CreateScheduleInterviewDto {
   @IsString()
@@ -21,8 +23,8 @@ export class CreateScheduleInterviewDto {
   durationMins?: number;
 
   @IsOptional()
-  @IsString()
-  type?: string;
+  @IsEnum(InterviewType)
+  type?: InterviewType;
 
   @IsOptional()
   @IsString()

@@ -5,11 +5,10 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
-import { ApplicationStatus } from '@prisma/client';
+import { Prisma, ApplicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrgAuthService } from '../org/org-auth.service';
-import { EmailService } from '../email/email.service';
+import { EmailProducer } from '../queues/email/email.producer';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 
@@ -25,13 +24,13 @@ export class ApplicationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly orgAuth: OrgAuthService,
-    private readonly emailService: EmailService,
+    private readonly emailProducer: EmailProducer,
   ) {}
 
   // Candidate: apply for a job
   async apply(dto: CreateApplicationDto, candidateId: string) {
     const job = await this.prisma.job.findUnique({ where: { id: dto.jobId } });
-    if (!job || !job.isActive)
+    if (!job || job.deletedAt || !job.isActive)
       throw new NotFoundException('Job not found or inactive');
 
     if (job.expiresAt && job.expiresAt < new Date()) {
@@ -44,19 +43,24 @@ export class ApplicationsService {
         throw new BadRequestException('Invalid CV');
     }
 
-    const existing = await this.prisma.application.findUnique({
-      where: { jobId_candidateId: { jobId: dto.jobId, candidateId } },
-    });
-    if (existing) throw new ConflictException('Already applied to this job');
-
-    return this.prisma.application.create({
-      data: {
-        jobId: dto.jobId,
-        candidateId,
-        coverLetter: dto.coverLetter,
-        cvId: dto.cvId ?? undefined,
-      },
-    });
+    try {
+      return await this.prisma.application.create({
+        data: {
+          jobId: dto.jobId,
+          candidateId,
+          coverLetter: dto.coverLetter,
+          cvId: dto.cvId ?? undefined,
+        },
+      });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        throw new ConflictException('Already applied to this job');
+      }
+      throw e;
+    }
   }
 
   // Candidate: get single application by id (must be owner)
@@ -118,10 +122,12 @@ export class ApplicationsService {
   // HR/OWNER: view applications for a job (includes candidate profile + CV data)
   async jobApplications(jobId: string, userId: string, page = 1, limit = 20) {
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });
-    if (!job) throw new NotFoundException('Job not found');
+    if (!job || job.deletedAt) throw new NotFoundException('Job not found');
     await this.orgAuth.assertOrgAccess(userId, job.organizationId);
 
-    const skip = (page - 1) * limit;
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(50, Math.max(1, limit));
+    const skip = (safePage - 1) * safeLimit;
     const [items, total] = await Promise.all([
       this.prisma.application.findMany({
         where: { jobId },
@@ -146,12 +152,12 @@ export class ApplicationsService {
         },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit,
+        take: safeLimit,
       }),
       this.prisma.application.count({ where: { jobId } }),
     ]);
 
-    return { items, total, page, totalPages: Math.ceil(total / limit) };
+    return { items, total, page: safePage, totalPages: Math.ceil(total / safeLimit) };
   }
 
   // HR/OWNER: update application status
@@ -162,7 +168,10 @@ export class ApplicationsService {
   ) {
     const application = await this.prisma.application.findUnique({
       where: { id },
-      include: { job: true },
+      include: {
+        job: true,
+        candidate: { select: { email: true, fullName: true } },
+      },
     });
     if (!application) throw new NotFoundException('Application not found');
 
@@ -174,19 +183,12 @@ export class ApplicationsService {
     });
 
     try {
-      const withCandidate = await this.prisma.application.findUnique({
-        where: { id },
-        include: {
-          candidate: { select: { email: true, fullName: true } },
-          job: { select: { title: true } },
-        },
-      });
-      if (withCandidate?.candidate?.email && withCandidate?.job?.title) {
+      if (application.candidate?.email && application.job?.title) {
         const statusLabel = STATUS_LABELS_AR[dto.status] ?? dto.status;
-        await this.emailService.sendApplicationStatusEmail(
-          withCandidate.candidate.email,
-          withCandidate.candidate.fullName ?? 'مرشح',
-          withCandidate.job.title,
+        await this.emailProducer.sendApplicationStatusEmail(
+          application.candidate.email,
+          application.candidate.fullName ?? 'مرشح',
+          application.job.title,
           statusLabel,
         );
       }

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, JobCategory, JobType } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const companies = [
@@ -100,7 +100,26 @@ const cities: Record<string, string[]> = {
   'الدقهلية': ['المنصورة', 'طلخا', 'ميت غمر', 'الزقازيق', 'دكرنس'],
 };
 
-const jobTypes = ['دوام كامل', 'دوام جزئي', 'عمل حر', 'تدريب', 'عقد'];
+const jobTypes: JobType[] = [
+  JobType.FULL_TIME,
+  JobType.PART_TIME,
+  JobType.FREELANCE,
+  JobType.INTERNSHIP,
+  JobType.CONTRACT,
+];
+const categoryMap: Record<string, JobCategory> = {
+  'تقنية المعلومات': JobCategory.TECHNOLOGY,
+  'المبيعات':        JobCategory.SALES,
+  'التسويق':         JobCategory.MARKETING,
+  'الموارد البشرية': JobCategory.HR,
+  'المحاسبة والمالية': JobCategory.FINANCE,
+  'الهندسة':         JobCategory.ENGINEERING,
+  'الصحة والطب':     JobCategory.HEALTHCARE,
+  'التعليم':         JobCategory.EDUCATION,
+  'خدمة العملاء':    JobCategory.CUSTOMER_SERVICE,
+  'الإدارة':         JobCategory.OPERATIONS,
+};
+
 const salaryRanges = [
   { min: 3000, max: 5000 }, { min: 5000, max: 8000 }, { min: 8000, max: 12000 },
   { min: 12000, max: 18000 }, { min: 18000, max: 25000 }, { min: 25000, max: 40000 },
@@ -119,8 +138,9 @@ async function main() {
   let count = 0;
 
   for (let i = 0; i < 500; i++) {
-    const category = categories[i % categories.length];
-    const jobsInCategory = jobsByCategory[category];
+    const categoryKey = categories[i % categories.length];
+    const category: JobCategory = categoryMap[categoryKey] ?? JobCategory.OTHER;
+    const jobsInCategory = jobsByCategory[categoryKey];
     const jobTemplate = jobsInCategory[i % jobsInCategory.length];
     const company = companies[i % companies.length];
     const gov = governorates[i % governorates.length];

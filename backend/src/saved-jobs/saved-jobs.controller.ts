@@ -5,6 +5,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { SavedJobsService } from './saved-jobs.service';
+import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
 
 @Controller('saved-jobs')
 @UseGuards(JwtAuthGuard)
@@ -20,7 +21,7 @@ export class SavedJobsController {
 
   @Get(':jobId/status')
   isSaved(
-    @Param('jobId') jobId: string,
+    @Param('jobId', ParseCuidPipe) jobId: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.savedJobsService.isSaved(req.user.sub, jobId);
@@ -30,7 +31,7 @@ export class SavedJobsController {
   @UseGuards(RolesGuard)
   @Roles(Role.candidate)
   toggle(
-    @Param('jobId') jobId: string,
+    @Param('jobId', ParseCuidPipe) jobId: string,
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.savedJobsService.toggle(req.user.sub, jobId);
