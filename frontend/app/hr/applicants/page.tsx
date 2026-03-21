@@ -30,6 +30,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Search, FileText, ChevronLeft, ChevronRight } from "lucide-react"
 import { apiJson } from "@/src/lib/api"
 import {
@@ -104,6 +105,7 @@ export default function ApplicantsPage() {
   const [page, setPage] = useState(1)
   const [cvSheetOpen, setCvSheetOpen] = useState(false)
   const [selectedApp, setSelectedApp] = useState<ApplicationWithJob | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const LIMIT = 15
   const router = useRouter()
 
@@ -256,6 +258,17 @@ export default function ApplicantsPage() {
                     <SelectItem value="HIRED">مقبول</SelectItem>
                   </SelectContent>
                 </Select>
+                {selectedIds.size >= 2 && (
+                  <Button
+                    onClick={() => {
+                      const ids = [...selectedIds].join(",")
+                      router.push(`/hr/compare?ids=${ids}`)
+                    }}
+                    className="shrink-0"
+                  >
+                    مقارنة المرشحين ({selectedIds.size})
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -265,6 +278,7 @@ export default function ApplicantsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
+                    <TableHead className="w-10"></TableHead>
                     <TableHead className="text-start">المرشح</TableHead>
                     <TableHead className="text-start">الوظيفة</TableHead>
                     <TableHead className="text-start">الحالة</TableHead>
@@ -276,7 +290,7 @@ export default function ApplicantsPage() {
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell colSpan={5}>
+                        <TableCell colSpan={6}>
                           <div className="h-10 w-full animate-pulse rounded-lg bg-muted" />
                         </TableCell>
                       </TableRow>
@@ -284,7 +298,7 @@ export default function ApplicantsPage() {
                   ) : paginated.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={5}
+                        colSpan={6}
                         className="py-10 text-center text-muted-foreground"
                       >
                         لا توجد طلبات مطابقة للبحث الحالي
@@ -298,6 +312,26 @@ export default function ApplicantsPage() {
                       const jobTitle = app.job?.title ?? ""
                       return (
                         <TableRow key={app.id} className="border-border">
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={selectedIds.has(app.id)}
+                              onCheckedChange={(checked) => {
+                                setSelectedIds((prev) => {
+                                  const next = new Set([...prev])
+                                  if (checked) {
+                                    next.add(app.id)
+                                  } else {
+                                    next.delete(app.id)
+                                  }
+                                  return next
+                                })
+                              }}
+                              disabled={
+                                !selectedIds.has(app.id) &&
+                                selectedIds.size >= 3
+                              }
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-8 w-8">

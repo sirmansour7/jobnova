@@ -8,25 +8,45 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Bookmark } from "lucide-react"
+import { Search, Bookmark, Sparkles } from "lucide-react"
 import { useJobs, type JobListItem } from "@/src/services/jobs.service"
 import Link from "next/link"
 import { useAuth } from "@/src/context/auth-context"
 import { apiJson } from "@/src/lib/api"
 
-const jobTypes = ["دوام كامل", "دوام جزئي", "تدريب", "عمل حر", "عن بعد", "هايبرد"]
-const experienceLevels = ["حديث تخرج", "1-3 سنوات", "3-5 سنوات", "5+ سنوات"]
-const jobCategories = [
-  "تكنولوجيا المعلومات",
-  "المالية والمحاسبة",
-  "التسويق والمبيعات",
-  "الموارد البشرية",
-  "الهندسة",
-  "خدمة العملاء",
-  "الصحة والطب",
-  "التعليم",
-  "القانون",
-  "الإدارة",
+// Maps Arabic UI labels → backend enum values (must match Prisma JobCategory / JobType enums)
+const JOB_CATEGORIES: { value: string; label: string }[] = [
+  { value: "TECHNOLOGY",       label: "تكنولوجيا المعلومات" },
+  { value: "FINANCE",          label: "المالية والمحاسبة"   },
+  { value: "MARKETING",        label: "التسويق"              },
+  { value: "SALES",            label: "المبيعات"             },
+  { value: "HR",               label: "الموارد البشرية"      },
+  { value: "ENGINEERING",      label: "الهندسة"              },
+  { value: "CUSTOMER_SERVICE", label: "خدمة العملاء"         },
+  { value: "HEALTHCARE",       label: "الصحة والطب"          },
+  { value: "EDUCATION",        label: "التعليم"              },
+  { value: "LEGAL",            label: "القانون"              },
+  { value: "OPERATIONS",       label: "الإدارة والعمليات"    },
+  { value: "DESIGN",           label: "التصميم"              },
+  { value: "OTHER",            label: "أخرى"                 },
+]
+
+const JOB_TYPES: { value: string; label: string }[] = [
+  { value: "FULL_TIME",  label: "دوام كامل" },
+  { value: "PART_TIME",  label: "دوام جزئي" },
+  { value: "INTERNSHIP", label: "تدريب"      },
+  { value: "FREELANCE",  label: "عمل حر"    },
+  { value: "REMOTE",     label: "عن بعد"    },
+  { value: "CONTRACT",   label: "عقد / مشروع" },
+]
+
+// Upper bound of experience range → backend maxExperience filter
+// undefined means "no upper limit" (5+ years)
+const EXPERIENCE_LEVELS: { value: number | undefined; label: string }[] = [
+  { value: 0,         label: "حديث تخرج"   },
+  { value: 3,         label: "1-3 سنوات"   },
+  { value: 5,         label: "3-5 سنوات"   },
+  { value: undefined, label: "5+ سنوات"    },
 ]
 
 const getRelativeDate = (dateStr: string) => {
@@ -52,14 +72,16 @@ export default function JobsClient() {
   const { user } = useAuth()
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1)
 
-  const [governorates, setGovernorates] = useState<string[]>([])
-  const [search, setSearch] = useState("")
-  const [selectedType, setSelectedType] = useState<string>("all")
-  const [selectedGov, setSelectedGov] = useState<string>("all")
-  const [selectedExp, setSelectedExp] = useState<string>("all")
+  const [governorates, setGovernorates]   = useState<string[]>([])
+  const [search, setSearch]               = useState("")
+  const [selectedType, setSelectedType]   = useState<string>("all")
+  const [selectedGov, setSelectedGov]     = useState<string>("all")
+  // "all" = no filter; otherwise the string representation of maxExperience (or "unlimited")
+  const [selectedExp, setSelectedExp]     = useState<string>("all")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [recommendedOnly, setRecommendedOnly] = useState(false)
 
   useEffect(() => {
     apiJson<{ items: { name: string }[] }>("/v1/governorates?limit=100")
@@ -95,10 +117,20 @@ export default function JobsClient() {
     [togglingId]
   )
 
+  // Resolve experience selection → maxExperience number (or undefined = no cap)
+  // "unlimited" is the sentinel for "5+ years" (no upper bound).
+  const maxExperience: number | undefined = (() => {
+    if (selectedExp === "all" || selectedExp === "unlimited") return undefined
+    const n = Number(selectedExp)
+    return isNaN(n) ? undefined : n
+  })()
+
   const { jobs, total, totalPages, loading, error } = useJobs({
-    category: selectedCategory !== "all" ? selectedCategory : undefined,
-    governorate: selectedGov !== "all" ? selectedGov : undefined,
-    search: search.trim() || undefined,
+    category:      selectedCategory !== "all" ? selectedCategory : undefined,
+    jobType:       selectedType     !== "all" ? selectedType     : undefined,
+    governorate:   selectedGov      !== "all" ? selectedGov      : undefined,
+    search:        search.trim()    || undefined,
+    maxExperience: selectedExp      !== "all" ? maxExperience    : undefined,
     page,
     limit: LIMIT,
   })
@@ -145,7 +177,9 @@ export default function JobsClient() {
                   <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="التخصص" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل التخصصات</SelectItem>
-                    {jobCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {JOB_CATEGORIES.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select
@@ -171,7 +205,9 @@ export default function JobsClient() {
                   <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="نوع العمل" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل الأنواع</SelectItem>
-                    {jobTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    {JOB_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select
@@ -184,9 +220,46 @@ export default function JobsClient() {
                   <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="الخبرة" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل المستويات</SelectItem>
-                    {experienceLevels.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                    {EXPERIENCE_LEVELS.map((e) => {
+                      const v = e.value === undefined ? "unlimited" : String(e.value)
+                      return <SelectItem key={v} value={v}>{e.label}</SelectItem>
+                    })}
                   </SelectContent>
                 </Select>
+                {/* Recommended only toggle — only visible to candidates who have CV data */}
+                {user?.role === "candidate" && (
+                  <Button
+                    variant={recommendedOnly ? "default" : "outline"}
+                    size="sm"
+                    className="shrink-0 gap-1.5"
+                    onClick={() => {
+                      setRecommendedOnly((v) => !v)
+                      if (page !== 1) router.replace("/jobs?page=1")
+                    }}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    مناسب لي
+                  </Button>
+                )}
+                {/* Clear all filters */}
+                {(selectedCategory !== "all" || selectedType !== "all" || selectedGov !== "all" || selectedExp !== "all" || search || recommendedOnly) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setSelectedCategory("all")
+                      setSelectedType("all")
+                      setSelectedGov("all")
+                      setSelectedExp("all")
+                      setSearch("")
+                      setRecommendedOnly(false)
+                      if (page !== 1) router.replace("/jobs?page=1")
+                    }}
+                  >
+                    مسح الفلاتر ✕
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -203,8 +276,21 @@ export default function JobsClient() {
               </Card>
             ) : (
               <>
-            <p className="text-sm text-muted-foreground">{jobs.length} نتيجة</p>
-            {jobs.length === 0 ? (
+            {(() => {
+              const visibleJobs = recommendedOnly ? jobs.filter((j) => j.isRecommended) : jobs
+              const recommendedCount = jobs.filter((j) => j.isRecommended).length
+              return (
+                <p className="text-sm text-muted-foreground">
+                  {visibleJobs.length} نتيجة
+                  {recommendedCount > 0 && !recommendedOnly && (
+                    <span className="mr-2 text-emerald-600 dark:text-emerald-400">
+                      · {recommendedCount} مناسبة لك
+                    </span>
+                  )}
+                </p>
+              )
+            })()}
+            {(recommendedOnly ? jobs.filter((j) => j.isRecommended) : jobs).length === 0 ? (
               <Card className="border-border bg-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Search className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -214,10 +300,14 @@ export default function JobsClient() {
               </Card>
             ) : (
               <>
-              {jobs.map((job) => (
+              {(recommendedOnly ? jobs.filter((j) => j.isRecommended) : jobs).map((job) => (
                 <div
                   key={job.id}
-                  className="relative rounded-xl border border-border bg-card p-4 hover:border-primary/50 hover:bg-card/80 transition-all"
+                  className={`relative rounded-xl border bg-card p-4 hover:bg-card/80 transition-all ${
+                    job.isRecommended
+                      ? "border-emerald-500/40 hover:border-emerald-500/60"
+                      : "border-border hover:border-primary/50"
+                  }`}
                 >
                   <Link href={`/jobs/${job.id}`} className="block">
                     <div className="flex items-start gap-3">
@@ -236,6 +326,21 @@ export default function JobsClient() {
                         </p>
                         {/* Badges */}
                         <div className="flex flex-wrap gap-1.5 mt-2">
+                          {/* "مناسب لك" recommendation badge with score */}
+                          {job.isRecommended && job.matchScore !== undefined && (() => {
+                            const score = job.matchScore
+                            const isExcellent = score >= 80
+                            return (
+                              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                isExcellent
+                                  ? "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400"
+                                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              }`}>
+                                {isExcellent ? "🔥" : <Sparkles className="h-3 w-3" />}
+                                مناسب لك · {score}%
+                              </span>
+                            )
+                          })()}
                           {job.category && (
                             <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary font-medium">
                               {job.category}
@@ -247,6 +352,13 @@ export default function JobsClient() {
                             </span>
                           )}
                         </div>
+                        {/* Matched skills hint */}
+                        {job.matchedSkills && job.matchedSkills.length > 0 && (
+                          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                            ✓ {job.matchedSkills.slice(0, 4).join("، ")}
+                            {job.matchedSkills.length > 4 && ` +${job.matchedSkills.length - 4}`} متطابقة
+                          </p>
+                        )}
                         {/* Footer */}
                         <div className="flex items-center flex-wrap gap-3 mt-2.5 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
@@ -258,6 +370,11 @@ export default function JobsClient() {
                           {job.salaryMin != null && job.salaryMax != null && (
                             <span className="text-green-500 font-medium" dir="ltr">
                               {job.salaryMin.toLocaleString("en-US")} - {job.salaryMax.toLocaleString("en-US")} جنيه
+                            </span>
+                          )}
+                          {job.matchScore !== undefined && job.matchScore > 0 && (
+                            <span className="text-muted-foreground">
+                              تطابق {job.matchScore}%
                             </span>
                           )}
                         </div>

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
   ValidationPipe,
@@ -43,6 +45,67 @@ export class HrController {
       select: { organizationId: true },
     });
     return membership?.organizationId ?? null;
+  }
+
+  /**
+   * GET /hr/jobs
+   * Returns a paginated list of jobs scoped to the HR user's organisation.
+   * Used by the schedule-interview modal and the pipeline job dropdown.
+   */
+  @Get('jobs')
+  async getOrgJobs(
+    @Req() req: Request & { user: { sub: string } },
+    @Query('limit') limit?: string,
+    @Query('page')  page?: string,
+    @Query('search') search?: string,
+  ) {
+    const organizationId = await this.getHrOrganizationId(req.user.sub);
+    if (!organizationId) {
+      return { items: [], total: 0, page: 1, totalPages: 0 };
+    }
+
+    const take = Math.min(limit ? parseInt(limit, 10) : 20, 100);
+    const currentPage = Math.max(page ? parseInt(page, 10) : 1, 1);
+    const skip = (currentPage - 1) * take;
+
+    const where = {
+      organizationId,
+      deletedAt: null as null,
+      ...(search
+        ? { title: { contains: search, mode: 'insensitive' as const } }
+        : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.job.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          partnerName: true,
+          category: true,
+          jobType: true,
+          isActive: true,
+          createdAt: true,
+          skills: true,
+          minExperience: true,
+          salaryMin: true,
+          salaryMax: true,
+          _count: { select: { applications: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip,
+      }),
+      this.prisma.job.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page: currentPage,
+      totalPages: Math.ceil(total / take) || 1,
+    };
   }
 
   @Get('analytics')
@@ -156,6 +219,92 @@ export class HrController {
       });
     }
 
+    // ── topApplicantSkills ──────────────────────────────────────────────
+    const appsWithCv = await this.prisma.application.findMany({
+      where: { job: { organizationId } },
+      select: {
+        candidate: {
+          select: {
+            cv: { select: { data: true } },
+          },
+        },
+      },
+      take: 200,
+    });
+
+    const skillFreq = new Map<string, number>();
+    for (const app of appsWithCv) {
+      const cvData =
+        app.candidate?.cv?.data as Record<string, unknown> | null;
+      const skills = cvData?.skills;
+      if (Array.isArray(skills)) {
+        for (const skill of skills as string[]) {
+          if (typeof skill === 'string' && skill.trim()) {
+            const s = skill.trim().toLowerCase();
+            skillFreq.set(s, (skillFreq.get(s) ?? 0) + 1);
+          }
+        }
+      }
+    }
+    const topApplicantSkills = [...skillFreq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([skill, count]) => ({ skill, count }));
+
+    // ── applicationsByCategory ─────────────────────────────────────────
+    const appsByCategoryRaw = await this.prisma.application.groupBy({
+      by: ['jobId'],
+      where: { job: { organizationId } },
+      _count: { _all: true },
+    });
+    const jobsForCategory = await this.prisma.job.findMany({
+      where: { organizationId },
+      select: { id: true, category: true },
+    });
+    const jobCategoryMap = new Map(
+      jobsForCategory.map((j) => [j.id, j.category ?? 'OTHER']),
+    );
+    const catFreq = new Map<string, number>();
+    for (const row of appsByCategoryRaw) {
+      const cat = jobCategoryMap.get(row.jobId) ?? 'OTHER';
+      catFreq.set(cat, (catFreq.get(cat) ?? 0) + row._count._all);
+    }
+    const applicationsByCategory = [...catFreq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([category, count]) => ({ category, count }));
+
+    // ── hireRate & avgDaysToHire ───────────────────────────────────────
+    const hiredApps = await this.prisma.application.findMany({
+      where: { job: { organizationId }, status: 'HIRED' },
+      select: { createdAt: true, updatedAt: true },
+    });
+    const hireRate =
+      totalApplications > 0
+        ? Math.round((hiredApps.length / totalApplications) * 100)
+        : 0;
+    const avgDaysToHire =
+      hiredApps.length > 0
+        ? Math.round(
+            hiredApps.reduce((sum, a) => {
+              return (
+                sum +
+                (a.updatedAt.getTime() - a.createdAt.getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+            }, 0) / hiredApps.length,
+          )
+        : 0;
+
+    // ── hireFunnel (derived from applicationsByStatus) ─────────────────
+    const statusMap = new Map(
+      applicationsByStatus.map((s) => [s.status, s.count]),
+    );
+    const hireFunnel = [
+      { stage: 'APPLIED', count: statusMap.get('APPLIED') ?? 0 },
+      { stage: 'SHORTLISTED', count: statusMap.get('SHORTLISTED') ?? 0 },
+      { stage: 'HIRED', count: statusMap.get('HIRED') ?? 0 },
+    ];
+
     return {
       totalJobs,
       activeJobs,
@@ -163,7 +312,86 @@ export class HrController {
       applicationsByStatus,
       topJobs,
       applicationsOverTime,
+      hireFunnel,
+      topApplicantSkills,
+      applicationsByCategory,
+      avgDaysToHire,
+      hireRate,
     };
+  }
+
+  @Get('compare')
+  async compareApplications(
+    @Query('ids') ids: string,
+    @Req() req: Request & { user: { sub: string } },
+  ) {
+    const organizationId = await this.getHrOrganizationId(req.user.sub);
+    if (!organizationId) throw new ForbiddenException('No organization');
+
+    const idList = (ids ?? '').split(',').filter(Boolean).slice(0, 3);
+    if (idList.length < 2)
+      throw new BadRequestException('At least 2 IDs required');
+
+    const applications = await this.prisma.application.findMany({
+      where: {
+        id: { in: idList },
+        job: { organizationId },
+      },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        job: { select: { id: true, title: true } },
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            cv: { select: { data: true } },
+          },
+        },
+      },
+    });
+
+    return applications.map((app) => {
+      const cvData =
+        (app.candidate.cv?.data as Record<string, unknown> | null) ?? {};
+      const intelligence =
+        (cvData.intelligence as Record<string, unknown> | undefined) ?? {};
+      const structuredData =
+        (intelligence.structuredData as Record<string, unknown> | undefined) ??
+        {};
+      const improvedCv =
+        (intelligence.improvedCv as Record<string, unknown> | undefined) ?? {};
+
+      return {
+        applicationId: app.id,
+        status: app.status,
+        createdAt: app.createdAt,
+        job: app.job,
+        candidate: {
+          id: app.candidate.id,
+          fullName: app.candidate.fullName,
+          email: app.candidate.email,
+        },
+        skills:
+          (cvData.skills as string[] | undefined) ??
+          (structuredData.skills as string[] | undefined) ??
+          [],
+        yearsOfExperience:
+          (structuredData.yearsOfExperience as number | undefined) ?? null,
+        seniority: (structuredData.seniority as string | undefined) ?? null,
+        education:
+          (cvData.education as
+            | Array<{ degree?: string; institution?: string; year?: string }>
+            | undefined) ?? [],
+        professionalSummary:
+          (improvedCv.professionalSummary as string | undefined) ??
+          (cvData.summary as string | undefined) ??
+          '',
+        matchScore: null as number | null,
+      };
+    });
   }
 
   @Post('interviews/schedule')

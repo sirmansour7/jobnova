@@ -16,7 +16,8 @@ import { MinimalATSTemplate } from "@/components/cv/templates/MinimalATSTemplate
 import { CreativeTemplate } from "@/components/cv/templates/CreativeTemplate"
 import { getMyCv, saveMyCv, EMPTY_CV } from "@/src/services/cv.service"
 import type { CvData, CvExperience, CvEducation } from "@/src/services/cv.service"
-import { apiJson } from "@/src/lib/api"
+import { apiJson, API_URL } from "@/src/lib/api"
+import { getCookie } from "@/src/lib/cookies"
 
 interface CvAnalysisResult {
   language: 'ar' | 'en' | 'mixed'
@@ -88,6 +89,9 @@ export default function CVBuilderPage() {
   const [analysisResult, setAnalysisResult] = useState<CvAnalysisResult | null>(null)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [template, setTemplate] = useState<"modern" | "ats" | "creative">("modern")
+  const [pdfTemplate, setPdfTemplate] = useState<"modern" | "classic" | "ats">("modern")
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   // Load existing CV
   useEffect(() => {
@@ -166,6 +170,41 @@ export default function CVBuilderPage() {
 </body>
 </html>`)
     printWindow.document.close()
+  }
+
+  const handleDownloadPdf = async () => {
+    setExportingPdf(true)
+    setExportError(null)
+    try {
+      const token = getCookie("jobnova_token")
+      const res = await fetch(`${API_URL}/v1/cv/export/pdf?template=${pdfTemplate}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const msg = (body as { message?: string }).message ?? `HTTP ${res.status}`
+        throw new Error(msg)
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `cv-${pdfTemplate}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "message" in err && typeof (err as { message: unknown }).message === "string"
+          ? (err as { message: string }).message
+          : "فشل تصدير PDF، حاول مرة أخرى"
+      setExportError(message)
+    } finally {
+      setExportingPdf(false)
+    }
   }
 
   const handleAnalyze = async () => {
@@ -410,6 +449,55 @@ export default function CVBuilderPage() {
                         <Download className="ml-2 h-4 w-4" />
                         تصدير PDF
                       </Button>
+                    </div>
+
+                    {/* PDF Export Section */}
+                    <div className="mt-6 space-y-4">
+                      <div className="border-t border-border pt-4">
+                        <h3 className="font-semibold text-foreground mb-3">تصدير السيرة الذاتية</h3>
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-3 gap-2">
+                            {([
+                              { id: "modern" as const, label: "عصري", desc: "تصميم حديث بألوان زرقاء" },
+                              { id: "classic" as const, label: "كلاسيكي", desc: "تصميم تقليدي احترافي" },
+                              { id: "ats" as const, label: "متوافق مع ATS", desc: "تصميم نصي للقراءة الآلية" },
+                            ]).map(t => (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => setPdfTemplate(t.id)}
+                                className={`rounded-xl border p-3 text-right transition-colors ${
+                                  pdfTemplate === t.id
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border bg-card text-muted-foreground hover:border-primary/50"
+                                }`}
+                              >
+                                <div className="text-xs font-semibold">{t.label}</div>
+                                <div className="text-[10px] mt-0.5 leading-tight">{t.desc}</div>
+                              </button>
+                            ))}
+                          </div>
+                          {exportError && <p className="text-sm text-destructive">{exportError}</p>}
+                          <Button
+                            variant="outline"
+                            className="w-full gap-2"
+                            onClick={handleDownloadPdf}
+                            disabled={exportingPdf}
+                          >
+                            {exportingPdf ? (
+                              <span className="flex items-center gap-2">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                جاري التصدير...
+                              </span>
+                            ) : (
+                              <>
+                                <Download className="h-4 w-4" />
+                                تحميل PDF
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Analysis Section */}

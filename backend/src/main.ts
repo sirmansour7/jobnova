@@ -5,7 +5,9 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import compression from 'compression';
 import * as express from 'express';
+import { join } from 'path';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { AppModule } from './app.module';
 
@@ -27,6 +29,22 @@ async function bootstrap() {
 
   app.use(express.json({ limit: '50kb' }));
   app.use(express.urlencoded({ extended: true, limit: '50kb' }));
+
+  // Serve uploaded CV files (PDF) as static assets
+  app.use(
+    '/uploads',
+    express.static(join(process.cwd(), 'uploads'), {
+      // Prevent directory listing
+      index: false,
+      // Only allow PDF downloads — block direct browser rendering
+      setHeaders: (res) => {
+        res.setHeader('Content-Disposition', 'attachment');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+      },
+    }),
+  );
+
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   app.setGlobalPrefix('v1');
 

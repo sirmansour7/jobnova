@@ -10,17 +10,55 @@ import { sanitizeInput } from '../common/utils/sanitize-input.util';
 import { CacheKeys, CacheTTL } from '../common/cache-keys';
 
 export interface JobFilters {
-  category?: JobCategory;
-  jobType?: JobType;
-  governorate?: string;
-  isActive?: boolean;
-  search?: string;
+  category?:      JobCategory;
+  jobType?:       JobType;
+  governorate?:   string;
+  isActive?:      boolean;
+  search?:        string;
   /** Include only jobs whose salaryMax is >= this value (or salaryMax is null) */
-  salaryMin?: number;
+  salaryMin?:     number;
   /** Include only jobs whose salaryMin is <= this value (or salaryMin is null) */
-  salaryMax?: number;
-  page?: number;
-  limit?: number;
+  salaryMax?:     number;
+  /**
+   * Show jobs that require AT MOST this many years of experience.
+   * Filters: job.minExperience <= maxExperience OR job.minExperience IS NULL
+   */
+  maxExperience?: number;
+  page?:          number;
+  limit?:         number;
+}
+
+/** Shape returned from findAll() — shared with the controller for type safety */
+export interface JobsPage {
+  items: Array<{
+    id: string;
+    title: string;
+    partnerName: string;
+    description: string | null;
+    governorateId: string | null;
+    cityId: string | null;
+    governorateRel: { name: string } | null;
+    cityRel: { name: string } | null;
+    category: JobCategory | null;
+    jobType: JobType | null;
+    skills: string[];
+    minExperience: number | null;
+    salaryMin: number | null;
+    salaryMax: number | null;
+    currency: string | null;
+    expiresAt: Date | null;
+    isActive: boolean;
+    createdAt: Date;
+    organization: { id: string; name: string };
+    _count: { applications: number };
+    // Injected by controller for candidates (not present on cache-served responses)
+    matchScore?: number;
+    isRecommended?: boolean;
+    matchedSkills?: string[];
+  }>;
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 @Injectable()
@@ -34,7 +72,7 @@ export class JobsService {
   async findAll(
     filters?: JobFilters,
     user?: { sub: string; role: string },
-  ) {
+  ): Promise<JobsPage> {
     const page = Math.max(1, filters?.page ?? 1);
     const limit = Math.min(50, Math.max(1, filters?.limit ?? 20));
     const skip = (page - 1) * limit;
@@ -47,12 +85,13 @@ export class JobsService {
       !filters?.category &&
       !filters?.jobType &&
       !filters?.governorate &&
-      filters?.salaryMin === undefined &&
-      filters?.salaryMax === undefined &&
+      filters?.salaryMin     === undefined &&
+      filters?.salaryMax     === undefined &&
+      filters?.maxExperience === undefined &&
       filters?.isActive !== false;
 
     if (isPublicP1) {
-      const cached = await this.cache.get(CacheKeys.JOBS_PUBLIC_P1);
+      const cached = await this.cache.get<JobsPage>(CacheKeys.JOBS_PUBLIC_P1);
       if (cached) return cached;
     }
 
@@ -111,13 +150,26 @@ export class JobsService {
       });
     }
 
+    // maxExperience: show jobs requiring AT MOST this many years (or with no requirement set)
+    if (filters?.maxExperience !== undefined) {
+      andConditions.push({
+        OR: [
+          { minExperience: null },
+          { minExperience: { lte: filters.maxExperience } },
+        ],
+      });
+    }
+
     const where: Record<string, unknown> = {
       deletedAt: null,
       isActive: filters?.isActive ?? true,
       ...(filters?.category && { category: filters.category }),
       ...(filters?.jobType && { jobType: filters.jobType }),
+      // Case-insensitive partial match on governorate name
       ...(filters?.governorate && {
-        governorateRel: { name: filters.governorate },
+        governorateRel: {
+          name: { contains: filters.governorate, mode: 'insensitive' },
+        },
       }),
       ...(orgId != null && { organizationId: orgId }),
       ...(andConditions.length > 0 && { AND: andConditions }),
@@ -137,6 +189,8 @@ export class JobsService {
           cityRel: { select: { name: true } },
           category: true,
           jobType: true,
+          skills: true,
+          minExperience: true,
           salaryMin: true,
           salaryMax: true,
           currency: true,
@@ -204,6 +258,7 @@ export class JobsService {
         salaryMax: dto.salaryMax,
         currency: dto.currency,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
+        isActive: dto.isActive ?? true,
       },
     });
     await this.cache.del(CacheKeys.JOBS_PUBLIC_P1);

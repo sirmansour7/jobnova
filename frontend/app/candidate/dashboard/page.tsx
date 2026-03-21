@@ -7,11 +7,46 @@ import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { ErrorBoundary } from "@/components/shared/error-boundary"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Briefcase, FileText, MessageSquare, Eye } from "lucide-react"
+import { Briefcase, FileText, MessageSquare, Eye, CheckCircle2, XCircle, Rocket, BookOpen, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { apiJson } from "@/src/lib/api"
 import { STATUS_LABEL, STATUS_COLOR } from "@/src/services/applications.service"
+
+// ─── CV Feedback types ────────────────────────────────────────────────────────
+interface CvFeedback {
+  score: number
+  strengths: string[]
+  weaknesses: string[]
+  improvements: string[]
+  recommendedSkills: string[]
+  analyzedAt: string
+}
+
+// ─── Score ring component ─────────────────────────────────────────────────────
+function ScoreRing({ score }: { score: number }) {
+  const r = 30
+  const circ = 2 * Math.PI * r
+  const offset = circ - (score / 100) * circ
+  const color = score >= 80 ? "#22c55e" : score >= 60 ? "#10b981" : score >= 40 ? "#f59e0b" : "#ef4444"
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="relative h-20 w-20">
+        <svg className="h-20 w-20 -rotate-90" viewBox="0 0 76 76">
+          <circle cx="38" cy="38" r={r} fill="none" stroke="currentColor" strokeWidth="6" className="text-secondary" />
+          <circle cx="38" cy="38" r={r} fill="none" stroke={color} strokeWidth="6"
+            strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+            style={{ transition: "stroke-dashoffset 0.6s ease" }} />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-lg font-bold text-foreground">{score}</span>
+        </div>
+      </div>
+      <span className="text-xs text-muted-foreground">جودة السيرة</span>
+    </div>
+  )
+}
 
 interface RecentApplication {
   id: string
@@ -54,6 +89,9 @@ export default function CandidateDashboard() {
   const [savedJobs, setSavedJobs] = useState<SavedJobStub[]>([])
   const [interviewsCount, setInterviewsCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [cvFeedback, setCvFeedback] = useState<CvFeedback | null>(null)
+  const [feedbackLoading, setFeedbackLoading] = useState(true)
+  const [reanalyzing, setReanalyzing] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -87,6 +125,30 @@ export default function CandidateDashboard() {
       })
       .catch(() => setLoading(false))
   }, [])
+
+  // Fetch CV feedback separately (non-blocking)
+  useEffect(() => {
+    apiJson<CvFeedback | null>("/v1/cv/me/feedback")
+      .then((fb) => setCvFeedback(fb))
+      .catch(() => setCvFeedback(null))
+      .finally(() => setFeedbackLoading(false))
+  }, [])
+
+  const handleReanalyze = async () => {
+    setReanalyzing(true)
+    try {
+      await apiJson("/v1/cv/re-analyze-pdf", { method: "POST" })
+      // Poll after 8 seconds for updated feedback
+      setTimeout(() => {
+        apiJson<CvFeedback | null>("/v1/cv/me/feedback")
+          .then((fb) => setCvFeedback(fb))
+          .catch(() => {})
+          .finally(() => setReanalyzing(false))
+      }, 8000)
+    } catch {
+      setReanalyzing(false)
+    }
+  }
 
   const statCards = [
     { label: "الطلبات المرسلة", value: loading ? <Skeleton className="h-8 w-16" /> : applicationsTotal, icon: <FileText className="h-5 w-5" />, color: "text-primary" },
@@ -198,6 +260,153 @@ export default function CandidateDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* ── CV Analysis Section ─────────────────────────────────────── */}
+          <Card className="border-border bg-card">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                تحليل السيرة الذاتية
+              </CardTitle>
+              <div className="flex gap-2">
+                {cvFeedback && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-xs text-muted-foreground"
+                    disabled={reanalyzing}
+                    onClick={handleReanalyze}
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${reanalyzing ? "animate-spin" : ""}`} />
+                    {reanalyzing ? "جاري التحليل..." : "إعادة التحليل"}
+                  </Button>
+                )}
+                <Link href="/candidate/cv-builder">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                    <Rocket className="h-3.5 w-3.5" />
+                    تحسين سيرتي
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {feedbackLoading ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}
+                </div>
+              ) : !cvFeedback ? (
+                <div className="flex flex-col items-center gap-3 py-8 text-center">
+                  <div className="rounded-full bg-secondary p-4">
+                    <FileText className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">لم يتم تحليل سيرتك الذاتية بعد</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      ارفع سيرتك الذاتية كـ PDF في صفحة المقابلة لتحصل على تحليل AI فوري
+                    </p>
+                  </div>
+                  <Link href="/candidate/cv-builder">
+                    <Button size="sm" className="mt-2 gap-1.5">
+                      <Rocket className="h-4 w-4" />
+                      أنشئ سيرتك الذاتية الآن
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Score header */}
+                  <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-start sm:gap-6">
+                    <ScoreRing score={cvFeedback.score} />
+                    <div className="flex-1 text-center sm:text-right">
+                      <p className="text-lg font-semibold text-foreground">
+                        {cvFeedback.score >= 80 ? "سيرتك الذاتية ممتازة 🎉"
+                          : cvFeedback.score >= 60 ? "سيرتك الذاتية جيدة ✅"
+                          : cvFeedback.score >= 40 ? "سيرتك الذاتية تحتاج تحسين ⚠️"
+                          : "سيرتك الذاتية تحتاج مراجعة شاملة ❌"}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        آخر تحليل: {new Date(cvFeedback.analyzedAt).toLocaleDateString("ar-EG")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 4-column feedback grid */}
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" dir="rtl">
+                    {/* Strengths */}
+                    {cvFeedback.strengths.length > 0 && (
+                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">نقاط القوة</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {cvFeedback.strengths.map((s, i) => (
+                            <li key={i} className="flex items-start gap-1.5 text-xs text-foreground/80">
+                              <span className="mt-0.5 text-emerald-500">•</span>
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Weaknesses */}
+                    {cvFeedback.weaknesses.length > 0 && (
+                      <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                          <span className="text-sm font-semibold text-red-600 dark:text-red-400">نقاط الضعف</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {cvFeedback.weaknesses.map((w, i) => (
+                            <li key={i} className="flex items-start gap-1.5 text-xs text-foreground/80">
+                              <span className="mt-0.5 text-red-500">•</span>
+                              {w}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Improvements */}
+                    {cvFeedback.improvements.length > 0 && (
+                      <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Rocket className="h-4 w-4 text-blue-500 shrink-0" />
+                          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">تحسينات مقترحة</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {cvFeedback.improvements.map((imp, i) => (
+                            <li key={i} className="flex items-start gap-1.5 text-xs text-foreground/80">
+                              <span className="mt-0.5 text-blue-500">→</span>
+                              {imp}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Recommended Skills */}
+                    {cvFeedback.recommendedSkills.length > 0 && (
+                      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <BookOpen className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">مهارات لازم تتعلمها</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {cvFeedback.recommendedSkills.map((sk, i) => (
+                            <span key={i} className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-700 dark:text-amber-300">
+                              {sk}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
         </DashboardLayout>
       </ProtectedRoute>

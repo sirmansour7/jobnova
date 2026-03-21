@@ -57,30 +57,44 @@ export class JobsController {
 
   @Get()
   @UseGuards(OptionalJwtAuthGuard)
-  findAll(
+  async findAll(
     @Query('search') search?: string,
     @Query('category') category?: string,
     @Query('jobType') jobType?: string,
     @Query('governorate') governorate?: string,
     @Query('salaryMin') salaryMin?: string,
     @Query('salaryMax') salaryMax?: string,
+    @Query('maxExperience') maxExperience?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Req() req?: Request & { user?: { sub: string; role: string } },
   ) {
-    return this.jobsService.findAll(
+    const result = await this.jobsService.findAll(
       {
         search,
-        category: toCategory(category),
-        jobType: toJobType(jobType),
+        category:      toCategory(category),
+        jobType:       toJobType(jobType),
         governorate,
-        salaryMin: salaryMin ? parseInt(salaryMin, 10) : undefined,
-        salaryMax: salaryMax ? parseInt(salaryMax, 10) : undefined,
-        page: page ? parseInt(page, 10) : undefined,
-        limit: limit ? parseInt(limit, 10) : undefined,
+        salaryMin:     salaryMin     ? parseInt(salaryMin, 10)     : undefined,
+        salaryMax:     salaryMax     ? parseInt(salaryMax, 10)     : undefined,
+        maxExperience: maxExperience ? parseInt(maxExperience, 10) : undefined,
+        page:          page          ? parseInt(page, 10)          : undefined,
+        limit:         limit         ? parseInt(limit, 10)         : undefined,
       },
       req?.user,
     );
+
+    // Enrich jobs with CV match scores for authenticated candidates.
+    // This is done in the controller so the cached public feed is untouched.
+    if (req?.user?.role === 'candidate') {
+      const enriched = await this.jobMatchService.enrichWithMatchScores(
+        req.user.sub,
+        result.items,
+      );
+      return { ...result, items: enriched };
+    }
+
+    return result;
   }
 
   // ─── Recommended jobs — must come before /:id ─────────────────────────────

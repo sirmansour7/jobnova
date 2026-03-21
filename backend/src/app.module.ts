@@ -23,6 +23,7 @@ import { SavedJobsModule } from './saved-jobs/saved-jobs.module';
 import { GovernoratesModule } from './governorates/governorates.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { QueuesModule } from './queues/queues.module';
+import { RemindersModule } from './reminders/reminders.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { QueuesModule } from './queues/queues.module';
     GovernoratesModule,
     NotificationsModule,
     QueuesModule,
+    RemindersModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: IpThrottlerGuard }],

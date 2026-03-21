@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   LogOut,
   Menu,
+  Brain,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -46,6 +47,7 @@ const candidateNav: NavItem[] = [
   { label: "الوظائف المحفوظة", href: "/candidate/saved-jobs", icon: <Bookmark className="h-4 w-4" /> },
   { label: "طلباتي", href: "/candidate/applications", icon: <FileText className="h-4 w-4" /> },
   { label: "السيرة الذاتية", href: "/candidate/cv-builder", icon: <FileText className="h-4 w-4" /> },
+  { label: "ذكاء السيرة الذاتية", href: "/candidate/cv-intelligence", icon: <Brain className="h-4 w-4" /> },
   { label: "الرسائل", href: "/candidate/messages", icon: <MessageSquare className="h-4 w-4" /> },
   { label: "الإعدادات", href: "/candidate/settings", icon: <Settings className="h-4 w-4" /> },
 ]

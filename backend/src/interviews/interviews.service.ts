@@ -3,7 +3,10 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Response as ExpressResponse } from 'express';
 import { HrDecision, InterviewType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrgAuthService } from '../org/org-auth.service';
@@ -53,10 +56,13 @@ const SCHEDULED_INTERVIEW_INCLUDE = {
 
 @Injectable()
 export class InterviewsService {
+  private readonly logger = new Logger(InterviewsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly orgAuth: OrgAuthService,
     private readonly aiProducer: AiProducer,
+    private readonly config: ConfigService,
   ) {}
 
   async startInterview(applicationId: string, candidateId: string) {
@@ -168,6 +174,196 @@ export class InterviewsService {
     }
 
     return this.toSessionResponse(updated);
+  }
+
+  /**
+   * Streaming version of answerInterview.
+   * Saves the candidate answer, then streams the next AI question token-by-token
+   * using Groq (falls back to static questions when API key is absent).
+   *
+   * Caller MUST set SSE response headers and call res.flushHeaders() BEFORE
+   * invoking this method.
+   */
+  async answerInterviewStream(
+    sessionId: string,
+    candidateId: string,
+    content: string,
+    res: ExpressResponse,
+  ): Promise<void> {
+    // ── 1. Validate ───────────────────────────────────────────────────────────
+    const session = await this.prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      select: {
+        candidateId: true,
+        status: true,
+        currentStep: true,
+        messages: {
+          orderBy: { createdAt: 'asc' as const },
+          select: { role: true, content: true },
+        },
+        job: { select: { title: true } },
+        candidate: { select: { fullName: true } },
+      },
+    });
+
+    if (!session) throw new NotFoundException('Session not found');
+    if (session.candidateId !== candidateId)
+      throw new ForbiddenException('Not your interview session');
+    if (session.status !== 'active')
+      throw new BadRequestException('Interview already completed');
+
+    const contentTrimmed = (content ?? '').trim();
+    if (!contentTrimmed)
+      throw new BadRequestException('Answer cannot be empty');
+
+    const nextStep = session.currentStep + 1;
+    const isLastQuestion = nextStep >= INTERVIEW_QUESTIONS_COUNT;
+
+    // ── 2. Persist candidate answer + update session ──────────────────────────
+    await this.prisma.$transaction([
+      this.prisma.interviewMessage.create({
+        data: { sessionId, role: 'candidate', content: contentTrimmed },
+      }),
+      this.prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: {
+          currentStep: nextStep,
+          ...(isLastQuestion && {
+            status: 'completed',
+            completedAt: new Date(),
+          }),
+        },
+      }),
+    ]);
+
+    // ── 3. Last question → complete ───────────────────────────────────────────
+    if (isLastQuestion) {
+      void this.aiProducer.queueInterviewSummary(sessionId);
+      this.sseWrite(res, { type: 'done', status: 'completed', step: nextStep });
+      res.end();
+      return;
+    }
+
+    // ── 4. Build Groq conversation history ───────────────────────────────────
+    const jobTitle = session.job?.title ?? 'الوظيفة';
+    const candidateName = session.candidate?.fullName ?? 'المرشح';
+
+    const systemPrompt =
+      `أنت محاور توظيف ذكي اسمك "نوفا" تعمل لمنصة JobNova المصرية.\n` +
+      `تجري مقابلة تعارف مع مرشح اسمه "${candidateName}" لوظيفة "${jobTitle}".\n\n` +
+      `هدفك جمع هذه المعلومات بشكل محادثة طبيعية (واحدة تلو الأخرى):\n` +
+      `1. الخلفية المهنية وسنوات الخبرة\n` +
+      `2. أهم المهارات التقنية\n` +
+      `3. الراتب المتوقع (جنيه مصري فقط)\n` +
+      `4. موعد الإتاحة للعمل\n\n` +
+      `قواعد صارمة:\n` +
+      `- سؤال واحد فقط في كل رد\n` +
+      `- ردود قصيرة (2-3 جمل كحد أقصى)\n` +
+      `- العربية الفصحى البسيطة\n` +
+      `- شجّع المرشح بجملة قصيرة ثم اسأل السؤال التالي\n` +
+      `- لا تكرر أسئلة سبق طرحها\n` +
+      `- بعد جمع كل المعلومات: اشكر "${candidateName}" وأخبره أن بياناته ستُرسل للمسؤول`;
+
+    const groqHistory = [
+      ...session.messages.map((m) => ({
+        role: m.role === 'bot' ? ('assistant' as const) : ('user' as const),
+        content: m.content,
+      })),
+      { role: 'user' as const, content: contentTrimmed },
+    ];
+
+    // ── 5. Stream from Groq (or fallback) ────────────────────────────────────
+    const apiKey = this.config.get<string>('GROQ_API_KEY');
+    let fullContent = '';
+
+    if (apiKey) {
+      try {
+        const groqRes = await fetch(
+          'https://api.groq.com/openai/v1/chat/completions',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'llama-3.1-8b-instant',
+              max_tokens: 150,
+              temperature: 0.7,
+              stream: true,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                ...groqHistory,
+              ],
+            }),
+          },
+        );
+
+        if (!groqRes.ok || !groqRes.body) {
+          throw new Error(`Groq ${groqRes.status}: ${groqRes.statusText}`);
+        }
+
+        const reader = groqRes.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+
+        outer: while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop() ?? '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data: ')) continue;
+            const payload = trimmed.slice(6).trim();
+            if (payload === '[DONE]') break outer;
+            try {
+              const parsed = JSON.parse(payload) as {
+                choices?: Array<{ delta?: { content?: string } }>;
+              };
+              const token = parsed.choices?.[0]?.delta?.content ?? '';
+              if (token) {
+                fullContent += token;
+                this.sseWrite(res, { type: 'token', content: token });
+              }
+            } catch {
+              // skip malformed SSE lines
+            }
+          }
+        }
+      } catch (err) {
+        this.logger.warn(`Groq streaming failed, using fallback: ${String(err)}`);
+        // Fallback handled below
+      }
+    }
+
+    // Fallback: static question when Groq is unavailable or errored
+    if (!fullContent) {
+      const fallback = INTERVIEW_QUESTIONS[nextStep];
+      fullContent = fallback;
+      this.sseWrite(res, { type: 'token', content: fallback });
+    }
+
+    // ── 6. Persist AI response ───────────────────────────────────────────────
+    const saved = await this.prisma.interviewMessage.create({
+      data: { sessionId, role: 'bot', content: fullContent },
+    });
+
+    this.sseWrite(res, {
+      type: 'done',
+      status: 'active',
+      step: nextStep,
+      messageId: saved.id,
+    });
+    res.end();
+  }
+
+  /** Writes a single SSE data line to the response. */
+  private sseWrite(res: ExpressResponse, payload: Record<string, unknown>): void {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
   }
 
   async getSession(sessionId: string, candidateId: string) {
