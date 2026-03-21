@@ -8,7 +8,7 @@ import {
   type JobApplication,
   type ApplicationStatus,
 } from "@/src/services/applications.service"
-import { type JobListItem } from "@/src/services/jobs.service"
+import { getHrJobs, type JobListItem } from "@/src/services/jobs.service"
 
 export interface PipelineStage {
   id: ApplicationStatus
@@ -24,18 +24,21 @@ const STAGES: { id: ApplicationStatus; label: string }[] = [
 ]
 
 export function useHrPipeline(jobId?: string) {
-  const [jobs, setJobs]     = useState<JobListItem[]>([])
-  const [stages, setStages] = useState<PipelineStage[]>(
+  const [jobs, setJobs]         = useState<JobListItem[]>([])
+  const [jobsLoading, setJobsLoading] = useState(true)
+  const [stages, setStages]     = useState<PipelineStage[]>(
     STAGES.map((s) => ({ ...s, candidates: [] }))
   )
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState<string | null>(null)
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState<string | null>(null)
 
-  // Load HR's jobs on mount
+  // Load HR's scoped jobs on mount
   useEffect(() => {
-    apiJson<JobListItem[] | { items: JobListItem[] }>("/v1/jobs")
-      .then((res) => setJobs(Array.isArray(res) ? res : res.items ?? []))
+    setJobsLoading(true)
+    getHrJobs({ limit: 100 })
+      .then((items) => setJobs(items))
       .catch(() => setJobs([]))
+      .finally(() => setJobsLoading(false))
   }, [])
 
   // Load applications when jobId changes
@@ -90,6 +93,6 @@ export function useHrPipeline(jobId?: string) {
     [stages]
   )
 
-  return { jobs, stages, loading, error, moveCandidate }
+  return { jobs, jobsLoading, stages, loading, error, moveCandidate }
 }
 

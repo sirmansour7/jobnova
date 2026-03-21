@@ -1,6 +1,7 @@
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsInt,
@@ -76,4 +77,12 @@ export class CreateJobDto {
   @IsDateString()
   @IsOptional()
   expiresAt?: string;
+
+  /**
+   * When false the job is saved as a draft (isActive=false) and won't appear
+   * in the public job listing.  Defaults to true (published).
+   */
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }

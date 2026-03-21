@@ -6,11 +6,12 @@ import {
   Patch,
   Post,
   Req,
+  Res,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
-import type { Request } from 'express';
+import type { Request, Response as ExpressResponse } from 'express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -53,6 +54,47 @@ export class InterviewsController {
       req.user.sub,
       dto.content,
     );
+  }
+
+  /**
+   * POST /interviews/:id/answer/stream
+   * Streams the AI-generated next question token-by-token via Server-Sent Events.
+   * The frontend reads this with fetch + ReadableStream (not EventSource,
+   * because EventSource only supports GET).
+   *
+   * SSE event shapes:
+   *   { type: 'token',  content: string }          — AI token chunk
+   *   { type: 'done',   status: 'active'|'completed', step: number, messageId?: string }
+   *   { type: 'error',  message: string }
+   */
+  @Post(':id/answer/stream')
+  async answerStream(
+    @Param('id', ParseCuidPipe) id: string,
+    @Body(VP) dto: AnswerInterviewDto,
+    @Req() req: Request & { user: { sub: string } },
+    @Res() res: ExpressResponse,
+  ) {
+    // Set SSE headers BEFORE any async work to prevent buffering
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx proxy buffering
+    res.flushHeaders();
+
+    try {
+      await this.interviewsService.answerInterviewStream(
+        id,
+        req.user.sub,
+        dto.content,
+        res,
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'حدث خطأ';
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`);
+        res.end();
+      }
+    }
   }
 
   @Get(':id')

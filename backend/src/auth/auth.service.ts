@@ -496,6 +496,71 @@ export class AuthService {
   }
 
   // ─────────────────────────────────────────
+  // Google OAuth
+  // ─────────────────────────────────────────
+
+  async googleLogin(profile: {
+    googleId: string;
+    email: string;
+    fullName: string;
+  }): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: {
+      id: string;
+      fullName: string;
+      email: string;
+      role: Role;
+      emailVerified: boolean;
+    };
+  }> {
+    const normalizedEmail = profile.email.toLowerCase();
+
+    let user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (user) {
+      if (user.deletedAt) throw new ForbiddenException('Account disabled');
+    } else {
+      const passwordHash = await bcrypt.hash(
+        randomBytes(32).toString('hex'),
+        BCRYPT_ROUNDS,
+      );
+      user = await this.prisma.user.create({
+        data: {
+          fullName: profile.fullName,
+          email: normalizedEmail,
+          passwordHash,
+          role: Role.candidate,
+          emailVerified: true,
+        },
+      });
+      this.audit.log({ event: AuditEvent.REGISTER, userId: user.id });
+    }
+
+    const { accessToken, refreshToken } = this.issueTokens(
+      user.id,
+      user.role,
+      user.tokenVersion,
+    );
+    await this.tokenStore.store(user.id, refreshToken);
+    this.audit.log({ event: AuditEvent.LOGIN_SUCCESS, userId: user.id });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        emailVerified: user.emailVerified,
+      },
+    };
+  }
+
+  // ─────────────────────────────────────────
   // Helpers
   // ─────────────────────────────────────────
 

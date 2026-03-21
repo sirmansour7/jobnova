@@ -99,6 +99,7 @@ export default function HrInterviewsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingInterview, setEditingInterview] = useState<ScheduledInterview | null>(null)
   const [jobs, setJobs] = useState<JobOption[]>([])
+  const [jobsLoading, setJobsLoading] = useState(true)
   const [candidates, setCandidates] = useState<ApplicationOption[]>([])
   const [selectedJobId, setSelectedJobId] = useState("")
   const [selectedApplicationId, setSelectedApplicationId] = useState("")
@@ -128,12 +129,14 @@ export default function HrInterviewsPage() {
   }, [])
 
   useEffect(() => {
-    apiJson<any>("/v1/jobs?limit=100")
+    setJobsLoading(true)
+    apiJson<{ items: JobOption[]; total: number } | JobOption[]>("/v1/hr/jobs?limit=100")
       .then((res) => {
-        const items = Array.isArray(res) ? res : res?.items ?? res?.data ?? []
-        setJobs(items.map((j: any) => ({ id: j.id, title: j.title })))
+        const items: JobOption[] = Array.isArray(res) ? res : (res?.items ?? [])
+        setJobs(items.map((j) => ({ id: j.id, title: j.title })))
       })
-      .catch(() => {})
+      .catch(() => setJobs([]))
+      .finally(() => setJobsLoading(false))
   }, [])
 
   useEffect(() => {
@@ -383,16 +386,38 @@ export default function HrInterviewsPage() {
               <div className="grid gap-4 py-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">الوظيفة</label>
-                  <Select value={selectedJobId} onValueChange={setSelectedJobId}>
+                  <Select
+                    value={selectedJobId}
+                    onValueChange={setSelectedJobId}
+                    disabled={jobsLoading}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر الوظيفة" />
+                      <SelectValue
+                        placeholder={
+                          jobsLoading
+                            ? "جاري تحميل الوظائف..."
+                            : jobs.length === 0
+                              ? "لا توجد وظائف متاحة"
+                              : "اختر الوظيفة"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {jobs.map((j) => (
-                        <SelectItem key={j.id} value={j.id}>
-                          {j.title}
-                        </SelectItem>
-                      ))}
+                      {jobsLoading ? (
+                        <div className="py-2 px-3 text-sm text-muted-foreground text-center">
+                          جاري التحميل...
+                        </div>
+                      ) : jobs.length === 0 ? (
+                        <div className="py-2 px-3 text-sm text-muted-foreground text-center">
+                          لا توجد وظائف متاحة
+                        </div>
+                      ) : (
+                        jobs.map((j) => (
+                          <SelectItem key={j.id} value={j.id}>
+                            {j.title}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

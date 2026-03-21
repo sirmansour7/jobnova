@@ -18,11 +18,17 @@ import {
   LineChart,
   Line,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts"
 
 type ApplicationsByStatus = { status: string; count: number }
 type TopJob = { title: string; applicationCount: number }
 type ApplicationsOverTime = { date: string; count: number }
+type HireFunnelItem = { stage: string; count: number }
+type TopSkillItem = { skill: string; count: number }
+type ApplicationsByCategory = { category: string; count: number }
 
 interface HrAnalyticsResponse {
   totalJobs: number
@@ -31,6 +37,11 @@ interface HrAnalyticsResponse {
   applicationsByStatus: ApplicationsByStatus[]
   topJobs: TopJob[]
   applicationsOverTime: ApplicationsOverTime[]
+  hireFunnel: HireFunnelItem[]
+  topApplicantSkills: TopSkillItem[]
+  applicationsByCategory: ApplicationsByCategory[]
+  avgDaysToHire: number
+  hireRate: number
 }
 
 const STATUS_LABEL_AR: Record<string, string> = {
@@ -40,12 +51,39 @@ const STATUS_LABEL_AR: Record<string, string> = {
   HIRED: "مقبول",
 }
 
+const FUNNEL_LABEL_AR: Record<string, string> = {
+  APPLIED: "تقديم",
+  SHORTLISTED: "قائمة مختصرة",
+  HIRED: "توظيف",
+}
+
+const CATEGORY_LABEL_AR: Record<string, string> = {
+  TECHNOLOGY: "تكنولوجيا",
+  MARKETING: "تسويق",
+  FINANCE: "مالية",
+  HEALTHCARE: "صحة",
+  EDUCATION: "تعليم",
+  ENGINEERING: "هندسة",
+  SALES: "مبيعات",
+  DESIGN: "تصميم",
+  OPERATIONS: "عمليات",
+  LEGAL: "قانون",
+  HR: "موارد بشرية",
+  CUSTOMER_SERVICE: "خدمة عملاء",
+  OTHER: "أخرى",
+}
+
 const COLORS: string[] = [
   "hsl(var(--chart-1))",
   "hsl(var(--chart-2))",
   "hsl(var(--chart-3))",
   "hsl(var(--chart-4))",
   "hsl(var(--chart-5))",
+  "#6366f1",
+  "#f59e0b",
+  "#10b981",
+  "#ef4444",
+  "#8b5cf6",
 ]
 
 function formatDateLabel(iso: string) {
@@ -103,8 +141,8 @@ export default function HrAnalyticsPage() {
           </div>
 
           {loading && !data ? (
-            <div className="grid gap-4 sm:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
+            <div className="grid gap-4 sm:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
                 <Card key={i} className="border-border bg-card">
                   <CardContent className="p-4">
                     <Skeleton className="h-6 w-24 mb-2" />
@@ -123,7 +161,8 @@ export default function HrAnalyticsPage() {
 
           {data && (
             <>
-              <div className="grid gap-4 sm:grid-cols-3">
+              {/* ── Metric Cards ── */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 <Card className="border-border bg-card">
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">إجمالي الوظائف</p>
@@ -148,8 +187,25 @@ export default function HrAnalyticsPage() {
                     </p>
                   </CardContent>
                 </Card>
+                <Card className="border-border bg-card">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground">نسبة التوظيف</p>
+                    <p className="mt-2 text-2xl font-bold text-foreground">
+                      {data.hireRate}%
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="border-border bg-card">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground">متوسط أيام التوظيف</p>
+                    <p className="mt-2 text-2xl font-bold text-foreground">
+                      {data.avgDaysToHire} يوم
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
 
+              {/* ── Charts Row 1 ── */}
               <div className="grid gap-6 lg:grid-cols-2">
                 <Card className="border-border bg-card">
                   <CardHeader>
@@ -170,7 +226,7 @@ export default function HrAnalyticsPage() {
                         <XAxis dataKey="name" tickLine={false} />
                         <YAxis allowDecimals={false} />
                         <Tooltip
-                          formatter={(v: any) => [`${v}`, "عدد الطلبات"]}
+                          formatter={(v: number) => [`${v}`, "عدد الطلبات"]}
                           labelFormatter={(l) => `الحالة: ${l}`}
                         />
                         <Legend />
@@ -198,7 +254,7 @@ export default function HrAnalyticsPage() {
                         <XAxis dataKey="label" tickLine={false} />
                         <YAxis allowDecimals={false} />
                         <Tooltip
-                          formatter={(v: any) => [`${v}`, "عدد الطلبات"]}
+                          formatter={(v: number) => [`${v}`, "عدد الطلبات"]}
                           labelFormatter={(l) => `اليوم: ${l}`}
                         />
                         <Legend />
@@ -215,38 +271,155 @@ export default function HrAnalyticsPage() {
                 </Card>
               </div>
 
-              <Card className="border-border bg-card">
-                <CardHeader>
-                  <CardTitle className="text-foreground">
-                    أكثر الوظائف طلبًا
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {data.topJobs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      لا توجد بيانات متاحة بعد.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {data.topJobs.map((job, idx) => (
-                        <div
-                          key={`${job.title}-${idx}`}
-                          className="flex items-center justify-between rounded-lg border border-border bg-secondary/20 px-3 py-2"
+              {/* ── Charts Row 2 ── */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Hire Funnel */}
+                <Card className="border-border bg-card">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">
+                      قمع التوظيف
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[320px]">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart
+                        layout="vertical"
+                        data={(data.hireFunnel ?? []).map((row) => ({
+                          name: FUNNEL_LABEL_AR[row.stage] ?? row.stage,
+                          count: row.count,
+                        }))}
+                        margin={{ left: 20, right: 20 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" allowDecimals={false} />
+                        <YAxis type="category" dataKey="name" tickLine={false} width={90} />
+                        <Tooltip
+                          formatter={(v: number) => [`${v}`, "عدد المرشحين"]}
+                        />
+                        <Bar dataKey="count" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Applications by Category */}
+                <Card className="border-border bg-card">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">
+                      الطلبات حسب التصنيف
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[320px] flex items-center justify-center">
+                    {(data.applicationsByCategory ?? []).length === 0 ? (
+                      <p className="text-sm text-muted-foreground">لا توجد بيانات</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={(data.applicationsByCategory ?? []).map((row) => ({
+                              name: CATEGORY_LABEL_AR[row.category] ?? row.category,
+                              value: row.count,
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            dataKey="value"
+                            label={({ name, percent }) =>
+                              `${name} (${Math.round((percent ?? 0) * 100)}%)`
+                            }
+                          >
+                            {(data.applicationsByCategory ?? []).map((_, idx) => (
+                              <Cell
+                                key={idx}
+                                fill={COLORS[idx % COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(v: number) => [`${v}`, "عدد الطلبات"]}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* ── Charts Row 3 ── */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Top Applicant Skills */}
+                <Card className="border-border bg-card">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">
+                      أبرز مهارات المرشحين
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[320px]">
+                    {(data.topApplicantSkills ?? []).length === 0 ? (
+                      <p className="text-sm text-muted-foreground pt-4">لا توجد بيانات</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart
+                          data={(data.topApplicantSkills ?? []).map((row) => ({
+                            name: row.skill,
+                            count: row.count,
+                          }))}
+                          margin={{ bottom: 40 }}
                         >
-                          <div className="flex flex-col">
-                            <span className="font-medium text-foreground">
-                              {job.title}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {job.applicationCount} طلب
-                            </span>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="name"
+                            tickLine={false}
+                            angle={-35}
+                            textAnchor="end"
+                            interval={0}
+                          />
+                          <YAxis allowDecimals={false} />
+                          <Tooltip
+                            formatter={(v: number) => [`${v}`, "عدد المرشحين"]}
+                            labelFormatter={(l) => `المهارة: ${l}`}
+                          />
+                          <Bar dataKey="count" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Top Jobs */}
+                <Card className="border-border bg-card">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">
+                      أكثر الوظائف طلبًا
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {data.topJobs.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        لا توجد بيانات متاحة بعد.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {data.topJobs.map((job, idx) => (
+                          <div
+                            key={`${job.title}-${idx}`}
+                            className="flex items-center justify-between rounded-lg border border-border bg-secondary/20 px-3 py-2"
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-medium text-foreground">
+                                {job.title}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {job.applicationCount} طلب
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </>
           )}
         </div>
@@ -254,4 +427,3 @@ export default function HrAnalyticsPage() {
     </ProtectedRoute>
   )
 }
-

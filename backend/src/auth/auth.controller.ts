@@ -7,11 +7,13 @@ import {
   Patch,
   Post,
   Req,
+  Res,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import { ThrottlerGuard, Throttle, SkipThrottle } from '@nestjs/throttler';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -22,6 +24,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 const VP = new ValidationPipe({
   whitelist: true,
@@ -43,7 +46,10 @@ function getUA(req: Request): string {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('register')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -116,5 +122,33 @@ export class AuthController {
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.authService.updateProfile(req.user.sub, body);
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @SkipThrottle()
+  googleAuth() {
+    // Passport redirects to Google — no body needed
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @SkipThrottle()
+  async googleCallback(
+    @Req() req: Request & { user: { googleId: string; email: string; fullName: string } },
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.googleLogin(req.user);
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
+    const params = new URLSearchParams({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      userId: result.user.id,
+      role: result.user.role,
+      fullName: result.user.fullName,
+      email: result.user.email,
+    });
+    res.redirect(`${frontendUrl}/auth/google/callback?${params.toString()}`);
   }
 }

@@ -271,6 +271,9 @@ model Application {
   coverLetter String?
   screeningAnswers     Json?
   screeningCompletedAt DateTime?
+  /** PDF uploaded by the candidate during the interview chat */
+  cvUrl        String?
+  cvUploadedAt DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 

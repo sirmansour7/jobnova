@@ -197,7 +197,7 @@ function DroppableColumn({
 
 export default function PipelinePage() {
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>()
-  const { jobs, stages, loading, error, moveCandidate } = useHrPipeline(selectedJobId)
+  const { jobs, jobsLoading, stages, loading, error, moveCandidate } = useHrPipeline(selectedJobId)
   const allowedRoles = useMemo(() => ["hr"] as const, [])
 
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -249,16 +249,35 @@ export default function PipelinePage() {
                 <Select
                   value={selectedJobId ?? ""}
                   onValueChange={(val) => setSelectedJobId(val || undefined)}
+                  disabled={jobsLoading}
                 >
                   <SelectTrigger className="w-72">
-                    <SelectValue placeholder="اختر وظيفة لعرض المرشحين" />
+                    <SelectValue
+                      placeholder={
+                        jobsLoading
+                          ? "جاري تحميل الوظائف..."
+                          : jobs.length === 0
+                            ? "لا توجد وظائف متاحة"
+                            : "اختر وظيفة لعرض المرشحين"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {jobs.map((job) => (
-                      <SelectItem key={job.id} value={job.id}>
-                        {job.title}
-                      </SelectItem>
-                    ))}
+                    {jobsLoading ? (
+                      <div className="py-2 px-3 text-sm text-muted-foreground text-center">
+                        جاري التحميل...
+                      </div>
+                    ) : jobs.length === 0 ? (
+                      <div className="py-2 px-3 text-sm text-muted-foreground text-center">
+                        لا توجد وظائف متاحة
+                      </div>
+                    ) : (
+                      jobs.map((job) => (
+                        <SelectItem key={job.id} value={job.id}>
+                          {job.title}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

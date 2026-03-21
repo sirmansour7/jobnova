@@ -16,4 +16,7 @@ export const envValidationSchema = Joi.object({
   THROTTLE_LIMIT: Joi.number().default(100),
   SENTRY_DSN: Joi.string().uri().optional(),
   REDIS_URL: Joi.string().uri().optional(),
+  GOOGLE_CLIENT_ID: Joi.string().optional(),
+  GOOGLE_CLIENT_SECRET: Joi.string().optional(),
+  BACKEND_URL: Joi.string().uri().optional(),
 });

@@ -398,4 +398,274 @@ export class EmailService {
       return false;
     }
   }
+
+  async sendInterviewReminderEmail(
+    to: string,
+    fullName: string,
+    jobTitle: string,
+    scheduledAt: Date,
+    role: 'candidate' | 'hr',
+  ): Promise<boolean> {
+    this.logger.log(
+      `Sending interview reminder email: to=${to} role=${role} jobTitle=${jobTitle}`,
+    );
+
+    const safeName = this.escapeHtml(fullName);
+    const safeJobTitle = this.escapeHtml(jobTitle);
+    const formattedDate = this.escapeHtml(
+      scheduledAt.toLocaleString('ar-EG', {
+        dateStyle: 'full',
+        timeStyle: 'short',
+      }),
+    );
+
+    const subject =
+      role === 'candidate'
+        ? `تذكير: مقابلتك غداً - ${jobTitle}`
+        : `تذكير: مقابلة مجدولة غداً - ${jobTitle}`;
+    const safeSubject = this.escapeHtml(subject);
+
+    const heading =
+      role === 'candidate' ? 'تذكير بموعد مقابلتك' : 'تذكير: مقابلة مجدولة';
+    const bodyText =
+      role === 'candidate'
+        ? `مرحباً ${safeName}، هذا تذكير بأن لديك مقابلة عمل لوظيفة &ldquo;${safeJobTitle}&rdquo; مجدولة في: ${formattedDate}. نتمنى لك حظاً موفقاً!`
+        : `مرحباً ${safeName}، تذكير بأن هناك مقابلة مجدولة لوظيفة &ldquo;${safeJobTitle}&rdquo; في: ${formattedDate}. يرجى الاستعداد للمقابلة.`;
+
+    try {
+      const result = await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        html: `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>${safeSubject}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#0B1220;font-family:Arial,system-ui,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0B1220;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#0F172A;border-radius:10px;border:1px solid #1E293B;box-shadow:0 12px 40px rgba(15,23,42,0.7);">
+            <tr>
+              <td style="padding:20px 24px 12px 24px;border-bottom:1px solid #1E293B;">
+                <table role="presentation" width="100%">
+                  <tr>
+                    <td align="right" style="font-size:20px;font-weight:700;color:#F8FAFC;">JobNova</td>
+                    <td align="left" style="font-size:11px;color:#93C5FD;">منصة التوظيف الذكية</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;">
+                <h1 style="margin:0 0 12px 0;font-size:20px;line-height:1.4;color:#F8FAFC;">${heading}</h1>
+                <p style="margin:0 0 16px 0;font-size:14px;line-height:1.7;color:#E5E7EB;">${bodyText}</p>
+                <p style="margin:0;font-size:12px;color:#94A3B8;">JobNova · منصة التوظيف الذكية</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 24px 20px 24px;border-top:1px solid #1E293B;">
+                <p style="margin:0;font-size:11px;color:#6B7280;text-align:center;">© ${new Date().getFullYear()} JobNova. جميع الحقوق محفوظة.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+        `,
+      });
+
+      const id = result?.data?.id;
+      if (!id) {
+        this.logger.error(
+          `Interview reminder email returned no id: to=${to} response=${JSON.stringify(result)}`,
+        );
+        return false;
+      }
+      this.logger.log(`Interview reminder email sent: to=${to} resendId=${id}`);
+      return true;
+    } catch (err) {
+      const e = err as { name?: string; message?: string };
+      this.logger.error(
+        `Failed to send interview reminder email: to=${to} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
+      );
+      return false;
+    }
+  }
+
+  async sendPendingApplicationsEmail(
+    to: string,
+    fullName: string,
+    pendingCount: number,
+    jobTitle: string,
+  ): Promise<boolean> {
+    this.logger.log(
+      `Sending pending applications email: to=${to} count=${pendingCount} job=${jobTitle}`,
+    );
+
+    const safeName = this.escapeHtml(fullName);
+    const safeJobTitle = this.escapeHtml(jobTitle);
+    const subject = `تذكير: طلبات معلقة تحتاج مراجعتك - ${jobTitle}`;
+    const safeSubject = this.escapeHtml(subject);
+
+    try {
+      const result = await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        html: `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>${safeSubject}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#0B1220;font-family:Arial,system-ui,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0B1220;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#0F172A;border-radius:10px;border:1px solid #1E293B;box-shadow:0 12px 40px rgba(15,23,42,0.7);">
+            <tr>
+              <td style="padding:20px 24px 12px 24px;border-bottom:1px solid #1E293B;">
+                <table role="presentation" width="100%">
+                  <tr>
+                    <td align="right" style="font-size:20px;font-weight:700;color:#F8FAFC;">JobNova</td>
+                    <td align="left" style="font-size:11px;color:#93C5FD;">منصة التوظيف الذكية</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;">
+                <h1 style="margin:0 0 12px 0;font-size:20px;line-height:1.4;color:#F8FAFC;">طلبات توظيف معلقة</h1>
+                <p style="margin:0 0 16px 0;font-size:14px;line-height:1.7;color:#E5E7EB;">
+                  مرحباً ${safeName}، يوجد <strong style="color:#F8FAFC;">${pendingCount}</strong> طلب توظيف معلق لوظيفة &ldquo;${safeJobTitle}&rdquo; منذ أكثر من 7 أيام ويحتاج إلى مراجعتك.
+                </p>
+                <p style="margin:0;font-size:12px;color:#94A3B8;">يرجى مراجعة لوحة التحكم لاتخاذ القرار المناسب.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 24px 20px 24px;border-top:1px solid #1E293B;">
+                <p style="margin:0;font-size:11px;color:#6B7280;text-align:center;">© ${new Date().getFullYear()} JobNova. جميع الحقوق محفوظة.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+        `,
+      });
+
+      const id = result?.data?.id;
+      if (!id) {
+        this.logger.error(
+          `Pending applications email returned no id: to=${to} response=${JSON.stringify(result)}`,
+        );
+        return false;
+      }
+      this.logger.log(
+        `Pending applications email sent: to=${to} resendId=${id}`,
+      );
+      return true;
+    } catch (err) {
+      const e = err as { name?: string; message?: string };
+      this.logger.error(
+        `Failed to send pending applications email: to=${to} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
+      );
+      return false;
+    }
+  }
+
+  async sendJobExpiryEmail(
+    to: string,
+    fullName: string,
+    jobTitle: string,
+    expiresAt: Date,
+  ): Promise<boolean> {
+    this.logger.log(
+      `Sending job expiry email: to=${to} jobTitle=${jobTitle} expiresAt=${expiresAt.toISOString()}`,
+    );
+
+    const safeName = this.escapeHtml(fullName);
+    const safeJobTitle = this.escapeHtml(jobTitle);
+    const formattedExpiry = this.escapeHtml(
+      expiresAt.toLocaleString('ar-EG', { dateStyle: 'full' }),
+    );
+    const subject = `تنبيه: وظيفة ستنتهي قريباً - ${jobTitle}`;
+    const safeSubject = this.escapeHtml(subject);
+
+    try {
+      const result = await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        html: `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>${safeSubject}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#0B1220;font-family:Arial,system-ui,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0B1220;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#0F172A;border-radius:10px;border:1px solid #1E293B;box-shadow:0 12px 40px rgba(15,23,42,0.7);">
+            <tr>
+              <td style="padding:20px 24px 12px 24px;border-bottom:1px solid #1E293B;">
+                <table role="presentation" width="100%">
+                  <tr>
+                    <td align="right" style="font-size:20px;font-weight:700;color:#F8FAFC;">JobNova</td>
+                    <td align="left" style="font-size:11px;color:#93C5FD;">منصة التوظيف الذكية</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;">
+                <h1 style="margin:0 0 12px 0;font-size:20px;line-height:1.4;color:#F8FAFC;">تنبيه انتهاء صلاحية وظيفة</h1>
+                <p style="margin:0 0 16px 0;font-size:14px;line-height:1.7;color:#E5E7EB;">
+                  مرحباً ${safeName}، وظيفة &ldquo;${safeJobTitle}&rdquo; ستنتهي صلاحيتها في <strong style="color:#F97316;">${formattedExpiry}</strong>. يرجى تجديد الإعلان أو إيقاف القبول إذا كانت الوظيفة قد اكتملت.
+                </p>
+                <p style="margin:0;font-size:12px;color:#94A3B8;">يرجى اتخاذ الإجراء المناسب من لوحة التحكم.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 24px 20px 24px;border-top:1px solid #1E293B;">
+                <p style="margin:0;font-size:11px;color:#6B7280;text-align:center;">© ${new Date().getFullYear()} JobNova. جميع الحقوق محفوظة.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+        `,
+      });
+
+      const id = result?.data?.id;
+      if (!id) {
+        this.logger.error(
+          `Job expiry email returned no id: to=${to} response=${JSON.stringify(result)}`,
+        );
+        return false;
+      }
+      this.logger.log(`Job expiry email sent: to=${to} resendId=${id}`);
+      return true;
+    } catch (err) {
+      const e = err as { name?: string; message?: string };
+      this.logger.error(
+        `Failed to send job expiry email: to=${to} error=${e?.name ?? 'Error'}: ${e?.message ?? String(err)}`,
+      );
+      return false;
+    }
+  }
 }
