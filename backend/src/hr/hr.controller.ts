@@ -71,6 +71,7 @@ export class HrController {
     const where = {
       organizationId,
       deletedAt: null as null,
+      isActive: true,
       ...(search
         ? { title: { contains: search, mode: 'insensitive' as const } }
         : {}),

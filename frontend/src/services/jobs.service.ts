@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { apiJson } from "@/src/lib/api"
 
 export interface JobListItem {
@@ -67,15 +67,16 @@ interface RawJobsResponse {
 
 export async function getJobsPaginated(filters: JobFilters = {}): Promise<JobsResponse> {
   const params = new URLSearchParams()
+  // Only append defined/truthy filter values — undefined means "no filter"
   if (filters.category)                    params.set("category",      filters.category)
   if (filters.jobType)                     params.set("jobType",       filters.jobType)
   if (filters.governorate)                 params.set("governorate",   filters.governorate)
   if (filters.search)                      params.set("search",        filters.search)
   if (filters.maxExperience !== undefined) params.set("maxExperience", String(filters.maxExperience))
-  if (filters.page)                        params.set("page",          String(filters.page))
-  if (filters.limit)                       params.set("limit",         String(filters.limit))
-  const qs = params.toString()
-  const raw = await apiJson<RawJobsResponse>(`/v1/jobs${qs ? `?${qs}` : ""}`)
+  // Always send page + limit so backend never silently defaults to wrong values
+  params.set("page",  String(Math.max(1, filters.page  ?? 1)))
+  params.set("limit", String(Math.max(1, filters.limit ?? 20)))
+  const raw = await apiJson<RawJobsResponse>(`/v1/jobs?${params.toString()}`)
   // Flatten relational location objects into the flat strings JobListItem expects.
   return {
     ...raw,
@@ -120,11 +121,22 @@ export function useJobs(filters: JobFilters = {}) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Always keep a ref to the latest filters so the async callback never reads
+  // stale values — important when React batches state + URL (searchParams) updates.
+  const filtersRef = useRef<JobFilters>(filters)
+  filtersRef.current = filters
+
+  // Destructure individual values for the dep array — only recreate the callback
+  // when a filter value actually changes, not on every render's new object reference.
+  const { category, jobType, governorate, search, maxExperience, page: pageFilter, limit } = filters
+
   const fetch = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const result = await getJobsPaginated(filters)
+      // Use the ref so we always fetch with the latest filter values, even if
+      // this callback was queued before a rapid filter change settled.
+      const result = await getJobsPaginated(filtersRef.current)
       setJobs(result.items)
       setTotal(result.total)
       setPageState(result.page)
@@ -134,7 +146,8 @@ export function useJobs(filters: JobFilters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [filters.category, filters.jobType, filters.governorate, filters.search, filters.maxExperience, filters.page, filters.limit])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, jobType, governorate, search, maxExperience, pageFilter, limit])
 
   useEffect(() => {
     void fetch()
