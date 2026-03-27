@@ -10,6 +10,12 @@ function getToken(): string | null {
 let isRefreshing = false
 let refreshPromise: Promise<string | null> | null = null
 
+function clearAuthCookies(): void {
+  deleteCookie("jobnova_token")
+  deleteCookie("jobnova_refresh")
+  deleteCookie("jobnova_user")
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getCookie("jobnova_refresh")
   if (!refreshToken) return null
@@ -18,11 +24,10 @@ async function refreshAccessToken(): Promise<string | null> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
+      signal: AbortSignal.timeout(10_000),
     })
     if (!res.ok) {
-      deleteCookie("jobnova_token")
-      deleteCookie("jobnova_refresh")
-      deleteCookie("jobnova_user")
+      clearAuthCookies()
       return null
     }
     const data = (await res.json()) as { accessToken: string; refreshToken?: string }
@@ -32,9 +37,7 @@ async function refreshAccessToken(): Promise<string | null> {
     }
     return data.accessToken
   } catch {
-    deleteCookie("jobnova_token")
-    deleteCookie("jobnova_refresh")
-    deleteCookie("jobnova_user")
+    clearAuthCookies()
     return null
   }
 }
@@ -57,6 +60,7 @@ export async function api(path: string, options: RequestInit = {}): Promise<Resp
       isRefreshing = true
       refreshPromise = refreshAccessToken().finally(() => {
         isRefreshing = false
+        refreshPromise = null
       })
     }
     const newToken = await refreshPromise

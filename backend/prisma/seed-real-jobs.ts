@@ -134,6 +134,13 @@ async function main() {
   await prisma.job.deleteMany({ where: { organizationId: org.id } });
   console.log('Cleared existing jobs');
 
+  // Load governorate & city IDs for FK linking
+  const govRecords = await prisma.governorate.findMany({ select: { id: true, name: true } });
+  const govIdMap = new Map(govRecords.map((g) => [g.name, g.id]));
+
+  const cityRecords = await prisma.city.findMany({ select: { id: true, name: true, governorateId: true } });
+  const cityIdMap = new Map(cityRecords.map((c) => [`${c.name}:${c.governorateId}`, c.id]));
+
   const categories = Object.keys(jobsByCategory);
   let count = 0;
 
@@ -143,11 +150,15 @@ async function main() {
     const jobsInCategory = jobsByCategory[categoryKey];
     const jobTemplate = jobsInCategory[i % jobsInCategory.length];
     const company = companies[i % companies.length];
-    const gov = governorates[i % governorates.length];
-    const citiesForGov = cities[gov] ?? [gov];
-    const city = citiesForGov[i % citiesForGov.length];
+    const govName = governorates[i % governorates.length];
+    const citiesForGov = cities[govName] ?? [govName];
+    const cityName = citiesForGov[i % citiesForGov.length];
     const salary = salaryRanges[i % salaryRanges.length];
     const jobType = jobTypes[i % jobTypes.length];
+
+    // Resolve governorate & city → FK IDs
+    const governorateId = govIdMap.get(govName) ?? undefined;
+    const cityId = governorateId ? (cityIdMap.get(`${cityName}:${governorateId}`) ?? undefined) : undefined;
 
     // Add variation to title
     const suffixes = ['', ' - خبرة', ' - حديث التخرج', ' - Senior', ' - Junior', ' - Remote'];
@@ -161,6 +172,8 @@ async function main() {
         description: jobTemplate.description,
         category,
         jobType,
+        governorateId,
+        cityId,
         salaryMin: salary.min,
         salaryMax: salary.max,
         currency: 'EGP',

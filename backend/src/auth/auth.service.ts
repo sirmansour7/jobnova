@@ -24,6 +24,19 @@ import { AuditEvent, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { BCRYPT_ROUNDS } from '../common/constants';
+import { CacheTTL } from '../common/cache-keys';
+
+export type OAuthLoginResult = {
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    role: Role;
+    emailVerified: boolean;
+  };
+};
 
 const ACCESS_TOKEN_EXPIRES = '15m';
 const REFRESH_TOKEN_EXPIRES = '7d';
@@ -95,11 +108,17 @@ export class AuthService {
 
     this.audit.log({ event: AuditEvent.REGISTER, userId: user.id });
 
-    await this.emailProducer.sendVerificationEmail(
-      user.email,
-      user.fullName,
-      verificationToken,
-    );
+    try {
+      await this.emailProducer.sendVerificationEmail(
+        user.email,
+        user.fullName,
+        verificationToken,
+      );
+    } catch (err) {
+      this.logger.error(
+        `Failed to queue verification email for user ${user.id}: ${String(err)}`,
+      );
+    }
 
     return {
       id: user.id,
@@ -161,12 +180,18 @@ export class AuthService {
     });
 
     this.logger.log(`Queuing verification email for user ${user.id}`);
-    await this.emailProducer.sendVerificationEmail(
-      user.email,
-      user.fullName,
-      verificationToken,
-    );
-    this.logger.log(`Verification email queued for user ${user.id}`);
+    try {
+      await this.emailProducer.sendVerificationEmail(
+        user.email,
+        user.fullName,
+        verificationToken,
+      );
+      this.logger.log(`Verification email queued for user ${user.id}`);
+    } catch (err) {
+      this.logger.error(
+        `Failed to queue verification email for user ${user.id}: ${String(err)}`,
+      );
+    }
 
     return { message: 'Verification email sent' };
   }
@@ -378,11 +403,17 @@ export class AuthService {
       ip,
     });
 
-    await this.emailProducer.sendPasswordResetEmail(
-      user.email,
-      user.fullName,
-      resetToken,
-    );
+    try {
+      await this.emailProducer.sendPasswordResetEmail(
+        user.email,
+        user.fullName,
+        resetToken,
+      );
+    } catch (err) {
+      this.logger.error(
+        `Failed to queue password reset email for user ${user.id}: ${String(err)}`,
+      );
+    }
 
     return {
       message: 'If this email exists, a reset link has been sent',
@@ -503,17 +534,7 @@ export class AuthService {
     googleId: string;
     email: string;
     fullName: string;
-  }): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    user: {
-      id: string;
-      fullName: string;
-      email: string;
-      role: Role;
-      emailVerified: boolean;
-    };
-  }> {
+  }): Promise<OAuthLoginResult> {
     const normalizedEmail = profile.email.toLowerCase();
 
     let user = await this.prisma.user.findUnique({
@@ -596,5 +617,38 @@ export class AuthService {
       role: user.role,
       emailVerified: user.emailVerified,
     };
+  }
+
+  // ─────────────────────────────────────────
+  // OAuth one-time code exchange
+  // ─────────────────────────────────────────
+
+  /**
+   * Generates a cryptographically random one-time code, stores the full
+   * OAuth login result under it for 60 seconds, and returns the code.
+   * The code is never logged — it carries the same sensitivity as a token.
+   */
+  async storeOAuthCode(result: OAuthLoginResult): Promise<string> {
+    const code = randomBytes(32).toString('hex'); // 256 bits of entropy
+    await this.cache.set(`oauth:${code}`, result, CacheTTL.ONE_MINUTE);
+    this.logger.log(`OAuth code issued for user ${result.user.id}`);
+    return code;
+  }
+
+  /**
+   * Looks up the one-time code, deletes it immediately (single-use),
+   * and returns the stored OAuth result.
+   * Throws 401 if the code is missing, expired, or already consumed.
+   */
+  async exchangeOAuthCode(code: string): Promise<OAuthLoginResult> {
+    const key = `oauth:${code}`;
+    const result = await this.cache.get<OAuthLoginResult>(key);
+    if (!result) {
+      throw new UnauthorizedException('Invalid or expired OAuth code');
+    }
+    // Delete before returning — prevent any second use of the same code
+    await this.cache.del(key);
+    this.logger.log(`OAuth code exchanged for user ${result.user.id}`);
+    return result;
   }
 }

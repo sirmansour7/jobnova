@@ -1,66 +1,102 @@
 import { PrismaClient } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const prisma = new PrismaClient();
-
-const GOVERNORATES: { name: string; cities: string[] }[] = [
-  { name: 'القاهرة', cities: ['مدينة نصر', 'المعادي', 'مصر الجديدة', 'التجمع الخامس', 'الدقي', 'المهندسين', 'وسط البلد', 'شبرا'] },
-  { name: 'الجيزة', cities: ['الشيخ زايد', 'السادس من أكتوبر', 'الهرم', 'فيصل', 'العجوزة', 'الدقي'] },
-  { name: 'الإسكندرية', cities: ['سموحة', 'جليم', 'سيدي بشر', 'المنتزه', 'العصافرة', 'ميامي'] },
-  { name: 'الدقهلية', cities: ['المنصورة', 'طلخا', 'ميت غمر'] },
-  { name: 'الشرقية', cities: ['الزقازيق', 'العاشر من رمضان', 'بلبيس'] },
-  { name: 'القليوبية', cities: ['بنها', 'شبرا الخيمة', 'القناطر الخيرية'] },
-  { name: 'الغربية', cities: ['طنطا', 'المحلة الكبرى', 'كفر الزيات'] },
-  { name: 'المنوفية', cities: ['شبين الكوم', 'منوف', 'السادات'] },
-  { name: 'البحيرة', cities: ['دمنهور', 'كفر الدوار', 'رشيد'] },
-  { name: 'الإسماعيلية', cities: ['الإسماعيلية', 'القنطرة شرق', 'فايد'] },
-  { name: 'السويس', cities: ['السويس', 'عتاقة'] },
-  { name: 'بورسعيد', cities: ['بورسعيد', 'بورفؤاد'] },
-  { name: 'كفر الشيخ', cities: ['كفر الشيخ', 'دسوق', 'فوه'] },
-  { name: 'دمياط', cities: ['دمياط', 'رأس البر', 'الزرقا'] },
-  { name: 'الفيوم', cities: ['الفيوم', 'إطسا', 'طامية'] },
-  { name: 'بني سويف', cities: ['بني سويف', 'الواسطى', 'ناصر'] },
-  { name: 'المنيا', cities: ['المنيا', 'ملوي', 'سمالوط'] },
-  { name: 'أسيوط', cities: ['أسيوط', 'ديروط', 'منفلوط'] },
-  { name: 'سوهاج', cities: ['سوهاج', 'أخميم', 'جرجا'] },
-  { name: 'قنا', cities: ['قنا', 'نجع حمادي', 'قوص'] },
-  { name: 'الأقصر', cities: ['الأقصر', 'الطود', 'إسنا'] },
-  { name: 'أسوان', cities: ['أسوان', 'كوم أمبو', 'إدفو'] },
-  { name: 'البحر الأحمر', cities: ['الغردقة', 'سفاجا', 'مرسى علم'] },
-  { name: 'الوادي الجديد', cities: ['الخارجة', 'الداخلة', 'الفرافرة'] },
-  { name: 'مطروح', cities: ['مرسى مطروح', 'سيوة', 'الحمام'] },
-  { name: 'شمال سيناء', cities: ['العريش', 'رفح', 'الشيخ زويد'] },
-  { name: 'جنوب سيناء', cities: ['شرم الشيخ', 'دهب', 'طابا'] },
-  { name: 'القاهرة الجديدة', cities: ['التجمع الأول', 'التجمع الثالث', 'التجمع الخامس', 'الرحاب', 'مدينتي'] },
-  { name: 'العاصمة الإدارية الجديدة', cities: ['الحي السكني الأول', 'الحي السكني الثاني', 'حي المال والأعمال'] },
-];
-
-async function main() {
-  console.log('Seeding governorates and cities...');
-  let created = 0;
-  let skipped = 0;
-
-  for (const gov of GOVERNORATES) {
-    const existing = await prisma.governorate.findUnique({ where: { name: gov.name } });
-    if (existing) {
-      skipped++;
-      continue;
-    }
-    await prisma.governorate.create({
-      data: {
-        name: gov.name,
-        cities: {
-          create: gov.cities.map((cityName) => ({ name: cityName })),
-        },
-      },
-    });
-    created++;
-    console.log(`Created: ${gov.name} (${gov.cities.length} cities)`);
-  }
-
-  console.log(`Done. Created: ${created}, Skipped: ${skipped}`);
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
+interface GovEntry {
+  name: string;
+  cities: string[];
 }
 
-main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(() => prisma.$disconnect());
+// ─────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────
+const prisma = new PrismaClient();
 
+const JSON_PATH = path.join(__dirname, 'egypt_level2_full.json');
+
+// ─────────────────────────────────────────────
+// Main
+// ─────────────────────────────────────────────
+async function main() {
+  console.log('🌱 Seeding Egypt governorates & cities...\n');
+
+  if (!fs.existsSync(JSON_PATH)) {
+    throw new Error(`JSON file not found: ${JSON_PATH}`);
+  }
+
+  const data: GovEntry[] = JSON.parse(fs.readFileSync(JSON_PATH, 'utf-8'));
+
+  let govCreated  = 0;
+  let govSkipped  = 0;
+  let cityCreated = 0;
+
+  for (const entry of data) {
+    // ── 1. Upsert Governorate ──────────────────────────────────
+    const gov = await prisma.governorate.upsert({
+      where:  { name: entry.name },
+      update: {},
+      create: { name: entry.name },
+    });
+
+    // Detect if this was a fresh insert
+    const isNew =
+      Math.abs(gov.createdAt.getTime() - gov.updatedAt.getTime()) < 1000;
+
+    if (isNew) {
+      govCreated++;
+      console.log(`✅ Created governorate: ${gov.name}`);
+    } else {
+      govSkipped++;
+      console.log(`⏭️  Governorate exists: ${gov.name}`);
+    }
+
+    // ── 2. Bulk-insert Cities (skipDuplicates) ─────────────────
+    if (entry.cities.length === 0) continue;
+
+    // Fetch already-existing city names for this governorate
+    const existing = await prisma.city.findMany({
+      where:  { governorateId: gov.id },
+      select: { name: true },
+    });
+    const existingNames = new Set(existing.map((c) => c.name));
+
+    const newCities = entry.cities
+      .filter((name) => !existingNames.has(name))
+      .map((name)   => ({ name, governorateId: gov.id }));
+
+    if (newCities.length > 0) {
+      const result = await prisma.city.createMany({
+        data:           newCities,
+        skipDuplicates: true,   // guard against race conditions
+      });
+      cityCreated += result.count;
+      console.log(`   ➕ Inserted ${result.count} new city/cities`);
+    } else {
+      console.log(`   ✔  All cities already exist`);
+    }
+
+    console.log('');
+  }
+
+  // ── Summary ───────────────────────────────────────────────────
+  console.log('─────────────────────────────────────────');
+  console.log('✅ Seed complete!');
+  console.log(`   Governorates → created: ${govCreated}  skipped: ${govSkipped}`);
+  console.log(`   Cities       → created: ${cityCreated}`);
+  console.log('─────────────────────────────────────────');
+}
+
+// ─────────────────────────────────────────────
+// Run
+// ─────────────────────────────────────────────
+main()
+  .catch((e) => {
+    console.error('❌ Seed failed:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

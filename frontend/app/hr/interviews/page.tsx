@@ -27,7 +27,7 @@ import { apiJson } from "@/src/lib/api"
 import { toast } from "sonner"
 
 type InterviewStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED"
-type InterviewType = "online" | "onsite"
+type InterviewType = "ONLINE" | "IN_PERSON" | "PHONE"
 
 interface ScheduledInterview {
   id: string
@@ -70,8 +70,9 @@ const STATUS_BADGE: Record<InterviewStatus, string> = {
 }
 
 const TYPE_LABEL: Record<InterviewType, string> = {
-  online: "أونلاين",
-  onsite: "حضوري",
+  ONLINE: "أونلاين",
+  IN_PERSON: "حضوري",
+  PHONE: "هاتفي",
 }
 
 function formatDateTime(iso: string) {
@@ -105,7 +106,7 @@ export default function HrInterviewsPage() {
   const [selectedApplicationId, setSelectedApplicationId] = useState("")
   const [scheduledAt, setScheduledAt] = useState("")
   const [durationMins, setDurationMins] = useState(60)
-  const [type, setType] = useState<InterviewType>("online")
+  const [type, setType] = useState<InterviewType>("ONLINE")
   const [location, setLocation] = useState("")
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -130,7 +131,7 @@ export default function HrInterviewsPage() {
 
   useEffect(() => {
     setJobsLoading(true)
-    apiJson<{ items: JobOption[]; total: number } | JobOption[]>("/v1/hr/jobs?limit=100")
+    apiJson<{ items: JobOption[]; total: number } | JobOption[]>("/v1/hr/jobs?limit=100&includeInactive=true")
       .then((res) => {
         const items: JobOption[] = Array.isArray(res) ? res : (res?.items ?? [])
         setJobs(items.map((j) => ({ id: j.id, title: j.title })))
@@ -167,7 +168,7 @@ export default function HrInterviewsPage() {
     setSelectedApplicationId("")
     setScheduledAt("")
     setDurationMins(60)
-    setType("online")
+    setType("ONLINE")
     setLocation("")
     setNotes("")
   }
@@ -465,8 +466,9 @@ export default function HrInterviewsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="online">{TYPE_LABEL.online}</SelectItem>
-                      <SelectItem value="onsite">{TYPE_LABEL.onsite}</SelectItem>
+                      <SelectItem value="ONLINE">{TYPE_LABEL.ONLINE}</SelectItem>
+                      <SelectItem value="IN_PERSON">{TYPE_LABEL.IN_PERSON}</SelectItem>
+                      <SelectItem value="PHONE">{TYPE_LABEL.PHONE}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

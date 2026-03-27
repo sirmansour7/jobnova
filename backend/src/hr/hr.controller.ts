@@ -58,6 +58,7 @@ export class HrController {
     @Query('limit') limit?: string,
     @Query('page')  page?: string,
     @Query('search') search?: string,
+    @Query('includeInactive') includeInactive?: string,
   ) {
     const organizationId = await this.getHrOrganizationId(req.user.sub);
     if (!organizationId) {
@@ -67,11 +68,12 @@ export class HrController {
     const take = Math.min(limit ? parseInt(limit, 10) : 20, 100);
     const currentPage = Math.max(page ? parseInt(page, 10) : 1, 1);
     const skip = (currentPage - 1) * take;
+    const showAll = includeInactive === 'true';
 
     const where = {
       organizationId,
       deletedAt: null as null,
-      isActive: true,
+      ...(showAll ? {} : { isActive: true }),
       ...(search
         ? { title: { contains: search, mode: 'insensitive' as const } }
         : {}),

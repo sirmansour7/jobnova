@@ -19,6 +19,7 @@ export const CacheKeys = {
 // TTLs in milliseconds (cache-manager v6+ uses ms)
 export const CacheTTL = {
   SIX_HOURS: 6 * 60 * 60 * 1000,
+  ONE_MINUTE: 60 * 1000,
   SIXTY_SECONDS: 60 * 1000,
   THIRTY_SECONDS: 30 * 1000,
 } as const;

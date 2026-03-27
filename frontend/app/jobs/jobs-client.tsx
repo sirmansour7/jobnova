@@ -149,7 +149,7 @@ export default function JobsClient() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">الوظائف المتاحة</h1>
             <p className="text-muted-foreground">
-              {loading ? "جاري التحميل..." : error ? error : `تصفح ${jobs.length} وظيفة متاحة في مصر`}
+              {loading ? "جاري التحميل..." : error ? error : `تصفح ${total} وظيفة متاحة في مصر`}
             </p>
           </div>
 
@@ -281,7 +281,7 @@ export default function JobsClient() {
               const recommendedCount = jobs.filter((j) => j.isRecommended).length
               return (
                 <p className="text-sm text-muted-foreground">
-                  {visibleJobs.length} نتيجة
+                  {recommendedOnly ? visibleJobs.length : total} نتيجة
                   {recommendedCount > 0 && !recommendedOnly && (
                     <span className="mr-2 text-emerald-600 dark:text-emerald-400">
                       · {recommendedCount} مناسبة لك

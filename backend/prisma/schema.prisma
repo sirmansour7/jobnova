@@ -167,8 +167,36 @@ model Governorate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cities City[]
-  jobs   Job[]
+  cities  City[]
+  centers Center[]
+  jobs    Job[]
+}
+
+model Center {
+  id            String   @id @default(cuid())
+  name          String
+  governorateId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  governorate Governorate @relation(fields: [governorateId], references: [id], onDelete: Cascade)
+  villages    Village[]
+
+  @@unique([name, governorateId])
+  @@index([governorateId])
+}
+
+model Village {
+  id        String   @id @default(cuid())
+  name      String
+  centerId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  center Center @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@unique([name, centerId])
+  @@index([centerId])
 }
 
 model City {

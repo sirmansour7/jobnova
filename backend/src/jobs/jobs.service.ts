@@ -23,9 +23,11 @@ export interface JobFilters {
    * Show jobs that require AT MOST this many years of experience.
    * Filters: job.minExperience <= maxExperience OR job.minExperience IS NULL
    */
-  maxExperience?: number;
-  page?:          number;
-  limit?:         number;
+  maxExperience?:   number;
+  page?:            number;
+  limit?:           number;
+  /** HR only: when true, omits the isActive=true filter so all org jobs are returned */
+  includeInactive?: boolean;
 }
 
 /** Shape returned from findAll() — shared with the controller for type safety */
@@ -160,9 +162,13 @@ export class JobsService {
       });
     }
 
+    // HR users may pass includeInactive=true to see all their org's jobs.
+    // For all other cases (public, candidates) always enforce isActive=true.
+    const skipActiveFilter = filters?.includeInactive === true && orgId != null;
+
     const where: Record<string, unknown> = {
       deletedAt: null,
-      isActive: filters?.isActive ?? true,
+      ...(skipActiveFilter ? {} : { isActive: filters?.isActive ?? true }),
       ...(filters?.category && { category: filters.category }),
       ...(filters?.jobType && { jobType: filters.jobType }),
       // Case-insensitive partial match on governorate name

@@ -42,14 +42,15 @@ export interface JobsResponse {
 }
 
 export interface JobFilters {
-  category?:      string
-  jobType?:       string
-  governorate?:   string
-  search?:        string
+  category?:        string
+  jobType?:         string
+  governorate?:     string
+  search?:          string
   /** Show jobs requiring AT MOST this many years of experience */
-  maxExperience?: number
-  page?:          number
-  limit?:         number
+  maxExperience?:   number
+  page?:            number
+  limit?:           number
+  includeInactive?: boolean
 }
 
 /** Raw shape returned by the API before location fields are flattened */
@@ -73,6 +74,7 @@ export async function getJobsPaginated(filters: JobFilters = {}): Promise<JobsRe
   if (filters.governorate)                 params.set("governorate",   filters.governorate)
   if (filters.search)                      params.set("search",        filters.search)
   if (filters.maxExperience !== undefined) params.set("maxExperience", String(filters.maxExperience))
+  if (filters.includeInactive)             params.set("includeInactive", "true")
   // Always send page + limit so backend never silently defaults to wrong values
   params.set("page",  String(Math.max(1, filters.page  ?? 1)))
   params.set("limit", String(Math.max(1, filters.limit ?? 20)))
@@ -96,9 +98,10 @@ export async function getJobs(filters: JobFilters = {}): Promise<JobListItem[]> 
 /** HR-scoped: returns only jobs belonging to the logged-in HR user's organization */
 export async function getHrJobsPaginated(filters: JobFilters = {}): Promise<JobsResponse> {
   const params = new URLSearchParams()
-  if (filters.search)  params.set("search", filters.search)
-  if (filters.page)    params.set("page",   String(filters.page))
-  if (filters.limit)   params.set("limit",  String(filters.limit))
+  if (filters.search)           params.set("search",          filters.search)
+  if (filters.page)             params.set("page",            String(filters.page))
+  if (filters.limit)            params.set("limit",           String(filters.limit))
+  if (filters.includeInactive)  params.set("includeInactive", "true")
   const qs = params.toString()
   return apiJson<JobsResponse>(`/v1/hr/jobs${qs ? `?${qs}` : ""}`)
 }

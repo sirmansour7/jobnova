@@ -2,10 +2,10 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const PROTECTED_ROUTES: Record<string, string[]> = {
-  "/admin": ["ADMIN"],
-  "/hr": ["HR", "OWNER"],
-  "/candidate": ["CANDIDATE"],
-  "/org": ["HR", "OWNER"],
+  "/admin": ["admin"],
+  "/hr": ["hr"],
+  "/candidate": ["candidate"],
+  "/org": ["hr"],
 }
 
 const PUBLIC_ONLY_ROUTES = ["/login", "/register", "/forgot-password"]
@@ -35,7 +35,8 @@ export function middleware(request: NextRequest) {
       if (userCookie?.value) {
         try {
           const user = JSON.parse(decodeURIComponent(userCookie.value))
-          if (!allowedRoles.includes(user.role)) {
+          const role = typeof user.role === "string" ? user.role.toLowerCase() : ""
+          if (!allowedRoles.includes(role)) {
             return NextResponse.redirect(new URL("/", request.url))
           }
         } catch {

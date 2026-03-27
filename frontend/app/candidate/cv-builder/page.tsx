@@ -557,7 +557,7 @@ export default function CVBuilderPage() {
                               </p>
 
                               {/* Strengths */}
-                              {analysisResult.strengths.length > 0 && (
+                              {(analysisResult.strengths?.length ?? 0) > 0 && (
                                 <div>
                                   <h4 className="text-xs font-semibold text-green-500 mb-2">✓ نقاط القوة</h4>
                                   <ul className="space-y-1">
@@ -572,7 +572,7 @@ export default function CVBuilderPage() {
                               )}
 
                               {/* Improvements */}
-                              {analysisResult.improvements.length > 0 && (
+                              {(analysisResult.improvements?.length ?? 0) > 0 && (
                                 <div>
                                   <h4 className="text-xs font-semibold text-yellow-500 mb-2">⚡ تحتاج تحسين</h4>
                                   <ul className="space-y-1">
@@ -587,7 +587,7 @@ export default function CVBuilderPage() {
                               )}
 
                               {/* Missing keywords — clickable chips to add to skills */}
-                              {analysisResult.roleMatch.missingKeywords.length > 0 && (
+                              {(analysisResult.roleMatch?.missingKeywords?.length ?? 0) > 0 && (
                                 <div>
                                   <h4 className="text-xs font-semibold text-primary mb-2">
                                     🎯 مهارات ناقصة للدور المستهدف

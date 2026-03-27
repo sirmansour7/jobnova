@@ -23,6 +23,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { GoogleExchangeDto } from './dto/google-exchange.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 
@@ -139,16 +140,20 @@ export class AuthController {
     @Res() res: Response,
   ) {
     const result = await this.authService.googleLogin(req.user);
+    // Store tokens server-side and redirect with a short-lived one-time code only.
+    // Tokens never appear in the URL, browser history, logs, or Referer headers.
+    const code = await this.authService.storeOAuthCode(result);
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
-    const params = new URLSearchParams({
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      userId: result.user.id,
-      role: result.user.role,
-      fullName: result.user.fullName,
-      email: result.user.email,
-    });
-    res.redirect(`${frontendUrl}/auth/google/callback?${params.toString()}`);
+    res.redirect(`${frontendUrl}/auth/google/callback?code=${code}`);
+  }
+
+  @Post('google/exchange')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async googleExchange(@Body(VP) body: GoogleExchangeDto) {
+    // Returns { accessToken, refreshToken, user } and consumes the code.
+    // Any second call with the same code returns 401.
+    return this.authService.exchangeOAuthCode(body.code);
   }
 }

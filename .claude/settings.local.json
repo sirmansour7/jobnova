@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"icacls \"\"F:\\\\jobnova\\\\backend\\\\src\"\" /grant \"\"Omar Mansour:\\(OI\\)\\(CI\\)F\"\" /T 2>&1\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx prisma:*)",
+      "Bash(node -e \"const p=require\\(''./package.json''\\); console.log\\(p.dependencies[''@nestjs/cache-manager''] ?? ''NOT_INSTALLED''\\); console.log\\(p.dependencies[''cache-manager''] ?? ''NOT_INSTALLED''\\)\")",
+      "Bash(node -e \"const p=require\\(''./package.json''\\); console.log\\(p.dependencies[''@nestjs/common'']\\)\")",
+      "Bash(npm install:*)",
+      "Bash(node -e \"const p=require\\(''./package.json''\\); console.log\\(p.dependencies[''@nestjs/cache-manager'']\\); console.log\\(p.dependencies[''cache-manager'']\\)\")",
+      "Bash(cmd.exe /c \"cd /d F:\\\\jobnova\\\\backend && npx prisma migrate dev --name add_token_reused_audit_index 2>&1\")",
+      "Bash(cmd.exe /c \"cd /d F:\\\\jobnova\\\\backend && npx prisma migrate dev --name add_token_reused_audit_index\")",
+      "Bash(cmd.exe /c \"cd /d F:\\\\jobnova\\\\backend && npx prisma migrate dev --name add_token_reused_audit_index && echo DONE\")",
+      "Bash(cmd.exe /c \"cd /d F:\\\\jobnova\\\\backend && npx prisma migrate dev --name add_token_reused_audit_index > C:\\\\tmp\\\\migrate_out.txt 2>&1 & timeout /t 30 & type C:\\\\tmp\\\\migrate_out.txt\")",
+      "Bash(powershell.exe -Command \"Set-Location ''F:\\\\jobnova\\\\backend''; $output = npx prisma migrate dev --name add_token_reused_audit_index 2>&1; $output | Out-String\")",
+      "Bash(powershell.exe -Command \"Set-Location ''F:\\\\jobnova\\\\backend''; $output = & npx prisma migrate dev --name add_token_reused_audit_index 2>&1; $output\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx prisma migrate dev --name add_token_reused_audit_index\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx prisma migrate dev --name soft_delete_user_job_org\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npm install @nestjs/bullmq bullmq\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx tsc --noEmit 2>&1 | Select-Object -First 60\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx tsc --noEmit 2>&1 | Select-Object -First 40\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx tsc -p tsconfig.build.json --noEmit 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx prisma migrate dev --name add_deleted_at_indexes 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx tsc --noEmit 2>&1 | Select-String ''token-store''\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx tsc --noEmit 2>&1 | Where-Object { $_-match ''token-store|error TS'' }\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx prisma migrate dev --name add_token_version 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx prisma migrate dev --name add_job_enums_and_skills 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; echo ''y'' | npx prisma migrate dev --name add_job_enums_and_skills 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; $env:CI=''1''; npx prisma migrate dev --name add_job_enums_and_skills --accept-data-loss 2>&1\")",
+      "Bash(cmd.exe /c \"cd /d F:\\\\jobnova\\\\backend && set PRISMA_FORCE_COLOR=0 && set CI=false && npx prisma migrate dev --name add_job_enums_and_skills 2>&1\")",
+      "Bash(powershell.exe -Command \":*)",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx prisma migrate dev --name add_job_enums_and_skills --create-only 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''F:\\\\jobnova\\\\backend''; npx prisma db push --accept-data-loss 2>&1\")",
+      "Bash(./node_modules/.bin/tsc --project tsconfig.build.json --noEmit)"
+    ]
+  }
+}

@@ -8,7 +8,7 @@ import {
   type JobApplication,
   type ApplicationStatus,
 } from "@/src/services/applications.service"
-import { getHrJobs, type JobListItem } from "@/src/services/jobs.service"
+import { getJobs, type JobListItem } from "@/src/services/jobs.service"
 
 export interface PipelineStage {
   id: ApplicationStatus
@@ -35,7 +35,7 @@ export function useHrPipeline(jobId?: string) {
   // Load HR's scoped jobs on mount
   useEffect(() => {
     setJobsLoading(true)
-    getHrJobs({ limit: 100 })
+    getJobs({ limit: 100, includeInactive: true })
       .then((items) => setJobs(items))
       .catch(() => setJobs([]))
       .finally(() => setJobsLoading(false))
