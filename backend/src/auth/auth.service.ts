@@ -201,97 +201,92 @@ export class AuthService {
   // ─────────────────────────────────────────
 
   async login(dto: LoginDto, ip?: string, userAgent?: string) {
-    try {
-      const normalizedEmail = dto.email.toLowerCase();
-      const user = await this.prisma.user.findUnique({
-        where: { email: normalizedEmail },
-      });
+    const normalizedEmail = dto.email.toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
 
-      // ✅ FIX: Always run bcrypt.compare to prevent timing-based email enumeration.
-      // When the user does not exist (or is soft-deleted) we compare against a
-      // dummy hash so response time is indistinguishable from a real failed attempt.
-      if (!user || user.deletedAt) {
-        await bcrypt.compare(dto.password, DUMMY_HASH);
-        this.audit.log({
-          event: AuditEvent.LOGIN_FAILED,
-          ip,
-          userAgent,
-          meta: { email: normalizedEmail, reason: 'user_not_found' },
-        });
-        throw new UnauthorizedException(INVALID_CREDENTIALS);
-      }
-
-      // ✅ Check account lockout
-      if (user.lockedUntil && user.lockedUntil > new Date()) {
-        this.audit.log({
-          event: AuditEvent.LOGIN_BLOCKED,
-          userId: user.id,
-          ip,
-          userAgent,
-          meta: { lockedUntil: user.lockedUntil.toISOString() },
-        });
-        throw new ForbiddenException(
-          `Account locked. Try again after ${user.lockedUntil.toISOString()}`,
-        );
-      }
-
-      // ✅ FIX: Check emailVerified BEFORE password comparison.
-      // Previously, failed attempts on unverified accounts incremented the lockout
-      // counter — an attacker could lock out a new user before they ever verified.
-      // We still call bcrypt.compare here so response time stays consistent.
-      if (!user.emailVerified) {
-        await bcrypt.compare(dto.password, user.passwordHash);
-        throw new ForbiddenException('Email not verified');
-      }
-
-      const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
-
-      if (!passwordMatch) {
-        const attempts = user.failedLoginAttempts + 1;
-        const shouldLock = attempts >= MAX_FAILED_ATTEMPTS;
-
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: {
-            failedLoginAttempts: attempts,
-            lockedUntil: shouldLock
-              ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000)
-              : null,
-          },
-        });
-
-        this.audit.log({
-          event: AuditEvent.LOGIN_FAILED,
-          userId: user.id,
-          ip,
-          userAgent,
-          meta: { attempts, locked: shouldLock },
-        });
-
-        throw new UnauthorizedException(INVALID_CREDENTIALS);
-      }
-
-      // ✅ Reset failed attempts on successful login
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { failedLoginAttempts: 0, lockedUntil: null },
-      });
-
-      const { accessToken, refreshToken } = this.issueTokens(user.id, user.role, user.tokenVersion);
-      await this.tokenStore.store(user.id, refreshToken);
-
+    // ✅ FIX: Always run bcrypt.compare to prevent timing-based email enumeration.
+    // When the user does not exist (or is soft-deleted) we compare against a
+    // dummy hash so response time is indistinguishable from a real failed attempt.
+    if (!user || user.deletedAt) {
+      await bcrypt.compare(dto.password, DUMMY_HASH);
       this.audit.log({
-        event: AuditEvent.LOGIN_SUCCESS,
+        event: AuditEvent.LOGIN_FAILED,
+        ip,
+        userAgent,
+        meta: { email: normalizedEmail, reason: 'user_not_found' },
+      });
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
+    }
+
+    // ✅ Check account lockout
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      this.audit.log({
+        event: AuditEvent.LOGIN_BLOCKED,
         userId: user.id,
         ip,
         userAgent,
+        meta: { lockedUntil: user.lockedUntil.toISOString() },
+      });
+      throw new ForbiddenException(
+        `Account locked. Try again after ${user.lockedUntil.toISOString()}`,
+      );
+    }
+
+    // ✅ FIX: Check emailVerified BEFORE password comparison.
+    // Previously, failed attempts on unverified accounts incremented the lockout
+    // counter — an attacker could lock out a new user before they ever verified.
+    // We still call bcrypt.compare here so response time stays consistent.
+    if (!user.emailVerified) {
+      await bcrypt.compare(dto.password, user.passwordHash);
+      throw new ForbiddenException('Email not verified');
+    }
+
+    const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
+
+    if (!passwordMatch) {
+      const attempts = user.failedLoginAttempts + 1;
+      const shouldLock = attempts >= MAX_FAILED_ATTEMPTS;
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts: attempts,
+          lockedUntil: shouldLock
+            ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000)
+            : null,
+        },
       });
 
-      return { accessToken, refreshToken, user: this.toAuthUser(user) };
-    } catch (error) {
-      this.logger.error('LOGIN ERROR: ' + error.message, error.stack);
-      throw error;
+      this.audit.log({
+        event: AuditEvent.LOGIN_FAILED,
+        userId: user.id,
+        ip,
+        userAgent,
+        meta: { attempts, locked: shouldLock },
+      });
+
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
+
+    // ✅ Reset failed attempts on successful login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { failedLoginAttempts: 0, lockedUntil: null },
+    });
+
+    const { accessToken, refreshToken } = this.issueTokens(user.id, user.role, user.tokenVersion);
+    await this.tokenStore.store(user.id, refreshToken);
+
+    this.audit.log({
+      event: AuditEvent.LOGIN_SUCCESS,
+      userId: user.id,
+      ip,
+      userAgent,
+    });
+
+    return { accessToken, refreshToken, user: this.toAuthUser(user) };
   }
 
   // ─────────────────────────────────────────
