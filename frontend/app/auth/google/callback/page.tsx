@@ -56,7 +56,7 @@ function GoogleCallbackInner() {
         }
         setCookie("jobnova_user", JSON.stringify(mappedUser), 7)
 
-        router.replace("/dashboard")
+        window.location.href = "/dashboard"
       })
       .catch(() => {
         router.replace("/login?error=google_failed")
