@@ -28,7 +28,10 @@ export function middleware(request: NextRequest) {
     if (pathname.startsWith(route)) {
       if (!isAuthenticated) {
         const loginUrl = new URL("/login", request.url)
-        loginUrl.searchParams.set("redirect", pathname)
+        // Never use OAuth callback paths as a redirect target
+        if (!pathname.includes("/auth/") && !pathname.includes("callback")) {
+          loginUrl.searchParams.set("redirect", pathname)
+        }
         return NextResponse.redirect(loginUrl)
       }
 
