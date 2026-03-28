@@ -12,6 +12,7 @@ function GoogleCallbackInner() {
   const router = useRouter()
 
   useEffect(() => {
+    console.log('OAuth callback - search params:', window.location.search, 'code:', searchParams.get("code"))
     const code = searchParams.get("code")
 
     if (!code) {
