@@ -78,7 +78,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     dir="ltr"
-                    className="pe-10 text-left"
+                    className="ps-10 text-left"
                   />
                   <button
                     type="button"

@@ -15,6 +15,13 @@ import { api, API_URL } from "@/src/lib/api"
 
 type UserRole = "candidate" | "hr" | "admin"
 
+const PASSWORD_RULES = [
+  { label: "8 أحرف على الأقل",         test: (p: string) => p.length >= 8 },
+  { label: "حرف كبير (A-Z)",            test: (p: string) => /[A-Z]/.test(p) },
+  { label: "رقم (0-9)",                 test: (p: string) => /[0-9]/.test(p) },
+  { label: "رمز خاص (!@#$...)",         test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+]
+
 export default function RegisterPage() {
   const router = useRouter()
   const [name, setName] = useState("")
@@ -25,8 +32,16 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
+  const passResults = PASSWORD_RULES.map((r) => ({ ...r, passed: r.test(password) }))
+  const passStrength = passResults.filter((r) => r.passed).length
+  const passwordValid = passStrength === PASSWORD_RULES.length
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!passwordValid) {
+      setError("كلمة المرور لا تستوفي المتطلبات المطلوبة")
+      return
+    }
     setLoading(true)
     setError("")
 
@@ -106,7 +121,7 @@ export default function RegisterPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     dir="ltr"
-                    className="pe-10 text-left"
+                    className="ps-10 text-left"
                   />
                   <button
                     type="button"
@@ -116,6 +131,33 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {password.length > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex gap-1">
+                      {PASSWORD_RULES.map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-1 flex-1 rounded-full transition-colors ${
+                            i < passStrength
+                              ? passStrength === 1 ? "bg-destructive"
+                              : passStrength === 2 ? "bg-orange-500"
+                              : passStrength === 3 ? "bg-yellow-500"
+                              : "bg-green-500"
+                              : "bg-muted"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <ul className="space-y-1">
+                      {passResults.map((r) => (
+                        <li key={r.label} className={`flex items-center gap-1.5 text-xs ${r.passed ? "text-green-500" : "text-muted-foreground"}`}>
+                          <span>{r.passed ? "✓" : "○"}</span>
+                          {r.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3">
