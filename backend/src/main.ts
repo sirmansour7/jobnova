@@ -10,6 +10,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { AppModule } from './app.module';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -96,6 +97,15 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 204,
   });
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('JobNova API')
+    .setDescription('JobNova Recruitment Platform API')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('v1/docs', app, document);
 
   const port = process.env.PORT || 8080;
   await app.listen(Number(port), '0.0.0.0');

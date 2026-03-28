@@ -32,6 +32,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-socket.io": "^11.1.17",
     "@nestjs/schedule": "^6.1.1",
+    "@nestjs/swagger": "^11.2.6",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^11.1.17",
     "@prisma/client": "^6.19.2",
@@ -60,6 +61,7 @@
     "resend": "^6.9.3",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0"
   },
   "devDependencies": {
