@@ -63,7 +63,6 @@ export const config = {
     "/login",
     "/register",
     "/forgot-password",
-    "/auth/google/callback",
   ],
 }
 
