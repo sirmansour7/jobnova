@@ -56,13 +56,7 @@ function GoogleCallbackInner() {
         }
         setCookie("jobnova_user", JSON.stringify(mappedUser), 7)
 
-        if (user.role === "hr") {
-          router.replace("/hr/dashboard")
-        } else if (user.role === "admin") {
-          router.replace("/admin/dashboard")
-        } else {
-          router.replace("/candidate/dashboard")
-        }
+        router.replace("/dashboard")
       })
       .catch(() => {
         router.replace("/login?error=google_failed")
