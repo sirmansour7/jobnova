@@ -4,6 +4,7 @@ import { Suspense, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { setCookie } from "@/src/lib/cookies"
+import { api } from "@/src/lib/api"
 import type { User } from "@/src/types/auth"
 
 function GoogleCallbackInner() {
@@ -11,47 +12,61 @@ function GoogleCallbackInner() {
   const router = useRouter()
 
   useEffect(() => {
-    const accessToken = searchParams.get("accessToken")
-    const refreshToken = searchParams.get("refreshToken")
-    const role = searchParams.get("role")
-    const userId = searchParams.get("userId")
-    const fullName = searchParams.get("fullName") ?? ""
-    const email = searchParams.get("email") ?? ""
+    const code = searchParams.get("code")
 
-    if (!accessToken || !refreshToken || !role || !userId) {
+    if (!code) {
       router.replace("/login?error=google_failed")
       return
     }
 
-    // Store tokens matching what auth-context expects
-    setCookie("jobnova_token", accessToken, 1)
-    setCookie("jobnova_refresh", refreshToken, 7)
+    api("/v1/auth/google/exchange", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          router.replace("/login?error=google_failed")
+          return
+        }
 
-    // Build and store the user object the same way auth-context does via mapBackendUserToUser
-    const mappedUser: User = {
-      id: userId,
-      name: fullName,
-      email,
-      role: role as User["role"],
-      avatar: fullName
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .slice(0, 2),
-      phone: "",
-      location: "",
-      createdAt: new Date().toISOString().split("T")[0],
-    }
-    setCookie("jobnova_user", JSON.stringify(mappedUser), 7)
+        const data = await res.json() as {
+          accessToken: string
+          refreshToken: string
+          user: { id: string; fullName: string; email: string; role: string }
+        }
 
-    // Redirect based on role
-    if (role === "hr") {
-      router.replace("/hr/dashboard")
-    } else if (role === "admin") {
-      router.replace("/admin/dashboard")
-    } else {
-      router.replace("/candidate/dashboard")
-    }
+        const { accessToken, refreshToken, user } = data
+
+        setCookie("jobnova_token", accessToken, 1)
+        setCookie("jobnova_refresh", refreshToken, 7)
+
+        const mappedUser: User = {
+          id: user.id,
+          name: user.fullName,
+          email: user.email,
+          role: user.role as User["role"],
+          avatar: user.fullName
+            .split(" ")
+            .map((n: string) => n[0])
+            .join("")
+            .slice(0, 2),
+          phone: "",
+          location: "",
+          createdAt: new Date().toISOString().split("T")[0],
+        }
+        setCookie("jobnova_user", JSON.stringify(mappedUser), 7)
+
+        if (user.role === "hr") {
+          router.replace("/hr/dashboard")
+        } else if (user.role === "admin") {
+          router.replace("/admin/dashboard")
+        } else {
+          router.replace("/candidate/dashboard")
+        }
+      })
+      .catch(() => {
+        router.replace("/login?error=google_failed")
+      })
   }, [searchParams, router])
 
   return (
