@@ -1,16 +1,14 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class GoogleAuthGuard extends AuthGuard('google') {
-  canActivate(context: ExecutionContext) {
-    return super.canActivate(context);
-  }
-
-  handleRequest(err: any, user: any, info: any) {
+  handleRequest(err: any, user: any, info: any, context: any) {
+    console.log('GoogleAuthGuard:', { err: err?.message, user: !!user, info });
     if (err || !user) {
-      console.error('Google OAuth failed:', err ?? info);
-      throw err || new Error('Google OAuth failed');
+      const res = context.switchToHttp().getResponse();
+      const frontendUrl = 'https://jobnova.xyz';
+      return res.redirect(`${frontendUrl}/login?error=google_failed`);
     }
     return user;
   }
