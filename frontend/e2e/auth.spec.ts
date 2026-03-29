@@ -18,7 +18,7 @@ test.describe('Auth', () => {
     await page.goto('/login')
 
     await page.getByPlaceholder('example@email.com').fill('wrong@email.com')
-    await page.getByPlaceholder(/كلمة المرور|password/i).fill('wrongpassword')
+    await page.locator('input[type="password"]').fill('wrongpassword')
     await page.getByRole('button', { name: 'تسجيل الدخول' }).click()
 
     await expect(
@@ -34,7 +34,7 @@ test.describe('Auth', () => {
     await page.goto('/login')
 
     await page.getByPlaceholder('example@email.com').fill(CANDIDATE_EMAIL)
-    await page.getByPlaceholder(/كلمة المرور|password/i).fill(CANDIDATE_PASSWORD)
+    await page.locator('input[type="password"]').fill(CANDIDATE_PASSWORD)
     await page.getByRole('button', { name: 'تسجيل الدخول' }).click()
 
     await expect(page).toHaveURL(/\/candidate\/dashboard/, { timeout: 15000 })
@@ -46,7 +46,7 @@ test.describe('Auth', () => {
     await page.goto('/login')
 
     await page.getByPlaceholder('example@email.com').fill(HR_EMAIL)
-    await page.getByPlaceholder(/كلمة المرور|password/i).fill(HR_PASSWORD)
+    await page.locator('input[type="password"]').fill(HR_PASSWORD)
     await page.getByRole('button', { name: 'تسجيل الدخول' }).click()
 
     await expect(page).toHaveURL(/\/hr\/dashboard/, { timeout: 15000 })
