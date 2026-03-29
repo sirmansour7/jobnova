@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -22,6 +23,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { GoogleExchangeDto } from './dto/google-exchange.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -123,6 +125,29 @@ export class AuthController {
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.authService.updateProfile(req.user.sub, body);
+  }
+
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @SkipThrottle()
+  async changePassword(
+    @Body(VP) body: ChangePasswordDto,
+    @Req() req: Request & { user: { sub: string } },
+  ) {
+    return this.authService.changePassword(
+      req.user.sub,
+      body.currentPassword,
+      body.newPassword,
+    );
+  }
+
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @SkipThrottle()
+  async deleteAccount(@Req() req: Request & { user: { sub: string } }) {
+    await this.authService.deleteAccount(req.user.sub);
   }
 
   @Get('google')

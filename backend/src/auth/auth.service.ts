@@ -651,4 +651,36 @@ export class AuthService {
     this.logger.log(`OAuth code exchanged for user ${result.user.id}`);
     return result;
   }
+
+  // ─────────────────────────────────────────
+  // Account management
+  // ─────────────────────────────────────────
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.deletedAt) throw new UnauthorizedException(INVALID_CREDENTIALS);
+    if (!user.passwordHash)
+      throw new BadRequestException(
+        'Password change is not available for accounts linked via Google',
+      );
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid)
+      throw new UnauthorizedException('كلمة المرور الحالية غير صحيحة');
+    const hash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: hash },
+    });
+    return { message: 'Password changed successfully' };
+  }
+
+  async deleteAccount(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.deletedAt) throw new UnauthorizedException(INVALID_CREDENTIALS);
+    await this.prisma.user.delete({ where: { id: userId } });
+  }
 }
