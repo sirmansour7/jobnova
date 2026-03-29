@@ -113,43 +113,17 @@ export default function ApplicantsPage() {
     const fetchApplicants = async () => {
       setLoading(true)
       try {
-        const jobsRes = await apiJson<any>(
-          "/v1/jobs?limit=100",
-        )
-        const jobsList = Array.isArray(jobsRes)
-          ? jobsRes
-          : jobsRes?.items ?? jobsRes?.data ?? []
-
-        const jobResults = await Promise.all(
-          jobsList.map(async (job: any) => {
-            const appsRes = await apiJson<any>(
-              `/v1/applications/job/${job.id}?limit=100`,
-            )
-            const list = Array.isArray(appsRes)
-              ? appsRes
-              : appsRes?.items ?? appsRes?.applications ?? appsRes?.data ?? []
-            if (!Array.isArray(list)) return []
-            return list.map(
-              (app: any): ApplicationWithJob => ({
-                id: app.id,
-                status: app.status ?? "APPLIED",
-                createdAt: app.createdAt,
-                candidate: app.candidate,
-                job: app.job ? { title: app.job.title } : { title: job.title },
-              }),
-            )
-          }),
-        )
-
-        const flat: ApplicationWithJob[] = jobResults.flat()
-        flat.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )
-        setApplications(flat)
+        const res = await apiJson<any>("/v1/applications/applicants")
+        const list: ApplicationWithJob[] = (res?.items ?? []).map((app: any): ApplicationWithJob => ({
+          id: app.id,
+          status: app.status ?? "APPLIED",
+          createdAt: app.createdAt,
+          candidate: app.candidate,
+          job: app.job ? { title: app.job.title } : undefined,
+        }))
+        setApplications(list)
       } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : "فشل تحميل المتقدمين"
+        const msg = err instanceof Error ? err.message : "فشل تحميل المتقدمين"
         toast.error(msg)
       } finally {
         setLoading(false)
