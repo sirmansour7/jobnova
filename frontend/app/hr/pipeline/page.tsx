@@ -82,10 +82,14 @@ function CandidateCard({
   app,
   withHover,
   onOpenCv,
+  onAccept,
+  onReject,
 }: {
   app: JobApplication
   withHover?: boolean
   onOpenCv?: () => void
+  onAccept?: () => void
+  onReject?: () => void
 }) {
   const name = app.candidate?.fullName ?? "مرشح"
   const email = app.candidate?.email ?? ""
@@ -133,6 +137,30 @@ function CandidateCard({
           </Button>
         )}
       </div>
+      {(onAccept || onReject) && (
+        <div className="flex gap-1.5 pt-1" onPointerDown={(e) => e.stopPropagation()}>
+          {onAccept && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 flex-1 text-xs border-chart-3/40 text-chart-3 hover:bg-chart-3/10"
+              onClick={onAccept}
+            >
+              قبول
+            </Button>
+          )}
+          {onReject && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 flex-1 text-xs border-destructive/40 text-destructive hover:bg-destructive/10"
+              onClick={onReject}
+            >
+              رفض
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -140,9 +168,13 @@ function CandidateCard({
 function DraggableCard({
   candidate,
   onOpenCv,
+  onAccept,
+  onReject,
 }: {
   candidate: JobApplication
   onOpenCv: () => void
+  onAccept?: () => void
+  onReject?: () => void
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: candidate.id,
@@ -154,7 +186,13 @@ function DraggableCard({
       {...attributes}
       className={isDragging ? "opacity-50" : ""}
     >
-      <CandidateCard app={candidate} withHover onOpenCv={onOpenCv} />
+      <CandidateCard
+        app={candidate}
+        withHover
+        onOpenCv={onOpenCv}
+        onAccept={onAccept}
+        onReject={onReject}
+      />
     </div>
   )
 }
@@ -362,6 +400,18 @@ export default function PipelinePage() {
                               setSelectedApp(candidate)
                               setCvSheetOpen(true)
                             }}
+                            onAccept={
+                              stage.id !== "HIRED" && stage.id !== "SHORTLISTED"
+                                ? () => moveCandidate(candidate.id, stage.id === "APPLIED" ? "SHORTLISTED" : "HIRED")
+                                : stage.id === "SHORTLISTED"
+                                  ? () => moveCandidate(candidate.id, "HIRED")
+                                  : undefined
+                            }
+                            onReject={
+                              stage.id !== "REJECTED"
+                                ? () => moveCandidate(candidate.id, "REJECTED")
+                                : undefined
+                            }
                           />
                         ))
                       )}

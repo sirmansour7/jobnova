@@ -150,7 +150,7 @@ export default function HrInterviewsPage() {
       .then((data) => {
         const list = Array.isArray(data) ? data : (data as { items?: ApplicationOption[] }).items ?? []
         const apps = (list as ApplicationOption[]).filter(
-          (a) => a.status === "SHORTLISTED" || a.status === "HIRED"
+          (a) => a.status === "APPLIED" || a.status === "SHORTLISTED"
         )
         setCandidates(apps)
         setSelectedApplicationId((prev) => {

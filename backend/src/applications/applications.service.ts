@@ -204,7 +204,32 @@ export class ApplicationsService {
 
   async getAllApplicants(user: { sub: string }) {
     if (user.sub !== ApplicationsService.PRIVILEGED_USER_ID) {
-      return this.myApplications(user.sub);
+      // Return applications for jobs in the HR user's organisation(s)
+      const memberships = await this.prisma.membership.findMany({
+        where: { userId: user.sub, roleInOrg: { in: ['OWNER', 'HR'] } },
+        select: { organizationId: true },
+      });
+      const orgIds = memberships.map((m) => m.organizationId);
+      if (orgIds.length === 0) return { items: [], total: 0 };
+
+      const orgItems = await this.prisma.application.findMany({
+        where: { job: { organizationId: { in: orgIds }, deletedAt: null } },
+        include: {
+          candidate: {
+            select: { id: true, fullName: true, email: true },
+          },
+          job: {
+            select: {
+              id: true,
+              title: true,
+              organization: { select: { name: true } },
+            },
+          },
+          cv: { select: { id: true, data: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      return { items: orgItems, total: orgItems.length };
     }
 
     const items = await this.prisma.application.findMany({

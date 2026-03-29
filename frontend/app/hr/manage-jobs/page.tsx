@@ -12,6 +12,7 @@ import { MoreVertical, Edit, Pause, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { api } from "@/src/lib/api"
+import { getHrJobs } from "@/src/services/jobs.service"
 
 type HRJob = {
   id: string
@@ -40,45 +41,15 @@ export default function ManageJobsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const orgRes = await api("/v1/orgs/my")
-
-        if (orgRes.status === 401) {
-          router.push("/login")
-          return
-        }
-        if (!orgRes.ok) return
-
-        const orgs = await orgRes.json()
-        const firstOrg = Array.isArray(orgs) && orgs.length > 0 ? orgs[0] : null
-        const orgId =
-          firstOrg?.organization?.id ?? firstOrg?.organizationId ?? firstOrg?.id
-
-        if (!orgId) return
-
-        const jobsRes = await api("/v1/jobs")
-
-        if (jobsRes.status === 401) {
-          router.push("/login")
-          return
-        }
-        if (!jobsRes.ok) return
-
-        const jobsData = await jobsRes.json()
-        const orgJobs = Array.isArray(jobsData)
-          ? jobsData.filter((job: any) => job.organization?.id === orgId)
-          : []
-
+    getHrJobs({ limit: 100, includeInactive: true })
+      .then((jobs) => {
         setHrJobs(
-          orgJobs.map(
-            (job: any): HRJob => ({
+          jobs.map(
+            (job): HRJob => ({
               id: job.id,
               title: job.title,
-              location:
-                [job.governorate, job.city].filter(Boolean).join(" - ") ||
-                "غير محدد",
-              type: job.category || "غير محدد",
+              location: "غير محدد",
+              type: (job.category as string) || "غير محدد",
               experience: "غير محدد",
               applicants: job._count?.applications ?? 0,
               isActive: job.isActive ?? true,
@@ -86,13 +57,11 @@ export default function ManageJobsPage() {
             }),
           ),
         )
-      } catch {
-        // ignore
-      }
-    }
-
-    fetchJobs()
-  }, [router])
+      })
+      .catch(() => {
+        // ignore network errors silently
+      })
+  }, [])
 
   const handleDelete = async (jobId: string) => {
     const confirmed = window.confirm("هل أنت متأكد من حذف هذه الوظيفة؟")
