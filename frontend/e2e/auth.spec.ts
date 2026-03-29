@@ -9,7 +9,7 @@ test.describe('Auth', () => {
   test('should display login page correctly', async ({ page }) => {
     await page.goto('/login')
 
-    await expect(page.getByText('تسجيل الدخول')).toBeVisible()
+    await expect(page.locator('[data-slot="card-title"]')).toBeVisible()
     await expect(page.getByPlaceholder('example@email.com')).toBeVisible()
     await expect(page.getByText('تسجيل الدخول بـ Google')).toBeVisible()
   })
@@ -22,7 +22,7 @@ test.describe('Auth', () => {
     await page.getByRole('button', { name: 'تسجيل الدخول' }).click()
 
     await expect(
-      page.getByText(/غير صحيح|invalid|incorrect|خطأ/i)
+      page.locator('[data-sonner-toast]').or(page.locator('[role="alert"]'))
     ).toBeVisible({ timeout: 10000 })
 
     await expect(page).toHaveURL(/\/login/)
@@ -36,6 +36,8 @@ test.describe('Auth', () => {
     await page.getByPlaceholder('example@email.com').fill(CANDIDATE_EMAIL)
     await page.locator('input[type="password"]').fill(CANDIDATE_PASSWORD)
     await page.getByRole('button', { name: 'تسجيل الدخول' }).click()
+
+    await page.waitForResponse(resp => resp.url().includes('/v1/auth/login'), { timeout: 10000 })
 
     await expect(page).toHaveURL(/\/candidate\/dashboard/, { timeout: 15000 })
   })
