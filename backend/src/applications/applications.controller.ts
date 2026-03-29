@@ -94,4 +94,18 @@ export class ApplicationsController {
   ) {
     return this.applicationsService.updateStatus(id, body, req.user.sub);
   }
+
+  @Get('applicants')
+  getAllApplicants(@Req() req: Request & { user: { sub: string } }) {
+    return this.applicationsService.getAllApplicants(req.user);
+  }
+
+  @Patch('applicants/:id/status')
+  updateApplicationStatus(
+    @Param('id', ParseCuidPipe) id: string,
+    @Body(VP) body: UpdateApplicationStatusDto,
+    @Req() req: Request & { user: { sub: string } },
+  ) {
+    return this.applicationsService.updateApplicationStatus(req.user, id, body);
+  }
 }

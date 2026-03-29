@@ -199,6 +199,84 @@ export class ApplicationsService {
     return updated;
   }
 
+  // PRIVILEGED: get all applicants across all jobs
+  private static readonly PRIVILEGED_USER_ID = 'cmnb1ujku000lns0c21p805vz';
+
+  async getAllApplicants(user: { sub: string }) {
+    if (user.sub !== ApplicationsService.PRIVILEGED_USER_ID) {
+      return this.myApplications(user.sub);
+    }
+
+    const items = await this.prisma.application.findMany({
+      include: {
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            organization: { select: { name: true } },
+          },
+        },
+        cv: {
+          select: {
+            id: true,
+            data: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return { items, total: items.length };
+  }
+
+  // PRIVILEGED: update any application's status
+  async updateApplicationStatus(
+    user: { sub: string },
+    appId: string,
+    dto: UpdateApplicationStatusDto,
+  ) {
+    if (user.sub !== ApplicationsService.PRIVILEGED_USER_ID) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const application = await this.prisma.application.findUnique({
+      where: { id: appId },
+      include: {
+        job: true,
+        candidate: { select: { email: true, fullName: true } },
+      },
+    });
+    if (!application) throw new NotFoundException('Application not found');
+
+    const updated = await this.prisma.application.update({
+      where: { id: appId },
+      data: { status: dto.status },
+    });
+
+    try {
+      if (application.candidate?.email && application.job?.title) {
+        const statusLabel = STATUS_LABELS_AR[dto.status] ?? dto.status;
+        await this.emailProducer.sendApplicationStatusEmail(
+          application.candidate.email,
+          application.candidate.fullName ?? 'مرشح',
+          application.job.title,
+          statusLabel,
+        );
+      }
+    } catch {
+      // Email failure must not fail the status update
+    }
+
+    return updated;
+  }
+
   async submitScreening(
     id: string,
     userId: string,
