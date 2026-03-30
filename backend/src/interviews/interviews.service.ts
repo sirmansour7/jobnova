@@ -97,7 +97,7 @@ export class InterviewsService {
       await tx.interviewMessage.create({
         data: {
           sessionId: s.id,
-          role: 'bot',
+          role: 'assistant',
           content: INTERVIEW_QUESTIONS[0],
         },
       });
@@ -155,7 +155,7 @@ export class InterviewsService {
         await tx.interviewMessage.create({
           data: {
             sessionId,
-            role: 'bot',
+            role: 'assistant',
             content: INTERVIEW_QUESTIONS[nextStep],
           },
         });
@@ -266,7 +266,7 @@ export class InterviewsService {
 
     const groqHistory = [
       ...session.messages.map((m) => ({
-        role: m.role === 'bot' ? ('assistant' as const) : ('user' as const),
+        role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
         content: m.content,
       })),
       { role: 'user' as const, content: contentTrimmed },
@@ -349,7 +349,7 @@ export class InterviewsService {
 
     // ── 6. Persist AI response ───────────────────────────────────────────────
     const saved = await this.prisma.interviewMessage.create({
-      data: { sessionId, role: 'bot', content: fullContent },
+      data: { sessionId, role: 'assistant', content: fullContent },
     });
 
     this.sseWrite(res, {
