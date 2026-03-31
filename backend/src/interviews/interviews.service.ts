@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Response as ExpressResponse } from 'express';
-import { HrDecision, InterviewType } from '@prisma/client';
+import { HrDecision, InterviewType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrgAuthService } from '../org/org-auth.service';
 import { AiProducer } from '../queues/ai/ai.producer';
@@ -84,28 +84,44 @@ export class InterviewsService {
       return this.toSessionResponse(existing);
     }
 
-    const session = await this.prisma.$transaction(async (tx) => {
-      const s = await tx.interviewSession.create({
-        data: {
-          applicationId,
-          candidateId,
-          jobId: application.jobId,
-          status: 'active',
-          currentStep: 0,
-        },
+    let session;
+    try {
+      session = await this.prisma.$transaction(async (tx) => {
+        const s = await tx.interviewSession.create({
+          data: {
+            applicationId,
+            candidateId,
+            jobId: application.jobId,
+            status: 'active',
+            currentStep: 0,
+          },
+        });
+        await tx.interviewMessage.create({
+          data: {
+            sessionId: s.id,
+            role: 'bot',
+            content: INTERVIEW_QUESTIONS[0],
+          },
+        });
+        return tx.interviewSession.findUniqueOrThrow({
+          where: { id: s.id },
+          include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
+        });
       });
-      await tx.interviewMessage.create({
-        data: {
-          sessionId: s.id,
-          role: 'assistant',
-          content: INTERVIEW_QUESTIONS[0],
-        },
-      });
-      return tx.interviewSession.findUniqueOrThrow({
-        where: { id: s.id },
-        include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
-      });
-    });
+    } catch (err) {
+      // P2002 = unique constraint violation (race condition: two concurrent start requests)
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        const race = await this.prisma.interviewSession.findUnique({
+          where: { applicationId },
+          include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
+        });
+        if (race) return this.toSessionResponse(race);
+      }
+      throw err;
+    }
     return this.toSessionResponse(session);
   }
 
