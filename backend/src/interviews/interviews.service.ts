@@ -99,7 +99,7 @@ export class InterviewsService {
         await tx.interviewMessage.create({
           data: {
             sessionId: s.id,
-            role: 'bot',
+            role: 'assistant',
             content: INTERVIEW_QUESTIONS[0],
           },
         });

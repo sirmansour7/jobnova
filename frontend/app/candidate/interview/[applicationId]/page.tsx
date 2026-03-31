@@ -86,7 +86,7 @@ export default function InterviewPage() {
     setMessages((prev) => [
       ...prev,
       { id: tempUserId, role: "candidate", content, createdAt: new Date().toISOString() },
-      { id: tempBotId,  role: "bot",       content: "",    createdAt: new Date().toISOString() },
+      { id: tempBotId,  role: "assistant",  content: "",    createdAt: new Date().toISOString() },
     ])
 
     try {
@@ -377,13 +377,13 @@ export default function InterviewPage() {
                   <div
                     key={msg.id}
                     className={`rounded-lg px-4 py-2.5 text-sm ${
-                      msg.role === "bot"
+                      msg.role === "assistant"
                         ? "bg-muted text-foreground mr-0 ml-8"
                         : "bg-primary/10 text-foreground ml-0 mr-8"
                     }`}
                   >
                     {/* Typing indicator for empty streaming bot message */}
-                    {msg.role === "bot" && msg.content === "" ? (
+                    {msg.role === "assistant" && msg.content === "" ? (
                       <span className="flex items-center gap-1 text-muted-foreground">
                         <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
                         <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
