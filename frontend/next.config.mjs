@@ -4,7 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-backend.fly.dev"
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-backend.fly.dev").trim()
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -44,7 +44,7 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              `connect-src 'self' ${API_URL} https://jobnova-backend.fly.dev https://vitals.vercel-insights.com`,
+              `connect-src 'self' ${API_URL} https://jobnova-backend.fly.dev wss://jobnova-backend.fly.dev https://vitals.vercel-insights.com`,
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob:",
