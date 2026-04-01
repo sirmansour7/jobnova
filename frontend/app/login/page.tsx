@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { api, API_URL } from "@/src/lib/api"
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
+import { API_URL } from "@/src/lib/api"
 
 function isSafeRedirect(path: string): boolean {
   return (
@@ -38,15 +38,6 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     setError("")
-
-    try {
-      await api("/v1/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      })
-    } catch {
-      // Ignore network errors for now; auth-context will still handle local auth logic
-    }
 
     const result = await login(email, password)
     if (!result.success) {
@@ -100,7 +91,12 @@ function LoginForm() {
           نسيت كلمة المرور؟
         </Link>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
       <Button type="submit" className="shadow-blue-glow w-full" disabled={loading}>
         {loading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
         تسجيل الدخول

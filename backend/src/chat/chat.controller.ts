@@ -7,6 +7,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ChatService } from './chat.service';
 import { BotMessageDto } from './dto/bot-message.dto';
+import { CvAssistantDto } from './dto/cv-assistant.dto';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -26,6 +27,23 @@ export class ChatController {
       jobTitle ?? 'وظيفة',
       conversationHistory ?? [],
       candidateName ?? 'المرشح',
+    );
+    return { message: reply };
+  }
+
+  @Post('cv-assistant')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async getCvAssistantResponse(
+    @Body() body: CvAssistantDto,
+    @Req() req: Request & { user: { sub: string; role: Role } },
+  ) {
+    const { userMessage, conversationHistory, candidateName, currentStep, cvContext } = body;
+    const reply = await this.chatService.getCvAssistantResponse(
+      userMessage,
+      conversationHistory ?? [],
+      candidateName ?? 'المرشح',
+      currentStep,
+      cvContext,
     );
     return { message: reply };
   }

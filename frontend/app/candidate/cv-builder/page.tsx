@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,13 +10,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Plus, Trash2, ChevronRight, ChevronLeft, Check, Download, Printer } from "lucide-react"
+import { Plus, Trash2, ChevronRight, ChevronLeft, Check, Download, Printer, MessageCircle, X, Send, Bot } from "lucide-react"
 import { ModernTechTemplate } from "@/components/cv/templates/ModernTechTemplate"
 import { MinimalATSTemplate } from "@/components/cv/templates/MinimalATSTemplate"
 import { CreativeTemplate } from "@/components/cv/templates/CreativeTemplate"
 import { getMyCv, saveMyCv, EMPTY_CV } from "@/src/services/cv.service"
 import type { CvData, CvExperience, CvEducation } from "@/src/services/cv.service"
-import { apiJson, API_URL } from "@/src/lib/api"
+import { api, apiJson, API_URL } from "@/src/lib/api"
 import { getCookie } from "@/src/lib/cookies"
 
 interface CvAnalysisResult {
@@ -49,6 +49,158 @@ const STEPS = [
 
 const EMPTY_EXP: CvExperience = { title: "", company: "", from: "", to: "", description: "" }
 const EMPTY_EDU: CvEducation = { degree: "", institution: "", year: "" }
+
+interface CvChatMessage {
+  role: "user" | "assistant"
+  content: string
+}
+
+function CvAssistantWidget({ currentStep, cv }: { currentStep: number; cv: CvData }) {
+  const [open, setOpen] = useState(false)
+  const [messages, setMessages] = useState<CvChatMessage[]>([
+    { role: "assistant", content: "مرحباً! 👋 أنا نوفا، مساعدتك في كتابة السيرة الذاتية. اسألني عن أي شيء وسأساعدك في كتابة سيرة ذاتية احترافية! ✨" }
+  ])
+  const [input, setInput] = useState("")
+  const [loading, setLoading] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, open])
+
+  const buildCvContext = () => {
+    const parts: string[] = []
+    if (cv.fullName) parts.push(`الاسم: ${cv.fullName}`)
+    if (cv.title) parts.push(`المسمى الوظيفي: ${cv.title}`)
+    if (cv.summary) parts.push(`الملخص: ${cv.summary}`)
+    if (cv.skills.length) parts.push(`المهارات: ${cv.skills.join(", ")}`)
+    if (cv.experience.length) {
+      const expSummary = cv.experience.map(e => `${e.title} في ${e.company}`).join("، ")
+      parts.push(`الخبرة: ${expSummary}`)
+    }
+    if (cv.education.length) {
+      const eduSummary = cv.education.map(e => `${e.degree} - ${e.institution}`).join("، ")
+      parts.push(`التعليم: ${eduSummary}`)
+    }
+    return parts.join("\n")
+  }
+
+  const sendMessage = async () => {
+    const text = input.trim()
+    if (!text || loading) return
+
+    const userMsg: CvChatMessage = { role: "user", content: text }
+    setMessages(prev => [...prev, userMsg])
+    setInput("")
+    setLoading(true)
+
+    try {
+      const history = messages.map(m => ({ role: m.role, content: m.content }))
+      const res = await api("/v1/chat/cv-assistant", {
+        method: "POST",
+        body: JSON.stringify({
+          userMessage: text,
+          conversationHistory: history,
+          candidateName: cv.fullName || "المرشح",
+          currentStep,
+          cvContext: buildCvContext(),
+        }),
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        const errMsg = (errData as { message?: string | string[] }).message
+        const display = Array.isArray(errMsg) ? errMsg[0] : errMsg ?? `خطأ ${res.status}`
+        setMessages(prev => [...prev, { role: "assistant", content: `❌ ${display}` }])
+        return
+      }
+      const data = await res.json()
+      setMessages(prev => [...prev, { role: "assistant", content: data.message ?? "عذراً، حدث خطأ." }])
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "خطأ في الاتصال"
+      setMessages(prev => [...prev, { role: "assistant", content: `❌ ${msg}` }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <>
+      {/* Floating button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all"
+        aria-label="مساعد السيرة الذاتية"
+      >
+        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+      </button>
+
+      {/* Chat panel */}
+      {open && (
+        <div className="fixed bottom-24 left-6 z-50 flex w-80 flex-col rounded-2xl border border-border bg-background shadow-2xl overflow-hidden"
+             style={{ height: "420px" }}>
+          {/* Header */}
+          <div className="flex items-center gap-2 bg-primary px-4 py-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/20">
+              <Bot className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-primary-foreground">نوفا</p>
+              <p className="text-xs text-primary-foreground/70">مساعدة السيرة الذاتية</p>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-start" : "justify-end"}`}>
+                <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                  msg.role === "user"
+                    ? "bg-secondary text-foreground rounded-br-sm"
+                    : "bg-primary text-primary-foreground rounded-bl-sm"
+                }`}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-end">
+                <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-sm px-3 py-2 text-sm">
+                  <span className="inline-flex gap-1">
+                    <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
+                    <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
+                    <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
+                  </span>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input */}
+          <div className="border-t border-border p-3 flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
+              placeholder="اكتب سؤالك هنا..."
+              disabled={loading}
+              className="flex-1 rounded-xl border border-border bg-secondary px-3 py-2 text-sm outline-none focus:border-primary disabled:opacity-50"
+              dir="rtl"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={loading || !input.trim()}
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
 
 function ScoreCircle({ score, label, color = "text-primary" }: { score: number; label: string; color?: string }) {
   const radius = 28
@@ -216,10 +368,45 @@ export default function CVBuilderPage() {
     setAnalysisError(null)
     setAnalysisResult(null)
     try {
-      const result = await apiJson<CvAnalysisResult>("/v1/cv/me/analyze", {
+      const raw = await apiJson<{
+        score: number
+        language: 'ar' | 'en' | 'mixed'
+        matchedSkills: string[]
+        missingSkills: string[]
+        strengths: string[]
+        recommendations: string[]
+        atsNotes: string[]
+        targetRole: string
+      }>("/v1/cv/me/analyze", {
         method: "POST",
         body: JSON.stringify({ targetRoleTitle }),
       })
+
+      const matched = raw.matchedSkills?.length ?? 0
+      const missing = raw.missingSkills?.length ?? 0
+      const roleFitScore = matched + missing > 0
+        ? Math.round((matched / (matched + missing)) * 100)
+        : 0
+
+      const result: CvAnalysisResult = {
+        language: raw.language,
+        overallScore: raw.score,
+        roleFitScore,
+        summary: raw.recommendations?.[0] ?? "تم تحليل السيرة الذاتية بنجاح",
+        strengths: raw.strengths ?? [],
+        improvements: raw.recommendations ?? [],
+        ats: {
+          missingKeywords: raw.missingSkills ?? [],
+          formatIssues: raw.atsNotes ?? [],
+          lengthAssessment: 'ok',
+        },
+        roleMatch: {
+          targetRoleTitle: raw.targetRole ?? targetRoleTitle,
+          matchedKeywords: raw.matchedSkills ?? [],
+          missingKeywords: raw.missingSkills ?? [],
+          suggestions: (raw.recommendations ?? []).slice(0, 3),
+        },
+      }
       setAnalysisResult(result)
     } catch (err: unknown) {
       const message = err && typeof err === "object" && "message" in err && typeof (err as { message: unknown }).message === "string"
@@ -710,6 +897,8 @@ export default function CVBuilderPage() {
 
         </div>
       </DashboardLayout>
+
+      <CvAssistantWidget currentStep={step} cv={cv} />
     </ProtectedRoute>
   )
 }

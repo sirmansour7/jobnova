@@ -214,9 +214,11 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   }, [id])
 
   useEffect(() => {
-    const savedJobs = JSON.parse(localStorage.getItem("jobnova_saved_jobs") ?? "[]")
-    setSaved(savedJobs.includes(job?.id))
-  }, [job?.id])
+    if (!job?.id || !isCandidate) return
+    apiJson<{ saved: boolean }>(`/v1/saved-jobs/${job.id}/status`)
+      .then((data) => setSaved(data.saved))
+      .catch(() => {})
+  }, [job?.id, isCandidate])
 
   useEffect(() => {
     if (!job?.category) return
@@ -227,14 +229,15 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
       .catch(() => {})
   }, [job?.category, job?.id])
 
-  const handleSave = useCallback(() => {
-    const savedJobs: string[] = JSON.parse(localStorage.getItem("jobnova_saved_jobs") ?? "[]")
-    const newSaved = saved
-      ? savedJobs.filter((id) => id !== job?.id)
-      : [...savedJobs, job?.id].filter(Boolean)
-    localStorage.setItem("jobnova_saved_jobs", JSON.stringify(newSaved))
-    setSaved(!saved)
-  }, [saved, job?.id])
+  const handleSave = useCallback(async () => {
+    if (!job?.id) return
+    try {
+      const data = await apiJson<{ saved: boolean }>(`/v1/saved-jobs/${job.id}`, { method: "POST" })
+      setSaved(data.saved)
+    } catch {
+      // ignore
+    }
+  }, [job?.id])
 
   const handleCopyLink = useCallback(async () => {
     await navigator.clipboard.writeText(window.location.href)
