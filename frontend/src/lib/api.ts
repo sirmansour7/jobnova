@@ -1,7 +1,7 @@
 import { getCookie, setCookie, deleteCookie } from "./cookies"
 
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production-e410.up.railway.app"
+  process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-backend.fly.dev"
 
 function getToken(): string | null {
   return getCookie("jobnova_token")
