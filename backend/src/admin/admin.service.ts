@@ -192,7 +192,7 @@ export class AdminService {
         { location: { contains: search, mode: 'insensitive' } },
       ];
     }
-    const [items, total] = await Promise.all([
+    const [orgs, total] = await Promise.all([
       this.prisma.organization.findMany({
         where,
         skip,
@@ -206,65 +206,87 @@ export class AdminService {
           location: true,
           size: true,
           createdAt: true,
-          responsibleHr: { select: { id: true, fullName: true, email: true } },
+          memberships: {
+            where: { roleInOrg: 'HR' },
+            select: { user: { select: { id: true, fullName: true, email: true } } },
+          },
           _count: { select: { jobs: true, memberships: true } },
         },
       }),
       this.prisma.organization.count({ where }),
     ]);
+
+    const items = orgs.map((org) => ({
+      ...org,
+      responsibleHrs: org.memberships.map((m) => m.user),
+      memberships: undefined,
+    }));
+
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  async assignHr(orgId: string, hrUserId: string | null) {
+  async assignHr(orgId: string, hrUserIds: string[]) {
     const org = await this.prisma.organization.findUnique({
       where: { id: orgId },
-      select: { id: true, deletedAt: true, responsibleHrId: true },
+      select: { id: true, deletedAt: true },
     });
     if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
 
-    if (hrUserId !== null) {
-      const user = await this.prisma.user.findUnique({ where: { id: hrUserId } });
-      if (!user || user.deletedAt) throw new NotFoundException('User not found');
-      if (user.role !== 'hr') throw new BadRequestException('User must have HR role');
+    // Validate all provided users exist and have HR role
+    if (hrUserIds.length > 0) {
+      const users = await this.prisma.user.findMany({
+        where: { id: { in: hrUserIds }, deletedAt: null },
+        select: { id: true, role: true },
+      });
+      if (users.length !== hrUserIds.length) {
+        throw new NotFoundException('One or more users not found');
+      }
+      const nonHr = users.find((u) => u.role !== 'hr');
+      if (nonHr) throw new BadRequestException('All users must have HR role');
     }
 
-    const prevHrId = org.responsibleHrId;
+    // Get current HR memberships (excludes OWNER)
+    const currentHrMemberships = await this.prisma.membership.findMany({
+      where: { organizationId: orgId, roleInOrg: 'HR' },
+      select: { userId: true },
+    });
+    const currentHrIds = new Set(currentHrMemberships.map((m) => m.userId));
+    const newHrIds = new Set(hrUserIds);
+
+    const toAdd = hrUserIds.filter((id) => !currentHrIds.has(id));
+    const toRemove = [...currentHrIds].filter((id) => !newHrIds.has(id));
 
     await this.prisma.$transaction(async (tx) => {
-      // 1. Update responsibleHrId
-      await tx.organization.update({
-        where: { id: orgId },
-        data: { responsibleHrId: hrUserId },
-      });
-
-      // 2. Remove previous HR's membership from this org (only if HR role, not OWNER)
-      if (prevHrId && prevHrId !== hrUserId) {
+      // Remove HR memberships no longer in the list
+      if (toRemove.length > 0) {
         await tx.membership.deleteMany({
-          where: {
-            userId: prevHrId,
-            organizationId: orgId,
-            roleInOrg: 'HR',
-          },
+          where: { organizationId: orgId, userId: { in: toRemove }, roleInOrg: 'HR' },
         });
       }
-
-      // 3. Create membership for the new HR if assigning
-      if (hrUserId) {
-        await tx.membership.upsert({
-          where: { userId_organizationId: { userId: hrUserId, organizationId: orgId } },
-          create: { userId: hrUserId, organizationId: orgId, roleInOrg: 'HR' },
-          update: {},
+      // Add new HR memberships
+      if (toAdd.length > 0) {
+        await tx.membership.createMany({
+          data: toAdd.map((userId) => ({ userId, organizationId: orgId, roleInOrg: 'HR' as const })),
+          skipDuplicates: true,
         });
       }
     });
 
-    return this.prisma.organization.findUnique({
+    const updated = await this.prisma.organization.findUnique({
       where: { id: orgId },
       select: {
         id: true,
-        responsibleHr: { select: { id: true, fullName: true, email: true } },
+        memberships: {
+          where: { roleInOrg: 'HR' },
+          select: { user: { select: { id: true, fullName: true, email: true } } },
+        },
       },
     });
+
+    return {
+      id: updated!.id,
+      responsibleHrs: updated!.memberships.map((m) => m.user),
+    };
   }
 
   async getOneOrg(id: string) {
