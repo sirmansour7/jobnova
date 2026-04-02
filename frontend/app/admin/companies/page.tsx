@@ -122,7 +122,7 @@ export default function ManageCompaniesPage() {
 
   async function openAssignDialog(company: AdminOrg) {
     setAssignTarget(company)
-    setSelectedHrIds(new Set(company.responsibleHrs.map((h) => h.id)))
+    setSelectedHrIds(new Set((company.responsibleHrs ?? []).map((h) => h.id)))
     setHrSearch("")
     setHrLoading(true)
     try {
