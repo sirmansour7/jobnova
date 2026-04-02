@@ -41,7 +41,7 @@ export class HrController {
 
   private async getHrOrganizationId(userId: string): Promise<string | null> {
     const membership = await this.prisma.membership.findFirst({
-      where: { userId },
+      where: { userId, roleInOrg: { in: ['OWNER', 'HR'] } },
       select: { organizationId: true },
     });
     return membership?.organizationId ?? null;
