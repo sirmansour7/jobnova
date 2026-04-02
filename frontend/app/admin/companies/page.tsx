@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -37,11 +38,35 @@ export interface AdminOrg {
   location?: string
   size?: string
   createdAt: string
-  responsibleHr?: HrUser | null
+  responsibleHrs: HrUser[]
   _count: { jobs: number; memberships: number }
 }
 
 const PAGE_SIZE = 15
+
+function StackedAvatars({ users }: { users: HrUser[] }) {
+  if (users.length === 0) {
+    return <span className="text-sm text-muted-foreground">غير محدد</span>
+  }
+  const visible = users.slice(0, 3)
+  const extra = users.length - visible.length
+  return (
+    <div className="flex items-center">
+      <div className="flex -space-x-2 space-x-reverse">
+        {visible.map((u) => (
+          <Avatar key={u.id} className="h-7 w-7 border-2 border-card">
+            <AvatarFallback className="bg-primary/20 text-primary text-xs">
+              {u.fullName.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        ))}
+      </div>
+      {extra > 0 && (
+        <span className="mr-2 text-xs text-muted-foreground">+{extra}</span>
+      )}
+    </div>
+  )
+}
 
 export default function ManageCompaniesPage() {
   const router = useRouter()
@@ -57,7 +82,7 @@ export default function ManageCompaniesPage() {
   const [assignTarget, setAssignTarget] = useState<AdminOrg | null>(null)
   const [hrUsers, setHrUsers] = useState<HrUser[]>([])
   const [hrSearch, setHrSearch] = useState("")
-  const [selectedHrId, setSelectedHrId] = useState<string | null>(null)
+  const [selectedHrIds, setSelectedHrIds] = useState<Set<string>>(new Set())
   const [hrLoading, setHrLoading] = useState(false)
   const [assigning, setAssigning] = useState(false)
 
@@ -97,7 +122,7 @@ export default function ManageCompaniesPage() {
 
   async function openAssignDialog(company: AdminOrg) {
     setAssignTarget(company)
-    setSelectedHrId(company.responsibleHr?.id ?? null)
+    setSelectedHrIds(new Set(company.responsibleHrs.map((h) => h.id)))
     setHrSearch("")
     setHrLoading(true)
     try {
@@ -110,21 +135,30 @@ export default function ManageCompaniesPage() {
     }
   }
 
+  function toggleHr(id: string) {
+    setSelectedHrIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   async function handleAssignHr() {
     if (!assignTarget) return
     setAssigning(true)
     try {
-      const updated = await apiJson<{ id: string; responsibleHr: HrUser | null }>(
+      const result = await apiJson<{ id: string; responsibleHrs: HrUser[] }>(
         `/v1/admin/orgs/${assignTarget.id}/assign-hr`,
         {
           method: "PATCH",
-          body: JSON.stringify({ hrUserId: selectedHrId }),
+          body: JSON.stringify({ hrUserIds: [...selectedHrIds] }),
         }
       )
-      setCompanies(prev =>
-        prev.map(c => c.id === assignTarget.id ? { ...c, responsibleHr: updated.responsibleHr } : c)
+      setCompanies((prev) =>
+        prev.map((c) => c.id === assignTarget.id ? { ...c, responsibleHrs: result.responsibleHrs } : c)
       )
-      toast.success(selectedHrId ? "تم تعيين HR المسؤول" : "تم إلغاء تعيين HR المسؤول")
+      toast.success("تم تحديث HR المسؤولين")
       setAssignTarget(null)
     } catch {
       toast.error("فشل تعيين HR المسؤول")
@@ -136,7 +170,7 @@ export default function ManageCompaniesPage() {
   const filteredHrUsers = useMemo(() => {
     if (!hrSearch.trim()) return hrUsers
     const q = hrSearch.toLowerCase()
-    return hrUsers.filter(u =>
+    return hrUsers.filter((u) =>
       u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
     )
   }, [hrUsers, hrSearch])
@@ -214,18 +248,7 @@ export default function ManageCompaniesPage() {
                           <TableCell className="text-sm text-foreground">{company.location ?? <span className="text-muted-foreground">—</span>}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{company.size ?? "—"}</TableCell>
                           <TableCell>
-                            {company.responsibleHr ? (
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                    {company.responsibleHr.fullName.slice(0, 2).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm text-foreground">{company.responsibleHr.fullName}</span>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">غير محدد</span>
-                            )}
+                            <StackedAvatars users={company.responsibleHrs ?? []} />
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">{company._count.memberships}</TableCell>
                           <TableCell>
@@ -281,9 +304,14 @@ export default function ManageCompaniesPage() {
         <Dialog open={!!assignTarget} onOpenChange={(open) => { if (!open) setAssignTarget(null) }}>
           <DialogContent className="sm:max-w-md" dir="rtl">
             <DialogHeader>
-              <DialogTitle>تغيير HR المسؤول — {assignTarget?.name}</DialogTitle>
+              <DialogTitle>HR المسؤولون — {assignTarget?.name}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {selectedHrIds.size > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {selectedHrIds.size} HR محدد
+                </p>
+              )}
               <div className="space-y-2">
                 <Label>بحث عن HR</Label>
                 <div className="relative">
@@ -291,50 +319,47 @@ export default function ManageCompaniesPage() {
                   <Input
                     placeholder="ابحث بالاسم أو البريد الإلكتروني..."
                     value={hrSearch}
-                    onChange={e => setHrSearch(e.target.value)}
+                    onChange={(e) => setHrSearch(e.target.value)}
                     className="pe-10"
                   />
                 </div>
               </div>
 
-              <div className="max-h-60 overflow-y-auto rounded-md border border-border">
+              <div className="max-h-64 overflow-y-auto rounded-md border border-border">
                 {hrLoading ? (
                   <div className="py-8 text-center text-sm text-muted-foreground">جاري التحميل...</div>
                 ) : filteredHrUsers.length === 0 ? (
                   <div className="py-8 text-center text-sm text-muted-foreground">لا يوجد مستخدمون بدور HR</div>
                 ) : (
                   <div className="divide-y divide-border">
-                    {/* None option */}
-                    <button
-                      type="button"
-                      className={`w-full px-4 py-3 text-start transition-colors hover:bg-secondary/40 ${selectedHrId === null ? "bg-primary/10" : ""}`}
-                      onClick={() => setSelectedHrId(null)}
-                    >
-                      <p className="text-sm text-muted-foreground">بدون HR مسؤول</p>
-                    </button>
-                    {filteredHrUsers.map(user => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        className={`w-full px-4 py-3 text-start transition-colors hover:bg-secondary/40 ${selectedHrId === user.id ? "bg-primary/10" : ""}`}
-                        onClick={() => setSelectedHrId(user.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                              {user.fullName.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{user.fullName}</p>
-                            <p className="text-xs text-muted-foreground" dir="ltr">{user.email}</p>
+                    {filteredHrUsers.map((user) => {
+                      const checked = selectedHrIds.has(user.id)
+                      return (
+                        <button
+                          key={user.id}
+                          type="button"
+                          className={`w-full px-4 py-3 text-start transition-colors hover:bg-secondary/40 ${checked ? "bg-primary/10" : ""}`}
+                          onClick={() => toggleHr(user.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() => toggleHr(user.id)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                                {user.fullName.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{user.fullName}</p>
+                              <p className="text-xs text-muted-foreground" dir="ltr">{user.email}</p>
+                            </div>
                           </div>
-                          {selectedHrId === user.id && (
-                            <span className="mr-auto text-xs text-primary font-medium">محدد</span>
-                          )}
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      )
+                    })}
                   </div>
                 )}
               </div>

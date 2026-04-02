@@ -124,8 +124,8 @@ export class AdminController {
   }
 
   @Patch('orgs/:id/assign-hr')
-  assignHr(@Param('id') id: string, @Body() body: { hrUserId: string | null }) {
-    return this.adminService.assignHr(id, body.hrUserId ?? null);
+  assignHr(@Param('id') id: string, @Body() body: { hrUserIds: string[] }) {
+    return this.adminService.assignHr(id, Array.isArray(body.hrUserIds) ? body.hrUserIds : []);
   }
 
   @Delete('orgs/:id')
