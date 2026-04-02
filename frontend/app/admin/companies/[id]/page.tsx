@@ -7,10 +7,21 @@ import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ArrowRight, Building2, MapPin, Users, Briefcase, Globe, Calendar } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { ArrowRight, Building2, MapPin, Users, Briefcase, Globe, Calendar, Pencil } from "lucide-react"
 import { apiJson } from "@/src/lib/api"
+import { toast } from "sonner"
 
 interface OrgDetail {
   id: string
@@ -36,6 +47,15 @@ interface OrgJob {
   _count?: { applications: number }
 }
 
+interface EditForm {
+  name: string
+  description: string
+  industry: string
+  location: string
+  website: string
+  size: string
+}
+
 export default function CompanyDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -44,6 +64,11 @@ export default function CompanyDetailPage() {
   const [org, setOrg] = useState<OrgDetail | null>(null)
   const [jobs, setJobs] = useState<OrgJob[]>([])
   const [loading, setLoading] = useState(true)
+  const [editOpen, setEditOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState<EditForm>({
+    name: "", description: "", industry: "", location: "", website: "", size: "",
+  })
 
   useEffect(() => {
     if (!id) return
@@ -55,6 +80,14 @@ export default function CompanyDetailPage() {
           apiJson<{ items: OrgJob[] }>(`/v1/admin/jobs?limit=100`),
         ])
         setOrg(orgData)
+        setForm({
+          name: orgData.name ?? "",
+          description: orgData.description ?? "",
+          industry: orgData.industry ?? "",
+          location: orgData.location ?? "",
+          website: orgData.website ?? "",
+          size: orgData.size ?? "",
+        })
         setJobs((jobsData.items ?? []).filter((j: OrgJob) => j.organization?.id === id))
       } catch { /* ignore */ }
       finally { setLoading(false) }
@@ -65,6 +98,35 @@ export default function CompanyDetailPage() {
   function formatDate(iso: string) {
     try { return new Date(iso).toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" }) }
     catch { return iso }
+  }
+
+  function handleChange(field: keyof EditForm, value: string) {
+    setForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  async function handleSave() {
+    if (!org) return
+    setSaving(true)
+    try {
+      const updated = await apiJson<OrgDetail>(`/v1/admin/orgs/${org.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: form.name || undefined,
+          description: form.description || undefined,
+          industry: form.industry || undefined,
+          location: form.location || undefined,
+          website: form.website || undefined,
+          size: form.size || undefined,
+        }),
+      })
+      setOrg(prev => prev ? { ...prev, ...updated } : prev)
+      setEditOpen(false)
+      toast.success("تم حفظ بيانات الشركة")
+    } catch {
+      toast.error("حدث خطأ أثناء الحفظ")
+    } finally {
+      setSaving(false)
+    }
   }
 
   const allowedRoles = useMemo(() => ["admin"] as const, [])
@@ -96,21 +158,27 @@ export default function CompanyDetailPage() {
     <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
         <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.push("/admin/companies")}>
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="bg-primary/20 text-primary font-bold text-lg">
-                  {org.name.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">{org.name}</h1>
-                <p className="text-muted-foreground font-mono text-sm" dir="ltr">{org.slug}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => router.push("/admin/companies")}>
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-primary/20 text-primary font-bold text-lg">
+                    {org.name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">{org.name}</h1>
+                  <p className="text-muted-foreground font-mono text-sm" dir="ltr">{org.slug}</p>
+                </div>
               </div>
             </div>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="h-4 w-4 ml-2" />
+              تعديل البيانات
+            </Button>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -227,6 +295,49 @@ export default function CompanyDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Edit Dialog */}
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="sm:max-w-lg" dir="rtl">
+            <DialogHeader>
+              <DialogTitle>تعديل بيانات الشركة</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>اسم الشركة</Label>
+                  <Input value={form.name} onChange={e => handleChange("name", e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>القطاع</Label>
+                  <Input value={form.industry} onChange={e => handleChange("industry", e.target.value)} placeholder="مثال: تقنية المعلومات" />
+                </div>
+                <div className="space-y-2">
+                  <Label>الموقع</Label>
+                  <Input value={form.location} onChange={e => handleChange("location", e.target.value)} placeholder="مثال: القاهرة، مصر" />
+                </div>
+                <div className="space-y-2">
+                  <Label>حجم الشركة</Label>
+                  <Input value={form.size} onChange={e => handleChange("size", e.target.value)} placeholder="مثال: 10-50" />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>الموقع الإلكتروني</Label>
+                  <Input value={form.website} onChange={e => handleChange("website", e.target.value)} dir="ltr" className="text-left" placeholder="https://example.com" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>وصف الشركة</Label>
+                <Textarea value={form.description} onChange={e => handleChange("description", e.target.value)} rows={3} placeholder="وصف مختصر عن الشركة..." />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)} disabled={saving}>إلغاء</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DashboardLayout>
     </ProtectedRoute>
   )

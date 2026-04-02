@@ -10,11 +10,13 @@ import { Role, ApplicationStatus } from '@prisma/client';
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
-  async getUsers(page = 1, limit = 20) {
+  async getUsers(page = 1, limit = 20, role?: string) {
     const skip = (page - 1) * limit;
+    const where: any = { deletedAt: null };
+    if (role) where.role = role;
     const [items, total] = await Promise.all([
       this.prisma.user.findMany({
-        where: { deletedAt: null },
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -28,7 +30,7 @@ export class AdminService {
           lockedUntil: true,
         },
       }),
-      this.prisma.user.count({ where: { deletedAt: null } }),
+      this.prisma.user.count({ where }),
     ]);
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }
@@ -204,12 +206,33 @@ export class AdminService {
           location: true,
           size: true,
           createdAt: true,
+          responsibleHr: { select: { id: true, fullName: true, email: true } },
           _count: { select: { jobs: true, memberships: true } },
         },
       }),
       this.prisma.organization.count({ where }),
     ]);
     return { items, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  async assignHr(orgId: string, hrUserId: string | null) {
+    const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
+    if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
+
+    if (hrUserId !== null) {
+      const user = await this.prisma.user.findUnique({ where: { id: hrUserId } });
+      if (!user || user.deletedAt) throw new NotFoundException('User not found');
+      if (user.role !== 'hr') throw new BadRequestException('User must have HR role');
+    }
+
+    return this.prisma.organization.update({
+      where: { id: orgId },
+      data: { responsibleHrId: hrUserId },
+      select: {
+        id: true,
+        responsibleHr: { select: { id: true, fullName: true, email: true } },
+      },
+    });
   }
 
   async getOneOrg(id: string) {
@@ -231,6 +254,22 @@ export class AdminService {
     });
     if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
     return org;
+  }
+
+  async updateOrg(id: string, data: { name?: string; description?: string; industry?: string; website?: string; location?: string; size?: string }) {
+    const org = await this.prisma.organization.findUnique({ where: { id } });
+    if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
+    return this.prisma.organization.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.industry !== undefined && { industry: data.industry }),
+        ...(data.website !== undefined && { website: data.website }),
+        ...(data.location !== undefined && { location: data.location }),
+        ...(data.size !== undefined && { size: data.size }),
+      },
+    });
   }
 
   async deleteOrg(id: string) {

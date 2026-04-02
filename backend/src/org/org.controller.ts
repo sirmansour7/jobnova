@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { OrgService } from './org.service';
 import { CreateOrgDto } from './dto/create-org.dto';
+import { UpdateOrgDto } from './dto/update-org.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ParseCuidPipe } from '../common/pipes/parse-cuid.pipe';
@@ -61,6 +63,15 @@ export class OrgController {
     @Req() req: Request & { user: { sub: string } },
   ) {
     return this.orgService.findOne(id, req.user.sub);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseCuidPipe) id: string,
+    @Body(VP) body: UpdateOrgDto,
+    @Req() req: Request & { user: { sub: string } },
+  ) {
+    return this.orgService.update(id, body, req.user.sub);
   }
 
   @Post(':id/members')

@@ -44,8 +44,12 @@ export class AdminController {
   }
 
   @Get('users')
-  getUsers(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.adminService.getUsers(safePage(page), safeLimit(limit));
+  getUsers(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('role') role?: string,
+  ) {
+    return this.adminService.getUsers(safePage(page), safeLimit(limit), role);
   }
 
   @Patch('users/:id/role')
@@ -112,6 +116,16 @@ export class AdminController {
   @Get('orgs/:id')
   getOneOrg(@Param('id') id: string) {
     return this.adminService.getOneOrg(id);
+  }
+
+  @Patch('orgs/:id')
+  updateOrg(@Param('id') id: string, @Body() body: { name?: string; description?: string; industry?: string; website?: string; location?: string; size?: string }) {
+    return this.adminService.updateOrg(id, body);
+  }
+
+  @Patch('orgs/:id/assign-hr')
+  assignHr(@Param('id') id: string, @Body() body: { hrUserId: string | null }) {
+    return this.adminService.assignHr(id, body.hrUserId ?? null);
   }
 
   @Delete('orgs/:id')

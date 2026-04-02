@@ -10,6 +10,7 @@ import type { Cache } from 'cache-manager';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrgDto } from './dto/create-org.dto';
+import { UpdateOrgDto } from './dto/update-org.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { CacheKeys, CacheTTL } from '../common/cache-keys';
 
@@ -93,6 +94,11 @@ export class OrgService {
             id: true,
             name: true,
             slug: true,
+            description: true,
+            industry: true,
+            website: true,
+            location: true,
+            size: true,
             createdAt: true,
             _count: { select: { jobs: true, memberships: true } },
           },
@@ -101,6 +107,21 @@ export class OrgService {
       orderBy: { organization: { createdAt: 'asc' } },
     });
     return membership?.organization ?? null;
+  }
+
+  async update(orgId: string, dto: UpdateOrgDto, userId: string) {
+    await this.assertOwner(userId, orgId);
+    return this.prisma.organization.update({
+      where: { id: orgId },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.industry !== undefined && { industry: dto.industry }),
+        ...(dto.website !== undefined && { website: dto.website }),
+        ...(dto.location !== undefined && { location: dto.location }),
+        ...(dto.size !== undefined && { size: dto.size }),
+      },
+    });
   }
 
   async getDashboardStats(userId: string) {
