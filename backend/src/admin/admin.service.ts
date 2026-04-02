@@ -216,7 +216,10 @@ export class AdminService {
   }
 
   async assignHr(orgId: string, hrUserId: string | null) {
-    const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, deletedAt: true, responsibleHrId: true },
+    });
     if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
 
     if (hrUserId !== null) {
@@ -225,9 +228,38 @@ export class AdminService {
       if (user.role !== 'hr') throw new BadRequestException('User must have HR role');
     }
 
-    return this.prisma.organization.update({
+    const prevHrId = org.responsibleHrId;
+
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Update responsibleHrId
+      await tx.organization.update({
+        where: { id: orgId },
+        data: { responsibleHrId: hrUserId },
+      });
+
+      // 2. Remove previous HR's membership from this org (only if HR role, not OWNER)
+      if (prevHrId && prevHrId !== hrUserId) {
+        await tx.membership.deleteMany({
+          where: {
+            userId: prevHrId,
+            organizationId: orgId,
+            roleInOrg: 'HR',
+          },
+        });
+      }
+
+      // 3. Create membership for the new HR if assigning
+      if (hrUserId) {
+        await tx.membership.upsert({
+          where: { userId_organizationId: { userId: hrUserId, organizationId: orgId } },
+          create: { userId: hrUserId, organizationId: orgId, roleInOrg: 'HR' },
+          update: {},
+        });
+      }
+    });
+
+    return this.prisma.organization.findUnique({
       where: { id: orgId },
-      data: { responsibleHrId: hrUserId },
       select: {
         id: true,
         responsibleHr: { select: { id: true, fullName: true, email: true } },
