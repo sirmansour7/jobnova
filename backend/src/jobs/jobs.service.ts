@@ -100,7 +100,7 @@ export class JobsService {
     let orgId: string | null = null;
     if (user?.role === 'hr') {
       const membership = await this.prisma.membership.findFirst({
-        where: { userId: user.sub },
+        where: { userId: user.sub, roleInOrg: { in: ['OWNER', 'HR'] } },
         select: { organizationId: true },
       });
       if (!membership) {
@@ -108,6 +108,10 @@ export class JobsService {
       }
       orgId = membership.organizationId;
     }
+
+    // HR users may pass includeInactive=true to see all their org's jobs.
+    // For all other cases (public, candidates) always enforce isActive=true.
+    const skipActiveFilter = filters?.includeInactive === true && orgId != null;
 
     // Build AND conditions so multiple OR-based clauses don't conflict.
     const andConditions: Record<string, unknown>[] = [];
@@ -123,8 +127,9 @@ export class JobsService {
       });
     }
 
-    // Only include non-expired jobs (or jobs with no expiry)
-    if (filters?.isActive !== false) {
+    // Only include non-expired jobs (or jobs with no expiry).
+    // Skip when HR requests includeInactive=true so they can see expired jobs too.
+    if (filters?.isActive !== false && !skipActiveFilter) {
       andConditions.push({
         OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       });
@@ -161,10 +166,6 @@ export class JobsService {
         ],
       });
     }
-
-    // HR users may pass includeInactive=true to see all their org's jobs.
-    // For all other cases (public, candidates) always enforce isActive=true.
-    const skipActiveFilter = filters?.includeInactive === true && orgId != null;
 
     const where: Record<string, unknown> = {
       deletedAt: null,

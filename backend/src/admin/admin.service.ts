@@ -263,11 +263,13 @@ export class AdminService {
           where: { organizationId: orgId, userId: { in: toRemove }, roleInOrg: 'HR' },
         });
       }
-      // Add new HR memberships
-      if (toAdd.length > 0) {
-        await tx.membership.createMany({
-          data: toAdd.map((userId) => ({ userId, organizationId: orgId, roleInOrg: 'HR' as const })),
-          skipDuplicates: true,
+      // Add new HR memberships — upsert so existing MEMBER records are promoted
+      // to HR instead of being silently dropped by a unique-constraint conflict.
+      for (const userId of toAdd) {
+        await tx.membership.upsert({
+          where: { userId_organizationId: { userId, organizationId: orgId } },
+          create: { userId, organizationId: orgId, roleInOrg: 'HR' },
+          update: { roleInOrg: 'HR' },
         });
       }
     });
