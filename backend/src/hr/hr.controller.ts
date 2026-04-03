@@ -40,11 +40,22 @@ export class HrController {
   ) {}
 
   private async getHrOrganizationId(userId: string): Promise<string | null> {
-    const membership = await this.prisma.membership.findFirst({
-      where: { userId, roleInOrg: { in: ['OWNER', 'HR'] } },
+    // Prefer an explicit HR assignment (assigned by admin) over org ownership.
+    // This handles the case where a user is both OWNER of one org and HR in
+    // another — we want the org they are responsible for as HR, not the one
+    // they happen to own (which may have 0 jobs).
+    const hrMembership = await this.prisma.membership.findFirst({
+      where: { userId, roleInOrg: 'HR' },
       select: { organizationId: true },
     });
-    return membership?.organizationId ?? null;
+    if (hrMembership) return hrMembership.organizationId;
+
+    // Fall back to orgs the user owns (owner using HR features for their own org).
+    const ownerMembership = await this.prisma.membership.findFirst({
+      where: { userId, roleInOrg: 'OWNER' },
+      select: { organizationId: true },
+    });
+    return ownerMembership?.organizationId ?? null;
   }
 
   /**

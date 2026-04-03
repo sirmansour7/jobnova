@@ -99,8 +99,13 @@ export class JobsService {
 
     let orgId: string | null = null;
     if (user?.role === 'hr') {
-      const membership = await this.prisma.membership.findFirst({
-        where: { userId: user.sub, roleInOrg: { in: ['OWNER', 'HR'] } },
+      // Prefer explicit HR assignment over org ownership (same logic as getHrOrganizationId).
+      const hrMembership = await this.prisma.membership.findFirst({
+        where: { userId: user.sub, roleInOrg: 'HR' },
+        select: { organizationId: true },
+      });
+      const membership = hrMembership ?? await this.prisma.membership.findFirst({
+        where: { userId: user.sub, roleInOrg: 'OWNER' },
         select: { organizationId: true },
       });
       if (!membership) {
