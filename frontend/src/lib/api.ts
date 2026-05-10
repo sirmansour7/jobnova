@@ -1,56 +1,41 @@
-import { getCookie, setCookie, deleteCookie } from "./cookies"
+// Cookie-based auth uses HttpOnly cookies, so no JS-readable token logic here.
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-backend.fly.dev"
 
-function getToken(): string | null {
-  return getCookie("jobnova_token")
-}
-
 let isRefreshing = false
-let refreshPromise: Promise<string | null> | null = null
+let refreshPromise: Promise<boolean> | null = null
 
-function clearAuthCookies(): void {
-  deleteCookie("jobnova_token")
-  deleteCookie("jobnova_refresh")
-  deleteCookie("jobnova_user")
-}
-
-async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = getCookie("jobnova_refresh")
-  if (!refreshToken) return null
+async function refreshSession(): Promise<boolean> {
   try {
     const res = await fetch(`${API_URL}/v1/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
+      credentials: "include",
       signal: AbortSignal.timeout(10_000),
     })
-    if (!res.ok) {
-      clearAuthCookies()
-      return null
+    if (res.ok) {
+      // Update the middleware cookie after successful refresh
+      const data = await res.clone().json().catch(() => null)
+      if (data?.user?.role) {
+        const userPayload = encodeURIComponent(JSON.stringify({ role: data.user.role }))
+        document.cookie = `jobnova_user=${userPayload}; path=/; max-age=604800; SameSite=Lax`
+      }
+      return true
     }
-    const data = (await res.json()) as { accessToken: string; refreshToken?: string }
-    setCookie("jobnova_token", data.accessToken, 1)
-    if (data.refreshToken) {
-      setCookie("jobnova_refresh", data.refreshToken, 7)
-    }
-    return data.accessToken
+    return false
   } catch {
-    clearAuthCookies()
-    return null
+    return false
   }
 }
 
 export async function api(path: string, options: RequestInit = {}): Promise<Response> {
-  const token = getToken()
   const url = `${API_URL}${path}`
 
   const res = await fetch(url, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },
   })
@@ -58,26 +43,25 @@ export async function api(path: string, options: RequestInit = {}): Promise<Resp
   if (res.status === 401) {
     if (!isRefreshing) {
       isRefreshing = true
-      refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = refreshSession().finally(() => {
         isRefreshing = false
         refreshPromise = null
       })
     }
-    const newToken = await refreshPromise
-    if (newToken) {
+
+    const refreshOk = await refreshPromise
+    if (refreshOk) {
       return fetch(url, {
         ...options,
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${newToken}`,
           ...(options.headers ?? {}),
         },
       })
     }
-    if (typeof window !== "undefined") {
-      window.location.href = "/login"
-      throw new Error("Session expired. Please log in again.")
-    }
+    // Session expired — return the 401 response, let the page handle it
+    return res
   }
 
   return res
