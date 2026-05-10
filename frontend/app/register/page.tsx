@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, AlertCircle, UserSearch, BriefcaseBusiness } from "lucide-react"
 import { api, API_URL } from "@/src/lib/api"
+import { cn } from "@/lib/utils"
 
-type UserRole = "candidate" | "hr" | "admin"
+type UserRole = "candidate" | "hr"
 
 const PASSWORD_RULES = [
   { label: "8 أحرف على الأقل",         test: (p: string) => p.length >= 8 },
@@ -85,6 +85,36 @@ export default function RegisterPage() {
             <CardDescription>أنشئ حسابك وابدأ رحلتك المهنية</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Role Toggle — أول حاجة يشوفها المستخدم */}
+            <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-secondary/50 p-1">
+              <button
+                type="button"
+                onClick={() => setRole("candidate")}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  role === "candidate"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <UserSearch className="h-4 w-4" />
+                باحث عن عمل
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("hr")}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  role === "hr"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <BriefcaseBusiness className="h-4 w-4" />
+                HR / شركة
+              </button>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">الاسم الكامل</Label>
@@ -160,35 +190,13 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              <div className="space-y-3">
-                <Label>نوع الحساب</Label>
-                <RadioGroup
-                  value={role}
-                  onValueChange={(val) => setRole(val as UserRole)}
-                  className="grid grid-cols-2 gap-3"
-                >
-                  <label
-                    htmlFor="candidate"
-                    className={`flex cursor-pointer items-center justify-center rounded-lg border p-3 text-sm transition-colors ${
-                      role === "candidate" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
-                    }`}
-                  >
-                    <RadioGroupItem value="candidate" id="candidate" className="sr-only" />
-                    باحث عن عمل
-                  </label>
-                  <label
-                    htmlFor="hr"
-                    className={`flex cursor-pointer items-center justify-center rounded-lg border p-3 text-sm transition-colors ${
-                      role === "hr" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
-                    }`}
-                  >
-                    <RadioGroupItem value="hr" id="hr" className="sr-only" />
-                    مسؤول توظيف
-                  </label>
-                </RadioGroup>
-              </div>
+              {error && (
+                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-              {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="shadow-blue-glow w-full" disabled={loading}>
                 {loading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
                 إنشاء الحساب
