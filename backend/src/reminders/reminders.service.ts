@@ -121,6 +121,16 @@ export class RemindersService {
 
       // Notify candidate
       try {
+        // Dedup: skip if already notified in last 24h
+        const existingCandidateNotif = await this.prisma.notification.findFirst({
+          where: {
+            userId: candidate.id,
+            type: 'INTERVIEW_REMINDER',
+            meta: { path: ['interviewId'], equals: interview.id },
+            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          },
+        });
+        if (!existingCandidateNotif) {
         await this.notifications.create(
           candidate.id,
           'INTERVIEW_REMINDER',
@@ -135,6 +145,7 @@ export class RemindersService {
           scheduledAt,
           'candidate',
         );
+        }
       } catch (err) {
         this.logger.error(
           `Failed to notify candidate ${candidate.id} for interview ${interview.id}: ${(err as Error).message}`,
@@ -145,6 +156,16 @@ export class RemindersService {
       for (const membership of job.organization.memberships) {
         const hrUser = membership.user;
         try {
+          // Dedup: skip if already notified in last 24h
+          const existingHrNotif = await this.prisma.notification.findFirst({
+            where: {
+              userId: hrUser.id,
+              type: 'INTERVIEW_REMINDER',
+              meta: { path: ['interviewId'], equals: interview.id },
+              createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            },
+          });
+          if (!existingHrNotif) {
           await this.notifications.create(
             hrUser.id,
             'INTERVIEW_REMINDER',
@@ -163,6 +184,7 @@ export class RemindersService {
             scheduledAt,
             'hr',
           );
+          }
         } catch (err) {
           this.logger.error(
             `Failed to notify HR ${hrUser.id} for interview ${interview.id}: ${(err as Error).message}`,
