@@ -85,7 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (meRes.ok) {
           const me = (await meRes.json()) as BackendMeUser
-          setUser(mapMeUserToUser(me))
+          const mapped = mapMeUserToUser(me)
+          // Refresh the middleware cookie
+          const userPayload = encodeURIComponent(JSON.stringify({ role: mapped.role }))
+          document.cookie = `jobnova_user=${userPayload}; path=/; max-age=604800; SameSite=Lax`
+          setUser(mapped)
           return
         }
 
@@ -97,7 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (refreshRes.ok) {
             const data = (await refreshRes.json()) as { user: BackendAuthUser }
-            setUser(mapBackendUserToUser(data.user))
+            const mapped = mapBackendUserToUser(data.user)
+            const userPayload = encodeURIComponent(JSON.stringify({ role: mapped.role }))
+            document.cookie = `jobnova_user=${userPayload}; path=/; max-age=604800; SameSite=Lax`
+            setUser(mapped)
             return
           }
         }
@@ -141,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Set client-readable cookie for middleware role check
         const userPayload = encodeURIComponent(JSON.stringify({ role: mappedUser.role }))
-        document.cookie = `jobnova_user=${userPayload}; path=/; max-age=900; SameSite=Lax`
+        document.cookie = `jobnova_user=${userPayload}; path=/; max-age=604800; SameSite=Lax`
 
         setUser(mappedUser)
         router.push(getDashboardPath(mappedUser.role))
