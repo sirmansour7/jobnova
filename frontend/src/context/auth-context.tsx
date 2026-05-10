@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // ✅ Role check — لو المستخدم اختار role مختلف عن اللي في الـ DB
         if (expectedRole && mappedUser.role !== expectedRole) {
           // logout فوراً عشان نمسح الـ cookie
-          await fetch(`${API_URL}/v1/auth/logout`, { method: "POST", credentials: "include" })
+          fetch(`${API_URL}/v1/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {})
           const roleLabel = expectedRole === "hr" ? "HR / شركة" : "باحث عن عمل"
           return {
             success: false,
