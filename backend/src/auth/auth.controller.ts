@@ -14,11 +14,11 @@ import {
 } from '@nestjs/common';
 import { ThrottlerGuard, Throttle, SkipThrottle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshDto } from './dto/refresh.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -52,6 +52,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
   @Post('register')
@@ -77,23 +78,107 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body(VP) body: LoginDto, @Req() req: Request) {
-    return this.authService.login(body, getIp(req), getUA(req));
+  async login(
+    @Body(VP) body: LoginDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.login(
+      body,
+      getIp(req),
+      getUA(req),
+    );
+    const { accessToken, refreshToken, user } = result;
+
+    res.cookie('jobnova_token', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    res.cookie('jobnova_refresh', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/v1/auth/refresh',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return res.json({
+      user: {
+        id: user.id,
+        name: user.fullName,
+        email: user.email,
+        role: user.role,
+      },
+    });
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async refresh(@Body(VP) body: RefreshDto, @Req() req: Request) {
-    return this.authService.refresh(body.refreshToken, getIp(req));
+  async refresh(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = req.cookies?.jobnova_refresh;
+    const result = await this.authService.refresh(
+      refreshToken as string,
+      getIp(req),
+    );
+
+    const { accessToken, refreshToken: newRefreshToken, user } = result;
+
+    res.cookie('jobnova_token', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    res.cookie('jobnova_refresh', newRefreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/v1/auth/refresh',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return res.json({
+      user: {
+        id: user.id,
+        name: user.fullName,
+        email: user.email,
+        role: user.role,
+      },
+    });
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
   @SkipThrottle()
-  async logout(@Req() req: Request & { user: { sub: string } }) {
-    return this.authService.logout(req.user.sub, getIp(req));
+  async logout(@Req() req: Request, @Res() res: Response) {
+    const accessToken = req.cookies?.jobnova_token;
+    let userId: string | null = null;
+
+    if (accessToken) {
+      try {
+        const secret = this.configService.get<string>('JWT_ACCESS_SECRET');
+        if (secret) {
+          const payload = this.jwtService.verify(accessToken, {
+            secret,
+            ignoreExpiration: true,
+          }) as { sub?: string };
+          userId = payload?.sub ?? null;
+        }
+      } catch {
+        userId = null;
+      }
+    }
+
+    if (userId) {
+      await this.authService.logout(userId, getIp(req));
+    }
+
+    res.clearCookie('jobnova_token');
+    res.clearCookie('jobnova_refresh', { path: '/v1/auth/refresh' });
+    return res.json({ message: 'Logged out' });
   }
 
   @Throttle({ default: { limit: 3, ttl: 300000 } })
