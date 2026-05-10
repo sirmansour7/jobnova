@@ -9,8 +9,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, AlertCircle, BriefcaseBusiness, UserSearch } from "lucide-react"
 import { API_URL } from "@/src/lib/api"
+import { cn } from "@/lib/utils"
+
+type SelectedRole = "candidate" | "hr"
 
 function isSafeRedirect(path: string): boolean {
   return (
@@ -25,6 +28,7 @@ function LoginForm() {
   const { login } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [selectedRole, setSelectedRole] = useState<SelectedRole>("candidate")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -40,68 +44,129 @@ function LoginForm() {
     setError("")
 
     const result = await login(email, password)
+
     if (!result.success) {
       setError(result.error ?? "حدث خطأ")
-    } else if (redirectTo) {
-      // Override the auth-context default dashboard redirect when a safe path is present
+      setLoading(false)
+      return
+    }
+
+    // ✅ Login succeeded — verify role matches what user selected
+    // The auth context already set the user and pushed to dashboard.
+    // We need to check the actual role from the cookie that was just set.
+    try {
+      const meRes = await fetch(`${API_URL}/v1/auth/me`, {
+        credentials: "include",
+      })
+      if (meRes.ok) {
+        const me = await meRes.json() as { role: string }
+        const actualRole = me.role?.toLowerCase()
+
+        if (actualRole !== selectedRole) {
+          // Role mismatch — log out silently and show error
+          await fetch(`${API_URL}/v1/auth/logout`, { method: "POST", credentials: "include" })
+          const roleLabel = selectedRole === "hr" ? "HR" : "باحث عن عمل"
+          setError(`هذا الحساب ليس حساب ${roleLabel}. يرجى اختيار نوع الحساب الصحيح.`)
+          setLoading(false)
+          return
+        }
+      }
+    } catch {
+      // If /me fails after a successful login, proceed normally
+    }
+
+    if (redirectTo) {
       router.replace(redirectTo)
     }
+
     setLoading(false)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">البريد الإلكتروني</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="example@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          dir="ltr"
-          className="text-left"
-        />
+    <div className="space-y-5">
+      {/* Role Toggle */}
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-secondary/50 p-1">
+        <button
+          type="button"
+          onClick={() => { setSelectedRole("candidate"); setError("") }}
+          className={cn(
+            "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            selectedRole === "candidate"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <UserSearch className="h-4 w-4" />
+          باحث عن عمل
+        </button>
+        <button
+          type="button"
+          onClick={() => { setSelectedRole("hr"); setError("") }}
+          className={cn(
+            "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            selectedRole === "hr"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <BriefcaseBusiness className="h-4 w-4" />
+          HR / شركة
+        </button>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">كلمة المرور</Label>
-        <div className="relative">
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">البريد الإلكتروني</Label>
           <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            placeholder="********"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            id="email"
+            type="email"
+            placeholder="example@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
             dir="ltr"
-            className="ps-10 text-left"
+            className="text-left"
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
         </div>
-      </div>
-      <div className="flex justify-end -mt-2">
-        <Link href="/forgot-password" className="text-xs text-primary hover:underline">
-          نسيت كلمة المرور؟
-        </Link>
-      </div>
-      {error && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{error}</span>
+        <div className="space-y-2">
+          <Label htmlFor="password">كلمة المرور</Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="********"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              dir="ltr"
+              className="ps-10 text-left"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
-      )}
-      <Button type="submit" className="shadow-blue-glow w-full" disabled={loading}>
-        {loading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
-        تسجيل الدخول
-      </Button>
-    </form>
+        <div className="flex justify-end -mt-2">
+          <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+            نسيت كلمة المرور؟
+          </Link>
+        </div>
+        {error && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+        <Button type="submit" className="shadow-blue-glow w-full" disabled={loading}>
+          {loading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
+          تسجيل الدخول
+        </Button>
+      </form>
+    </div>
   )
 }
 
@@ -119,7 +184,7 @@ export default function LoginPage() {
             <CardDescription>ادخل بياناتك للوصول إلى حسابك</CardDescription>
           </CardHeader>
           <CardContent>
-            <Suspense fallback={<div className="h-[220px]" />}>
+            <Suspense fallback={<div className="h-[300px]" />}>
               <LoginForm />
             </Suspense>
 
