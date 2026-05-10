@@ -94,13 +94,13 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
     res.cookie('jobnova_refresh', refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      path: '/v1/auth/refresh',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -130,13 +130,13 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
     res.cookie('jobnova_refresh', newRefreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      path: '/v1/auth/refresh',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -177,7 +177,7 @@ export class AuthController {
     }
 
     res.clearCookie('jobnova_token');
-    res.clearCookie('jobnova_refresh', { path: '/v1/auth/refresh' });
+    res.clearCookie('jobnova_refresh', { path: '/' });
     return res.json({ message: 'Logged out' });
   }
 

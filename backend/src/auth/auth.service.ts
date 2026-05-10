@@ -38,7 +38,7 @@ export type OAuthLoginResult = {
   };
 };
 
-const ACCESS_TOKEN_EXPIRES = '15m';
+const ACCESS_TOKEN_EXPIRES = '24h';
 const REFRESH_TOKEN_EXPIRES = '7d';
 const INVALID_CREDENTIALS = 'Invalid credentials';
 const MAX_FAILED_ATTEMPTS = 5;
