@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Loader2, AlertCircle, BriefcaseBusiness, UserSearch } from "lucide-react"
-import { API_URL } from "@/src/lib/api"
+import { API_URL } from "@/src/lib/api"  
 import { cn } from "@/lib/utils"
 
 type SelectedRole = "candidate" | "hr"
@@ -43,39 +43,11 @@ function LoginForm() {
     setLoading(true)
     setError("")
 
-    const result = await login(email, password)
+    const result = await login(email, password, selectedRole)
 
     if (!result.success) {
       setError(result.error ?? "حدث خطأ")
-      setLoading(false)
-      return
-    }
-
-    // ✅ Login succeeded — verify role matches what user selected
-    // The auth context already set the user and pushed to dashboard.
-    // We need to check the actual role from the cookie that was just set.
-    try {
-      const meRes = await fetch(`${API_URL}/v1/auth/me`, {
-        credentials: "include",
-      })
-      if (meRes.ok) {
-        const me = await meRes.json() as { role: string }
-        const actualRole = me.role?.toLowerCase()
-
-        if (actualRole !== selectedRole) {
-          // Role mismatch — log out silently and show error
-          await fetch(`${API_URL}/v1/auth/logout`, { method: "POST", credentials: "include" })
-          const roleLabel = selectedRole === "hr" ? "HR" : "باحث عن عمل"
-          setError(`هذا الحساب ليس حساب ${roleLabel}. يرجى اختيار نوع الحساب الصحيح.`)
-          setLoading(false)
-          return
-        }
-      }
-    } catch {
-      // If /me fails after a successful login, proceed normally
-    }
-
-    if (redirectTo) {
+    } else if (redirectTo) {
       router.replace(redirectTo)
     }
 

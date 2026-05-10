@@ -3,13 +3,12 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import type { UserRole, User } from "@/src/types/auth"
-import { getCookie, setCookie, deleteCookie } from "@/src/lib/cookies"
 import { API_URL } from "@/src/lib/api"
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string, expectedRole?: string) => Promise<{ success: boolean; error?: string }>
   register: (name: string, email: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>
   logout: () => void | Promise<void>
   isAuthenticated: boolean
@@ -17,19 +16,36 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-const COOKIE_TOKEN = "jobnova_token"   // raw JWT for Authorization header
-const COOKIE_USER = "jobnova_user"     // JSON user for session restore & middleware role
-
-/** Backend auth login response user shape */
+/** Backend auth login/refresh user shape */
 interface BackendAuthUser {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+}
+
+/** Backend /auth/me user shape */
+interface BackendMeUser {
   id: string
   fullName: string
   email: string
   role: UserRole
-  emailVerified: boolean
 }
 
 function mapBackendUserToUser(b: BackendAuthUser): User {
+  return {
+    id: b.id,
+    name: b.name,
+    email: b.email,
+    role: b.role,
+    avatar: b.name.split(" ").map((n) => n[0]).join("").slice(0, 2),
+    phone: "",
+    location: "",
+    createdAt: new Date().toISOString().split("T")[0],
+  }
+}
+
+function mapMeUserToUser(b: BackendMeUser): User {
   return {
     id: b.id,
     name: b.fullName,
@@ -58,28 +74,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (initialized.current) return
     initialized.current = true
 
-    // Session restore: use jobnova_user for user object; jobnova_token is used by API client for Authorization header
-    const userJson = getCookie(COOKIE_USER)
-    if (userJson) {
+    ;(async () => {
       try {
-        const parsed = JSON.parse(userJson) as User
-        if (parsed?.email && (parsed.name ?? parsed.role)) {
-          queueMicrotask(() => setUser(parsed))
-        } else {
-          deleteCookie(COOKIE_USER)
+        const meRes = await fetch(`${API_URL}/v1/auth/me`, {
+          method: "GET",
+          credentials: "include",
+        })
+
+        if (meRes.ok) {
+          const me = (await meRes.json()) as BackendMeUser
+          setUser(mapMeUserToUser(me))
+          return
         }
+
+        if (meRes.status === 401) {
+          const refreshRes = await fetch(`${API_URL}/v1/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+          })
+
+          if (refreshRes.ok) {
+            const data = (await refreshRes.json()) as { user: BackendAuthUser }
+            setUser(mapBackendUserToUser(data.user))
+            return
+          }
+        }
+
+        setUser(null)
       } catch {
-        deleteCookie(COOKIE_USER)
+        setUser(null)
+      } finally {
+        setIsLoading(false)
       }
-    }
-    queueMicrotask(() => setIsLoading(false))
+    })()
   }, [])
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, expectedRole?: string) => {
       try {
         const res = await fetch(`${API_URL}/v1/auth/login`, {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         })
@@ -88,17 +123,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const msg = (data as { message?: string }).message
           return { success: false, error: msg ?? "البريد الإلكتروني أو كلمة المرور غير صحيحة" }
         }
-        const data = (await res.json()) as {
-          accessToken: string
-          refreshToken?: string
-          user: BackendAuthUser
-        }
+        const data = (await res.json()) as { user: BackendAuthUser }
         const mappedUser = mapBackendUserToUser(data.user)
-        setCookie(COOKIE_TOKEN, data.accessToken, 1)
-        if (data.refreshToken) {
-          setCookie("jobnova_refresh", data.refreshToken, 7)
+
+        // ✅ Role check — لو المستخدم اختار role مختلف عن اللي في الـ DB
+        if (expectedRole && mappedUser.role !== expectedRole) {
+          // logout فوراً عشان نمسح الـ cookie
+          await fetch(`${API_URL}/v1/auth/logout`, { method: "POST", credentials: "include" })
+          const roleLabel = expectedRole === "hr" ? "HR / شركة" : "باحث عن عمل"
+          return {
+            success: false,
+            error: `هذا الحساب ليس حساب ${roleLabel}. يرجى اختيار نوع الحساب الصحيح.`,
+          }
         }
-        setCookie(COOKIE_USER, JSON.stringify(mappedUser), 7)
+
         setUser(mappedUser)
         router.push(getDashboardPath(mappedUser.role))
         return { success: true }
@@ -134,23 +172,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const logout = useCallback(async () => {
-    const token = getCookie(COOKIE_TOKEN)
-    if (token) {
-      try {
-        await fetch(`${API_URL}/v1/auth/logout`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      } catch {
-        // network failure is acceptable — proceed with local logout
-      }
+    try {
+      await fetch(`${API_URL}/v1/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      })
+    } catch {
+      // network failure is acceptable — proceed with local logout
     }
-    deleteCookie(COOKIE_TOKEN)
-    deleteCookie(COOKIE_USER)
-    deleteCookie("jobnova_refresh")
     setUser(null)
     router.push("/")
   }, [router])
