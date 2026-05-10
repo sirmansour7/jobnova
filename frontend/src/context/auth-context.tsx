@@ -19,7 +19,8 @@ const AuthContext = createContext<AuthContextType | null>(null)
 /** Backend auth login/refresh user shape */
 interface BackendAuthUser {
   id: string
-  name: string
+  name?: string
+  fullName?: string
   email: string
   role: UserRole
 }
@@ -33,12 +34,13 @@ interface BackendMeUser {
 }
 
 function mapBackendUserToUser(b: BackendAuthUser): User {
+  const displayName = b.fullName ?? b.name ?? ""
   return {
     id: b.id,
-    name: b.name,
+    name: displayName,
     email: b.email,
     role: b.role,
-    avatar: b.name.split(" ").map((n) => n[0]).join("").slice(0, 2),
+    avatar: displayName.split(" ").map((n) => n[0]).join("").slice(0, 2),
     phone: "",
     location: "",
     createdAt: new Date().toISOString().split("T")[0],
