@@ -139,6 +139,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
+        // Set client-readable cookie for middleware role check
+        const userPayload = encodeURIComponent(JSON.stringify({ role: mappedUser.role }))
+        document.cookie = `jobnova_user=${userPayload}; path=/; max-age=900; SameSite=Lax`
+
         setUser(mappedUser)
         router.push(getDashboardPath(mappedUser.role))
         return { success: true }
