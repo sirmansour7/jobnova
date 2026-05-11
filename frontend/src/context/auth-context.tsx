@@ -76,6 +76,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (initialized.current) return
     initialized.current = true
 
+    // Don't check auth on public pages
+    if (typeof window !== "undefined") {
+      const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"]
+      const isPublic = publicPaths.some(p => window.location.pathname.startsWith(p))
+      if (isPublic) {
+        setIsLoading(false)
+        return
+      }
+    }
+
     ;(async () => {
       try {
         const meRes = await fetch(`${API_URL}/v1/auth/me`, {
