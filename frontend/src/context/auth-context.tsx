@@ -193,8 +193,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // network failure is acceptable — proceed with local logout
     }
+    // Clear the middleware cookie
+    document.cookie = "jobnova_user=; path=/; max-age=0; SameSite=Lax"
     setUser(null)
-    router.push("/")
+    router.push("/login")
   }, [router])
 
   return (
