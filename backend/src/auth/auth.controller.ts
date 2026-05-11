@@ -261,9 +261,31 @@ export class AuthController {
   @Post('google/exchange')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async googleExchange(@Body(VP) body: GoogleExchangeDto) {
-    // Returns { accessToken, refreshToken, user } and consumes the code.
-    // Any second call with the same code returns 401.
-    return this.authService.exchangeOAuthCode(body.code);
+  async googleExchange(@Body(VP) body: GoogleExchangeDto, @Res() res: Response) {
+    const result = await this.authService.exchangeOAuthCode(body.code);
+    const { accessToken, refreshToken, user } = result;
+
+    res.cookie('jobnova_token', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    res.cookie('jobnova_refresh', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.json({
+      user: {
+        id: user.id,
+        name: user.fullName,
+        email: user.email,
+        role: user.role,
+      },
+    });
   }
 }
