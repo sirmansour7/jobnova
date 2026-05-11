@@ -17,11 +17,10 @@ export class EmailProducer {
     fullName: string,
     token: string,
   ): Promise<void> {
-    await this.queue.add(
-      EmailJobName.SEND_VERIFICATION,
-      { email, fullName, token },
-      EMAIL_JOB_OPTS,
-    );
+    await Promise.race([
+      this.queue.add(EmailJobName.SEND_VERIFICATION, { email, fullName, token }, EMAIL_JOB_OPTS),
+      new Promise<void>((_, reject) => setTimeout(() => reject(new Error('Queue timeout')), 5000)),
+    ]);
   }
 
   async sendPasswordResetEmail(
