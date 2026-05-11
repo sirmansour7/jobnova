@@ -3,16 +3,13 @@
 import { useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
-import { setCookie } from "@/src/lib/cookies"
 import { api } from "@/src/lib/api"
-import type { User } from "@/src/types/auth"
 
 export default function GoogleCallbackClient() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
   useEffect(() => {
-    console.log('OAuth callback - search params:', window.location.search, 'code:', searchParams.get("code"))
     const code = searchParams.get("code")
 
     if (!code) {
@@ -31,36 +28,19 @@ export default function GoogleCallbackClient() {
         }
 
         const data = await res.json() as {
-          accessToken: string
-          refreshToken: string
-          user: { id: string; fullName: string; email: string; role: string }
+          user: { id: string; name: string; email: string; role: string }
         }
 
-        const { accessToken, refreshToken, user } = data
+        const { user } = data
 
-        setCookie("jobnova_token", accessToken, 1)
-        setCookie("jobnova_refresh", refreshToken, 7)
+        // Set middleware cookie
+        const userPayload = encodeURIComponent(JSON.stringify({ role: user.role }))
+        document.cookie = `jobnova_user=${userPayload}; path=/; max-age=604800; SameSite=Lax`
 
-        const mappedUser: User = {
-          id: user.id,
-          name: user.fullName,
-          email: user.email,
-          role: user.role as User["role"],
-          avatar: user.fullName
-            .split(" ")
-            .map((n: string) => n[0])
-            .join("")
-            .slice(0, 2),
-          phone: "",
-          location: "",
-          createdAt: new Date().toISOString().split("T")[0],
-        }
-        setCookie("jobnova_user", JSON.stringify(mappedUser), 7)
-
-        const role = user.role
-        const path = role === "candidate" ? "/candidate/dashboard"
-                   : role === "hr"        ? "/hr/dashboard"
+        const path = user.role === "candidate" ? "/candidate/dashboard"
+                   : user.role === "hr"        ? "/hr/dashboard"
                    : "/admin/dashboard"
+
         window.location.href = path
       })
       .catch(() => {
