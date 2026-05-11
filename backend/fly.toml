@@ -1,5 +1,5 @@
 app = "jobnova-backend"
-primary_region = "cdg"
+primary_region = "fra"
 
 [build]
 
