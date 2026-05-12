@@ -133,11 +133,11 @@ export default function ManageJobsPage() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{job.postedAt}</TableCell>
                       <TableCell>
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
+                          <DropdownMenuContent align="end" sideOffset={4}>
                             <DropdownMenuItem><Eye className="ml-2 h-4 w-4" /> عرض</DropdownMenuItem>
                             <DropdownMenuItem><Edit className="ml-2 h-4 w-4" /> تعديل</DropdownMenuItem>
                             <DropdownMenuItem><Pause className="ml-2 h-4 w-4" /> إيقاف</DropdownMenuItem>
