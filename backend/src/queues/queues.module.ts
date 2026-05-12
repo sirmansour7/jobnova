@@ -18,17 +18,24 @@ import { InterviewSummaryService } from '../interviews/interview-summary.service
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      useFactory: (config: ConfigService) => {
+        const redisUrl = config.get<string>('REDIS_URL') ?? 'redis://localhost:6379';
+        const isTLS = redisUrl.startsWith('rediss://');
+        return {
         connection: {
-          // Falls back to local Redis in development. Set REDIS_URL in production.
-          url: config.get<string>('REDIS_URL') ?? 'redis://localhost:6379',
+          url: redisUrl,
+          ...(isTLS ? { tls: { rejectUnauthorized: false } } : {}),
+          enableOfflineQueue: false,
+          connectTimeout: 10000,
+          maxRetriesPerRequest: 3,
         },
         defaultJobOptions: {
           // Keep last 100 completed and 200 failed jobs for inspection
           removeOnComplete: 100,
           removeOnFail: 200,
         },
-      }),
+        };
+      },
     }),
     BullModule.registerQueue({ name: QUEUE_EMAIL }, { name: QUEUE_AI }),
     EmailModule,
