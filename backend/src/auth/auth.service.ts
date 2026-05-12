@@ -15,6 +15,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../token-store/token-store.service';
 import { AuditService } from '../audit/audit.service';
 import { EmailProducer } from '../queues/email/email.producer';
+import { EmailService } from '../email/email.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -66,6 +67,7 @@ export class AuthService {
     private readonly tokenStore: TokenStoreService,
     private readonly audit: AuditService,
     private readonly emailProducer: EmailProducer,
+    private readonly emailService: EmailService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
@@ -109,7 +111,7 @@ export class AuthService {
     this.audit.log({ event: AuditEvent.REGISTER, userId: user.id });
 
     try {
-      await this.emailProducer.sendVerificationEmail(
+      await this.emailService.sendVerificationEmail(
         user.email,
         user.fullName,
         verificationToken,
@@ -181,7 +183,7 @@ export class AuthService {
 
     this.logger.log(`Queuing verification email for user ${user.id}`);
     try {
-      await this.emailProducer.sendVerificationEmail(
+      await this.emailService.sendVerificationEmail(
         user.email,
         user.fullName,
         verificationToken,
@@ -404,7 +406,7 @@ export class AuthService {
     });
 
     try {
-      await this.emailProducer.sendPasswordResetEmail(
+      await this.emailService.sendPasswordResetEmail(
         user.email,
         user.fullName,
         resetToken,
