@@ -108,7 +108,7 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   const port = process.env.PORT || 8080;
-  await app.listen(Number(port), '0.0.0.0');
+  await app.listen(port, '0.0.0.0');
 
   console.log(`JobNova backend running on port ${port}`);
 }
