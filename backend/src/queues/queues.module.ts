@@ -25,6 +25,7 @@ import { InterviewSummaryService } from '../interviews/interview-summary.service
         connection: {
           url: redisUrl,
           ...(isTLS ? { tls: { rejectUnauthorized: false } } : {}),
+          family: 0,
           enableOfflineQueue: false,
           connectTimeout: 10000,
           maxRetriesPerRequest: 3,
