@@ -39,6 +39,7 @@ enum AuditEvent {
   PASSWORD_RESET_SUCCESS
   TOKEN_REUSED
   SUSPICIOUS_ACTIVITY // kept for backward compatibility with existing log rows
+  CV_FILE_ACCESSED
 }
 
 enum InterviewSessionStatus {
