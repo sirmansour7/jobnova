@@ -118,7 +118,10 @@ export default function ApplicantsPage() {
           id: app.id,
           status: app.status ?? "APPLIED",
           createdAt: app.createdAt,
-          candidate: app.candidate,
+          candidate: {
+            ...app.candidate,
+            cv: app.cv ?? app.candidate?.cv,
+          },
           job: app.job ? { title: app.job.title } : undefined,
         }))
         setApplications(list)
