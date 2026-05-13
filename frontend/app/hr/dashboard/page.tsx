@@ -19,6 +19,7 @@ interface DashboardStats {
   totalJobs: number
   activeJobs: number
   totalApplications: number
+  interviewsThisWeek?: number
   recentApplications: Array<{
     id: string
     status: string
@@ -88,7 +89,7 @@ export default function HRDashboard() {
     },
     {
       label: "المقابلات هذا الأسبوع",
-      value: "0",
+      value: String(stats?.interviewsThisWeek ?? 0),
       icon: <FileText className="h-5 w-5" />,
       color: "text-chart-2",
     },

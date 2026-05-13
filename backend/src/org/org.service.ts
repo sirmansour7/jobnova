@@ -134,6 +134,7 @@ export class OrgService {
         totalJobs: 0,
         activeJobs: 0,
         totalApplications: 0,
+        interviewsThisWeek: 0,
         recentApplications: [],
       };
 
@@ -142,7 +143,16 @@ export class OrgService {
     const cached = await this.cache.get(key);
     if (cached) return cached;
 
-    const [totalJobs, activeJobs, totalApplications, recentApplications] =
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const [totalJobs, activeJobs, totalApplications, interviewsThisWeek, recentApplications] =
       await Promise.all([
         this.prisma.job.count({ where: { organizationId: orgId } }),
         this.prisma.job.count({
@@ -150,6 +160,13 @@ export class OrgService {
         }),
         this.prisma.application.count({
           where: { job: { organizationId: orgId } },
+        }),
+        this.prisma.interview.count({
+          where: {
+            application: { job: { organizationId: orgId } },
+            scheduledAt: { gte: startOfWeek, lte: endOfWeek },
+            status: { not: 'CANCELLED' },
+          },
         }),
         this.prisma.application.findMany({
           where: { job: { organizationId: orgId } },
@@ -171,6 +188,7 @@ export class OrgService {
       totalJobs,
       activeJobs,
       totalApplications,
+      interviewsThisWeek,
       recentApplications,
     };
     await this.cache.set(key, result, CacheTTL.THIRTY_SECONDS);
