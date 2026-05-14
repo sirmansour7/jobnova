@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (expectedRole && mappedUser.role !== expectedRole) {
           // logout فوراً عشان نمسح الـ cookie
           fetch(`${API_URL}/v1/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {})
-          const roleLabel = expectedRole === "hr" ? "HR / شركة" : "باحث عن عمل"
+          const roleLabel = expectedRole === "hr" ? "HR / شركة" : expectedRole === "admin" ? "Admin" : "باحث عن عمل"
           return {
             success: false,
             error: `هذا الحساب ليس حساب ${roleLabel}. يرجى اختيار نوع الحساب الصحيح.`,

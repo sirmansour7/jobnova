@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Loader2, AlertCircle, BriefcaseBusiness, UserSearch } from "lucide-react"
+import { Eye, EyeOff, Loader2, AlertCircle, BriefcaseBusiness, UserSearch, ShieldCheck } from "lucide-react"
 import { API_URL } from "@/src/lib/api"  
 import { cn } from "@/lib/utils"
 
-type SelectedRole = "candidate" | "hr"
+type SelectedRole = "candidate" | "hr" | "admin"
 
 function isSafeRedirect(path: string): boolean {
   return (
@@ -57,32 +57,45 @@ function LoginForm() {
   return (
     <div className="space-y-5">
       {/* Role Toggle */}
-      <div className="grid grid-cols-2 gap-2 rounded-xl bg-secondary/50 p-1">
+      <div className="grid grid-cols-3 gap-2 rounded-xl bg-secondary/50 p-1">
         <button
           type="button"
           onClick={() => { setSelectedRole("candidate"); setError("") }}
           className={cn(
-            "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            "flex items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-all duration-200",
             selectedRole === "candidate"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <UserSearch className="h-4 w-4" />
-          باحث عن عمل
+          <UserSearch className="h-3.5 w-3.5" />
+          باحث
         </button>
         <button
           type="button"
           onClick={() => { setSelectedRole("hr"); setError("") }}
           className={cn(
-            "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            "flex items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-all duration-200",
             selectedRole === "hr"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <BriefcaseBusiness className="h-4 w-4" />
-          HR / شركة
+          <BriefcaseBusiness className="h-3.5 w-3.5" />
+          HR
+        </button>
+        <button
+          type="button"
+          onClick={() => { setSelectedRole("admin"); setError("") }}
+          className={cn(
+            "flex items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-all duration-200",
+            selectedRole === "admin"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Admin
         </button>
       </div>
 
