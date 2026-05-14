@@ -20,8 +20,19 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!secret) {
       throw new Error('JWT_ACCESS_SECRET is not defined');
     }
+    const extractJwtFromCookieOrHeader = (req: any) => {
+      let token = null;
+      if (req && req.cookies) {
+        token = req.cookies['jobnova_token'];
+      }
+      if (!token) {
+        token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+      }
+      return token;
+    };
+
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: extractJwtFromCookieOrHeader,
       ignoreExpiration: false,
       secretOrKey: secret,
     });

@@ -11,6 +11,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,6 +28,8 @@ async function bootstrap() {
 
   // ✅ Helmet — sets secure HTTP headers (XSS, HSTS, clickjacking, etc.)
   app.use(helmet());
+
+  app.use(cookieParser());
 
   app.use(express.json({ limit: '50kb' }));
   app.use(express.urlencoded({ extended: true, limit: '50kb' }));
