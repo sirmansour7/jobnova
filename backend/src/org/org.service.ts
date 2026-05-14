@@ -152,37 +152,46 @@ export class OrgService {
     endOfWeek.setDate(startOfWeek.getDate() + 6);
     endOfWeek.setHours(23, 59, 59, 999);
 
-    const [totalJobs, activeJobs, totalApplications, interviewsThisWeek, recentApplications] =
-      await Promise.all([
-        this.prisma.job.count({ where: { organizationId: orgId } }),
-        this.prisma.job.count({
-          where: { organizationId: orgId, isActive: true },
-        }),
-        this.prisma.application.count({
-          where: { job: { organizationId: orgId } },
-        }),
-        this.prisma.interview.count({
-          where: {
-            application: { job: { organizationId: orgId } },
-            scheduledAt: { gte: startOfWeek, lte: endOfWeek },
-            status: { not: 'CANCELLED' },
+    const [
+      totalJobs,
+      activeJobs,
+      totalApplications,
+      interviewsThisWeek,
+      recentApplications,
+      hiredCount,
+    ] = await Promise.all([
+      this.prisma.job.count({ where: { organizationId: orgId } }),
+      this.prisma.job.count({
+        where: { organizationId: orgId, isActive: true },
+      }),
+      this.prisma.application.count({
+        where: { job: { organizationId: orgId } },
+      }),
+      this.prisma.interview.count({
+        where: {
+          application: { job: { organizationId: orgId } },
+          scheduledAt: { gte: startOfWeek, lte: endOfWeek },
+          status: { not: 'CANCELLED' },
+        },
+      }),
+      this.prisma.application.findMany({
+        where: { job: { organizationId: orgId } },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          candidate: {
+            select: { id: true, fullName: true, email: true },
           },
-        }),
-        this.prisma.application.findMany({
-          where: { job: { organizationId: orgId } },
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-          select: {
-            id: true,
-            status: true,
-            createdAt: true,
-            candidate: {
-              select: { id: true, fullName: true, email: true },
-            },
-            job: { select: { id: true, title: true } },
-          },
-        }),
-      ]);
+          job: { select: { id: true, title: true } },
+        },
+      }),
+      this.prisma.application.count({
+        where: { job: { organizationId: orgId }, status: 'HIRED' },
+      }),
+    ]);
 
     const result = {
       totalJobs,
@@ -190,6 +199,7 @@ export class OrgService {
       totalApplications,
       interviewsThisWeek,
       recentApplications,
+      hiredCount,
     };
     await this.cache.set(key, result, CacheTTL.THIRTY_SECONDS);
     return result;

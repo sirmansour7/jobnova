@@ -19,6 +19,7 @@ interface DashboardStats {
   totalJobs: number
   activeJobs: number
   totalApplications: number
+  hiredCount?: number
   interviewsThisWeek?: number
   recentApplications: Array<{
     id: string
@@ -95,7 +96,9 @@ export default function HRDashboard() {
     },
     {
       label: "معدل القبول",
-      value: "0%",
+      value: totalApplications > 0
+        ? `${Math.round(((stats?.hiredCount ?? 0) / totalApplications) * 100)}%`
+        : "0%",
       icon: <TrendingUp className="h-5 w-5" />,
       color: "text-chart-4",
     },
