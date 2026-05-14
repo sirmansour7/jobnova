@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Edit, Pause, Trash2, Eye } from "lucide-react"
+import { MoreVertical, Edit, Pause, Play, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { api } from "@/src/lib/api"
@@ -62,6 +62,25 @@ export default function ManageJobsPage() {
         // ignore network errors silently
       })
   }, [])
+
+  const handleToggle = async (jobId: string, currentIsActive: boolean) => {
+    try {
+      const res = await api(`/v1/jobs/${jobId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: !currentIsActive }),
+      })
+      if (res.status === 401) {
+        router.push("/login")
+        return
+      }
+      if (!res.ok) return
+      setHrJobs((prev) =>
+        prev.map((j) => (j.id === jobId ? { ...j, isActive: !currentIsActive } : j)),
+      )
+    } catch {
+      /* ignore */
+    }
+  }
 
   const handleDelete = async (jobId: string) => {
     const confirmed = window.confirm("هل أنت متأكد من حذف هذه الوظيفة؟")
@@ -138,9 +157,23 @@ export default function ManageJobsPage() {
                             <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" sideOffset={4}>
-                            <DropdownMenuItem><Eye className="ml-2 h-4 w-4" /> عرض</DropdownMenuItem>
-                            <DropdownMenuItem><Edit className="ml-2 h-4 w-4" /> تعديل</DropdownMenuItem>
-                            <DropdownMenuItem><Pause className="ml-2 h-4 w-4" /> إيقاف</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}`)}>
+                              <Eye className="ml-2 h-4 w-4" /> عرض
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/hr/create-job?edit=${job.id}`)}>
+                              <Edit className="ml-2 h-4 w-4" /> تعديل
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleToggle(job.id, job.isActive)}>
+                              {job.isActive ? (
+                                <>
+                                  <Pause className="ml-2 h-4 w-4" /> إيقاف
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="ml-2 h-4 w-4" /> تفعيل
+                                </>
+                              )}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => handleDelete(job.id)}

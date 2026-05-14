@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Loader2 } from "lucide-react"
 import { useState, useMemo, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { api, apiJson } from "@/src/lib/api"
 import { toast } from "sonner"
 
@@ -71,6 +71,10 @@ export default function CreateJobPage() {
   const [isSubmitting,     setIsSubmitting]     = useState(false)
   const [isDrafting,       setIsDrafting]       = useState(false)
 
+  const searchParams = useSearchParams()
+  const editJobId = searchParams.get("edit")
+  const [isEditMode, setIsEditMode] = useState(false)
+
   const router = useRouter()
 
   useEffect(() => {
@@ -78,6 +82,38 @@ export default function CreateJobPage() {
       .then((res) => setGovernorates(res.items))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!editJobId) return
+    setIsEditMode(true)
+    apiJson<{
+      title: string
+      category?: string
+      jobType?: string
+      minExperience?: number
+      description?: string
+      salaryMin?: number
+      salaryMax?: number
+      currency?: string
+      expiresAt?: string
+      skills?: string[]
+      governorateRel?: { name: string } | null
+    }>(`/v1/jobs/${editJobId}`)
+      .then((job) => {
+        setTitle(job.title ?? "")
+        setCategory(job.category ?? "")
+        setJobType(job.jobType ?? "")
+        setMinExperience(job.minExperience != null ? String(job.minExperience) : "")
+        setDescription(job.description ?? "")
+        setSalaryMin(job.salaryMin != null ? String(job.salaryMin) : "")
+        setSalaryMax(job.salaryMax != null ? String(job.salaryMax) : "")
+        setCurrency(job.currency ?? "EGP")
+        setExpiresAt(job.expiresAt ? job.expiresAt.slice(0, 10) : "")
+        setSkills(job.skills ?? [])
+        setGovernorateValue(job.governorateRel?.name ?? "")
+      })
+      .catch(() => {})
+  }, [editJobId])
 
   // ── Skill / requirement helpers ─────────────────────────────────────────────
   const addSkill = () => {
@@ -143,10 +179,12 @@ export default function CreateJobPage() {
         ...(expiresAt            && { expiresAt }),
       }
 
-      // 3. POST /v1/jobs
-      const res = await api("/v1/jobs", {
-        method: "POST",
-        body:   JSON.stringify(body),
+      // 3. PATCH or POST /v1/jobs
+      const method = isEditMode ? "PATCH" : "POST"
+      const endpoint = isEditMode ? `/v1/jobs/${editJobId}` : "/v1/jobs"
+      const res = await api(endpoint, {
+        method,
+        body: JSON.stringify(body),
       })
 
       if (res.status === 401) { router.push("/login"); return }
@@ -180,13 +218,19 @@ export default function CreateJobPage() {
       <DashboardLayout>
         <div className="mx-auto max-w-3xl space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">نشر وظيفة جديدة</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              {isEditMode ? "تعديل الوظيفة" : "نشر وظيفة جديدة"}
+            </h1>
             <p className="text-muted-foreground">أنشئ إعلان وظيفي جديد لجذب أفضل المرشحين</p>
           </div>
 
           {/* ── Job details ─────────────────────────────────────────────────── */}
           <Card className="border-border bg-card">
-            <CardHeader><CardTitle className="text-foreground">تفاصيل الوظيفة</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-foreground">
+                {isEditMode ? "تعديل الوظيفة" : "تفاصيل الوظيفة"}
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>عنوان الوظيفة <span className="text-destructive">*</span></Label>
@@ -384,7 +428,7 @@ export default function CreateJobPage() {
               disabled={isSubmitting || isDrafting}
             >
               {isSubmitting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-              نشر الوظيفة
+              {isEditMode ? "حفظ التعديلات" : "نشر الوظيفة"}
             </Button>
           </div>
         </div>
