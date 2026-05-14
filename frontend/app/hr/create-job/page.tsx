@@ -50,7 +50,7 @@ const EXPERIENCE_LEVELS: { value: number; label: string }[] = [
   { value: 5, label: "5+ سنوات" },
 ]
 
-export default function CreateJobPage() {
+function CreateJobPage() {
   // ── Form state ──────────────────────────────────────────────────────────────
   const [title,            setTitle]            = useState("")
   const [category,         setCategory]         = useState("")
@@ -434,5 +434,15 @@ export default function CreateJobPage() {
         </div>
       </DashboardLayout>
     </ProtectedRoute>
+  )
+}
+
+import { Suspense } from "react"
+
+export default function CreateJobPageWrapper() {
+  return (
+    <Suspense>
+      <CreateJobPage />
+    </Suspense>
   )
 }
