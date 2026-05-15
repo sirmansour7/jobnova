@@ -189,7 +189,10 @@ export class OrgService {
         },
       }),
       this.prisma.application.count({
-        where: { job: { organizationId: orgId }, status: 'HIRED' },
+        where: {
+          job: { organizationId: orgId },
+          status: { in: ['HIRED', 'SHORTLISTED'] },
+        },
       }),
     ]);
 

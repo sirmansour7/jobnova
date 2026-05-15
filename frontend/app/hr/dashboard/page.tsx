@@ -95,7 +95,7 @@ export default function HRDashboard() {
       color: "text-chart-2",
     },
     {
-      label: "معدل القبول",
+      label: "معدل الترشيح",
       value: totalApplications > 0
         ? `${Math.round(((stats?.hiredCount ?? 0) / totalApplications) * 100)}%`
         : "0%",
