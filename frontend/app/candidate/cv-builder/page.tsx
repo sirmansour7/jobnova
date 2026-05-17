@@ -639,55 +639,6 @@ export default function CVBuilderPage() {
                       </Button>
                     </div>
 
-                    {/* PDF Export Section */}
-                    <div className="mt-6 space-y-4">
-                      <div className="border-t border-border pt-4">
-                        <h3 className="font-semibold text-foreground mb-3">تصدير السيرة الذاتية</h3>
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-3 gap-2">
-                            {([
-                              { id: "modern" as const, label: "عصري", desc: "تصميم حديث بألوان زرقاء" },
-                              { id: "classic" as const, label: "كلاسيكي", desc: "تصميم تقليدي احترافي" },
-                              { id: "ats" as const, label: "متوافق مع ATS", desc: "تصميم نصي للقراءة الآلية" },
-                            ]).map(t => (
-                              <button
-                                key={t.id}
-                                type="button"
-                                onClick={() => setPdfTemplate(t.id)}
-                                className={`rounded-xl border p-3 text-right transition-colors ${
-                                  pdfTemplate === t.id
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-border bg-card text-muted-foreground hover:border-primary/50"
-                                }`}
-                              >
-                                <div className="text-xs font-semibold">{t.label}</div>
-                                <div className="text-[10px] mt-0.5 leading-tight">{t.desc}</div>
-                              </button>
-                            ))}
-                          </div>
-                          {exportError && <p className="text-sm text-destructive">{exportError}</p>}
-                          <Button
-                            variant="outline"
-                            className="w-full gap-2"
-                            onClick={handleDownloadPdf}
-                            disabled={exportingPdf}
-                          >
-                            {exportingPdf ? (
-                              <span className="flex items-center gap-2">
-                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                جاري التصدير...
-                              </span>
-                            ) : (
-                              <>
-                                <Download className="h-4 w-4" />
-                                تحميل PDF
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Analysis Section */}
                     <div className="mt-6 space-y-4">
                       <div className="border-t border-border pt-4">
