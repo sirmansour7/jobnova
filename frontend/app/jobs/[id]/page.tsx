@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select"
 import { MapPin, Clock, Users, Banknote, Calendar, Building2, CheckCircle2, Loader2, Copy, Bookmark, BookmarkCheck, FileText } from "lucide-react"
 import Link from "next/link"
-import { api, apiJson } from "@/src/lib/api"
+import { api, apiJson, API_URL } from "@/src/lib/api"
 import type { JobListItem } from "@/src/services/jobs.service"
 import { JobMatchPanel } from "@/components/jobs/JobMatchPanel"
 import { useAuth } from "@/src/context/auth-context"
@@ -170,6 +170,19 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
   const [similarJobs, setSimilarJobs] = useState<JobListItem[]>([])
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setUploadedFile(e.target.files[0])
+    }
+  }
+
+  useEffect(() => {
+    if (!applyDialogOpen) {
+      setUploadedFile(null)
+    }
+  }, [applyDialogOpen])
 
   useEffect(() => {
     let cancelled = false
@@ -280,10 +293,27 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     setApplyMessage(null)
     try {
       const cvId = cvSelectValue === "none" ? undefined : cvSelectValue
-      const res = await api("/v1/applications", {
-        method: "POST",
-        body: JSON.stringify({ jobId: id, ...(cvId ? { cvId } : {}) }),
-      })
+      let res;
+      if (uploadedFile) {
+        const formData = new FormData()
+        formData.append("jobId", id)
+        if (cvId) {
+          formData.append("cvId", cvId)
+        }
+        formData.append("cvFile", uploadedFile)
+
+        res = await fetch(`${API_URL}/v1/applications`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        })
+      } else {
+        res = await api("/v1/applications", {
+          method: "POST",
+          body: JSON.stringify({ jobId: id, ...(cvId ? { cvId } : {}) }),
+        })
+      }
+
       const body = await res.json().catch(() => ({}))
       if (res.status === 201) {
         setApplied(true)
@@ -303,7 +333,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     } finally {
       setApplyLoading(false)
     }
-  }, [id, cvSelectValue])
+  }, [id, cvSelectValue, uploadedFile])
 
   if (loading) {
     return (
@@ -485,33 +515,61 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                     <span>جاري تحميل السير الذاتية...</span>
                   </div>
                 ) : cvs.length === 0 ? (
-                  <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      لم تقم بإنشاء سيرة ذاتية بعد — يمكنك التقديم بدون سيرة أو إنشاء سيرة ذاتية أولاً.
-                    </p>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href="/candidate/cv-builder" className="gap-2">
-                        <FileText className="h-4 w-4" />
-                        إنشاء سيرة ذاتية
-                      </Link>
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        لم تقم بإنشاء سيرة ذاتية بعد — يمكنك التقديم بدون سيرة أو إنشاء سيرة ذاتية أولاً.
+                      </p>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/candidate/cv-builder" className="gap-2">
+                          <FileText className="h-4 w-4" />
+                          إنشاء سيرة ذاتية
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-gray-400 text-sm text-right">أو ارفع سيرتك الذاتية مباشرة</p>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleFileChange}
+                        className="w-full border border-dashed border-gray-600 rounded-lg p-3 text-sm text-right text-gray-300 cursor-pointer hover:border-blue-500 transition-colors bg-transparent"
+                      />
+                      {uploadedFile && (
+                        <p className="text-green-400 text-xs text-right mt-1">{uploadedFile.name}</p>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">اختر سيرة ذاتية (اختياري)</label>
-                    <Select value={cvSelectValue} onValueChange={setCvSelectValue}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="اختر سيرة ذاتية" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">بدون سيرة ذاتية</SelectItem>
-                        {cvs.map((cv) => (
-                          <SelectItem key={cv.id} value={cv.id}>
-                            {cv.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">اختر سيرة ذاتية (اختياري)</label>
+                      <Select value={cvSelectValue} onValueChange={setCvSelectValue}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="اختر سيرة ذاتية" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">بدون سيرة ذاتية</SelectItem>
+                          {cvs.map((cv) => (
+                            <SelectItem key={cv.id} value={cv.id}>
+                              {cv.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-gray-400 text-sm text-right">أو ارفع سيرتك الذاتية مباشرة</p>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleFileChange}
+                        className="w-full border border-dashed border-gray-600 rounded-lg p-3 text-sm text-right text-gray-300 cursor-pointer hover:border-blue-500 transition-colors bg-transparent"
+                      />
+                      {uploadedFile && (
+                        <p className="text-green-400 text-xs text-right mt-1">{uploadedFile.name}</p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

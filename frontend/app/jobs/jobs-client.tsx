@@ -164,7 +164,7 @@ export default function JobsClient() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     onBlur={() => { if (page !== 1) router.replace("/jobs?page=1") }}
-                    className="pe-10"
+                    className="pe-10 pr-12"
                   />
                 </div>
                 <Select
