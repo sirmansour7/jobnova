@@ -81,18 +81,23 @@ export class CvExportService {
       html = this.renderModern({ fullName, email, title, phone, location, summary, skills, experience, education });
     }
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-
     try {
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-      return Buffer.from(pdfBuffer);
-    } finally {
-      await browser.close();
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+
+      try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+        return Buffer.from(pdfBuffer);
+      } finally {
+        await browser.close();
+      }
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      throw error;
     }
   }
 
