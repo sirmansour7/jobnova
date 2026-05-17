@@ -119,6 +119,46 @@ export default function CvIntelligencePage() {
   const [copied, setCopied] = useState(false)
   const [liveStatus, setLiveStatus] = useState<"analyzing" | "updated" | "error" | null>(null)
 
+  const [uploadedCv, setUploadedCv] = useState<File | null>(null)
+  const [uploadTargetJob, setUploadTargetJob] = useState("")
+  const [uploadAnalyzing, setUploadAnalyzing] = useState(false)
+
+  const handleUploadAndAnalyze = async () => {
+    if (!uploadedCv) return
+    setUploadAnalyzing(true)
+    setError(null)
+    try {
+      const formData = new FormData()
+      formData.append("cvFile", uploadedCv)
+      if (uploadTargetJob.trim()) {
+        formData.append("targetJob", uploadTargetJob.trim())
+      }
+
+      const token = getCookie("jobnova_token")
+
+      const res = await fetch(`${API_URL}/v1/cv/intelligence`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const msg = (body as { message?: string }).message ?? `HTTP ${res.status}`
+        throw new Error(msg)
+      }
+
+      const result = await res.json() as CvIntelligenceResult
+      setData(result)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "حدث خطأ أثناء الرفع والتحليل. يرجى المحاولة لاحقاً."
+      setError(msg)
+    } finally {
+      setUploadAnalyzing(false)
+    }
+  }
+
   // ── Load stored result on mount ─────────────────────────────────────────────
   const loadStored = useCallback(async () => {
     try {
@@ -194,6 +234,65 @@ export default function CvIntelligencePage() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-5xl space-y-6" dir="rtl">
+
+        <div className="mb-8 p-6 rounded-2xl border border-dashed border-gray-600 bg-gray-800/30">
+          <h3 className="text-right text-white font-semibold mb-1">لديك سيرة ذاتية جاهزة؟</h3>
+          <p className="text-right text-gray-400 text-sm mb-4">ارفع ملف PDF وسنحلله فوراً دون الحاجة لبناء سيرة ذاتية</p>
+
+          <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-600 rounded-xl p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-500/5 transition-all group mb-4">
+            <input type="file" accept=".pdf" className="hidden" onChange={(e) => setUploadedCv(e.target.files?.[0] || null)} />
+            {uploadedCv ? (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="text-right">
+                  <p className="text-green-400 text-sm font-medium">{uploadedCv.name}</p>
+                  <p className="text-gray-500 text-xs">اضغط لتغيير الملف</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                </div>
+                <p className="text-gray-300 text-sm">اسحب ملف PDF هنا أو <span className="text-blue-400">اضغط للاختيار</span></p>
+                <p className="text-gray-500 text-xs">PDF فقط</p>
+              </div>
+            )}
+          </label>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleUploadAndAnalyze}
+              disabled={!uploadedCv || uploadAnalyzing}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors"
+            >
+              {uploadAnalyzing ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a3.5 3.5 0 01-4.95 0l-.347-.347z" />
+                </svg>
+              )}
+              {uploadAnalyzing ? "جاري التحليل..." : "حلل السيرة الذاتية"}
+            </button>
+            <input
+              type="text"
+              value={uploadTargetJob}
+              onChange={(e) => setUploadTargetJob(e.target.value)}
+              placeholder="المسمى الوظيفي المستهدف (اختياري)..."
+              className="flex-1 bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2.5 text-sm text-right text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
 
         {/* Live status banner */}
         {liveStatus === "analyzing" && (

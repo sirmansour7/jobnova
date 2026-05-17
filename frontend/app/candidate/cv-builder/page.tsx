@@ -330,6 +330,7 @@ export default function CVBuilderPage() {
     try {
       const token = getCookie("jobnova_token")
       const res = await fetch(`${API_URL}/v1/cv/export/pdf?template=${pdfTemplate}`, {
+        credentials: "include",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
