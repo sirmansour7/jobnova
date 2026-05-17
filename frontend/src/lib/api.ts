@@ -1,7 +1,7 @@
 // Cookie-based auth uses HttpOnly cookies, so no JS-readable token logic here.
 
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-backend.fly.dev"
+  (process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-backend.fly.dev").replace(/\/$/, "")
 
 let isRefreshing = false
 let refreshPromise: Promise<boolean> | null = null

@@ -2,7 +2,7 @@ import { io, Socket } from "socket.io-client"
 import { getCookie } from "./cookies"
 
 export const SOCKET_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production-e410.up.railway.app"
+  (process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production-e410.up.railway.app").replace(/\/$/, "")
 
 let socket: Socket | null = null
 
