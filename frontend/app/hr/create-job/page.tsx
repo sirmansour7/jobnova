@@ -70,6 +70,7 @@ function CreateJobPage() {
   const [governorates,     setGovernorates]     = useState<{ id: string; name: string }[]>([])
   const [isSubmitting,     setIsSubmitting]     = useState(false)
   const [isDrafting,       setIsDrafting]       = useState(false)
+  const [errors,           setErrors]           = useState<Record<string, string>>({})
 
   const searchParams = useSearchParams()
   const editJobId = searchParams.get("edit")
@@ -132,12 +133,25 @@ function CreateJobPage() {
     }
   }
 
+  const validate = (isActive: boolean) => {
+    const newErrors: Record<string, string> = {}
+    if (!title.trim()) {
+      newErrors.title = "هذا الحقل مطلوب"
+    }
+    if (isActive) {
+      if (!category) newErrors.category = "هذا الحقل مطلوب"
+      if (!jobType) newErrors.jobType = "هذا الحقل مطلوب"
+      if (!minExperience) newErrors.minExperience = "هذا الحقل مطلوب"
+      if (!governorateValue) newErrors.governorateValue = "هذا الحقل مطلوب"
+      if (!description.trim()) newErrors.description = "هذا الحقل مطلوب"
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   // ── Shared submission logic ──────────────────────────────────────────────────
   const submitJob = async (isActive: boolean) => {
-    if (!title.trim()) {
-      toast.error("يرجى إدخال عنوان الوظيفة")
-      return
-    }
+    if (!validate(isActive)) return
 
     const setter = isActive ? setIsSubmitting : setIsDrafting
     setter(true)
@@ -216,7 +230,7 @@ function CreateJobPage() {
   return (
     <ProtectedRoute allowedRoles={allowedRoles}>
       <DashboardLayout>
-        <div className="mx-auto max-w-3xl space-y-6">
+        <form onSubmit={(e) => e.preventDefault()} noValidate className="mx-auto max-w-3xl space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">
               {isEditMode ? "تعديل الوظيفة" : "نشر وظيفة جديدة"}
@@ -237,15 +251,27 @@ function CreateJobPage() {
                 <Input
                   placeholder="مثال: مطور واجهات أمامية"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTitle(e.target.value)
+                    setErrors(prev => ({ ...prev, title: "" }))
+                  }}
                 />
+                {errors.title && (
+                  <p className="text-red-400 text-xs mt-1 text-right">{errors.title}</p>
+                )}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 {/* Category — Bug 1 fixed: sends enum value */}
                 <div className="space-y-2">
                   <Label>التخصص</Label>
-                  <Select value={category} onValueChange={setCategory}>
+                  <Select
+                    value={category}
+                    onValueChange={(val) => {
+                      setCategory(val)
+                      setErrors(prev => ({ ...prev, category: "" }))
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="اختر التخصص" /></SelectTrigger>
                     <SelectContent>
                       {JOB_CATEGORIES.map((c) => (
@@ -253,12 +279,21 @@ function CreateJobPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.category && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.category}</p>
+                  )}
                 </div>
 
                 {/* Job type — Bug 2 fixed: sends enum value */}
                 <div className="space-y-2">
                   <Label>نوع العمل</Label>
-                  <Select value={jobType} onValueChange={setJobType}>
+                  <Select
+                    value={jobType}
+                    onValueChange={(val) => {
+                      setJobType(val)
+                      setErrors(prev => ({ ...prev, jobType: "" }))
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="اختر نوع العمل" /></SelectTrigger>
                     <SelectContent>
                       {JOB_TYPES.map((t) => (
@@ -266,6 +301,9 @@ function CreateJobPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.jobType && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.jobType}</p>
+                  )}
                 </div>
 
                 {/* Experience */}
@@ -273,7 +311,10 @@ function CreateJobPage() {
                   <Label>مستوى الخبرة</Label>
                   <Select
                     value={minExperience}
-                    onValueChange={setMinExperience}
+                    onValueChange={(val) => {
+                      setMinExperience(val)
+                      setErrors(prev => ({ ...prev, minExperience: "" }))
+                    }}
                   >
                     <SelectTrigger><SelectValue placeholder="اختر المستوى" /></SelectTrigger>
                     <SelectContent>
@@ -282,12 +323,21 @@ function CreateJobPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.minExperience && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.minExperience}</p>
+                  )}
                 </div>
 
                 {/* Governorate — Bug 3 fixed: value=g.name (backend expects name) */}
                 <div className="space-y-2">
                   <Label>المحافظة</Label>
-                  <Select value={governorateValue} onValueChange={setGovernorateValue}>
+                  <Select
+                    value={governorateValue}
+                    onValueChange={(val) => {
+                      setGovernorateValue(val)
+                      setErrors(prev => ({ ...prev, governorateValue: "" }))
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
                     <SelectContent>
                       {governorates.map((g) => (
@@ -295,6 +345,9 @@ function CreateJobPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.governorateValue && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.governorateValue}</p>
+                  )}
                 </div>
               </div>
 
@@ -330,8 +383,14 @@ function CreateJobPage() {
                   placeholder="اكتب وصفًا تفصيليًا للوظيفة..."
                   rows={4}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    setDescription(e.target.value)
+                    setErrors(prev => ({ ...prev, description: "" }))
+                  }}
                 />
+                {errors.description && (
+                  <p className="text-red-400 text-xs mt-1 text-right">{errors.description}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -357,6 +416,7 @@ function CreateJobPage() {
                     <li key={i} className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2 text-sm text-foreground">
                       {req}
                       <button
+                        type="button"
                         onClick={() => setRequirements(requirements.filter((_, idx) => idx !== i))}
                         className="text-muted-foreground hover:text-destructive"
                       >
@@ -373,7 +433,7 @@ function CreateJobPage() {
                   onChange={(e) => setNewReq(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addReq())}
                 />
-                <Button variant="outline" size="icon" onClick={addReq}>
+                <Button type="button" variant="outline" size="icon" onClick={addReq}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -390,6 +450,7 @@ function CreateJobPage() {
                     <Badge key={skill} variant="secondary" className="gap-1 py-1">
                       {skill}
                       <button
+                        type="button"
                         onClick={() => setSkills(skills.filter((s) => s !== skill))}
                         className="mr-1 hover:text-destructive"
                       >
@@ -406,7 +467,7 @@ function CreateJobPage() {
                   onChange={(e) => setNewSkill(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSkill())}
                 />
-                <Button variant="outline" size="icon" onClick={addSkill}>
+                <Button type="button" variant="outline" size="icon" onClick={addSkill}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -416,6 +477,7 @@ function CreateJobPage() {
           {/* ── Action buttons — Bug 6 fixed: draft handler wired ──────────── */}
           <div className="flex justify-end gap-3">
             <Button
+              type="button"
               variant="outline"
               onClick={handleDraft}
               disabled={isDrafting || isSubmitting}
@@ -424,6 +486,7 @@ function CreateJobPage() {
               حفظ كمسودة
             </Button>
             <Button
+              type="button"
               onClick={handlePublish}
               disabled={isSubmitting || isDrafting}
             >
@@ -431,7 +494,7 @@ function CreateJobPage() {
               {isEditMode ? "حفظ التعديلات" : "نشر الوظيفة"}
             </Button>
           </div>
-        </div>
+        </form>
       </DashboardLayout>
     </ProtectedRoute>
   )

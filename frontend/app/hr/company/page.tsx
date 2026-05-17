@@ -47,6 +47,7 @@ export default function CompanyProfilePage() {
     location: "",
     size: "",
   })
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -89,10 +90,21 @@ export default function CompanyProfilePage() {
 
   function handleChange(field: keyof FormState, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
+    setErrors(prev => ({ ...prev, [field]: "" }))
+  }
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    if (!form.name.trim()) {
+      newErrors.name = "هذا الحقل مطلوب"
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   async function handleSave() {
     if (!company) return
+    if (!validate()) return
     setSaving(true)
     try {
       await apiJson(`/v1/orgs/${company.id}`, {
@@ -169,69 +181,74 @@ export default function CompanyProfilePage() {
           {/* Edit Form */}
           <Card className="border-border bg-card">
             <CardHeader><CardTitle className="text-foreground">معلومات الشركة</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <CardContent>
+              <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>اسم الشركة</Label>
+                    <Input
+                      value={form.name}
+                      onChange={e => handleChange("name", e.target.value)}
+                    />
+                    {errors.name && (
+                      <p className="text-red-400 text-xs mt-1 text-right">{errors.name}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>القطاع</Label>
+                    <Input
+                      value={form.industry}
+                      onChange={e => handleChange("industry", e.target.value)}
+                      placeholder="مثال: تقنية المعلومات"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>الموقع</Label>
+                    <Input
+                      value={form.location}
+                      onChange={e => handleChange("location", e.target.value)}
+                      placeholder="مثال: القاهرة، مصر"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>حجم الشركة</Label>
+                    <Input
+                      value={form.size}
+                      onChange={e => handleChange("size", e.target.value)}
+                      placeholder="مثال: 1-10، 50-200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>الموقع الإلكتروني</Label>
+                    <Input
+                      value={form.website}
+                      onChange={e => handleChange("website", e.target.value)}
+                      dir="ltr"
+                      className="text-left"
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>سنة التأسيس</Label>
+                    <Input value={formatDate(company.createdAt)} dir="ltr" className="text-left" disabled />
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  <Label>اسم الشركة</Label>
-                  <Input
-                    value={form.name}
-                    onChange={e => handleChange("name", e.target.value)}
+                  <Label>وصف الشركة</Label>
+                  <Textarea
+                    value={form.description}
+                    onChange={e => handleChange("description", e.target.value)}
+                    rows={4}
+                    placeholder="اكتب وصفاً مختصراً عن الشركة..."
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>القطاع</Label>
-                  <Input
-                    value={form.industry}
-                    onChange={e => handleChange("industry", e.target.value)}
-                    placeholder="مثال: تقنية المعلومات"
-                  />
+                <Separator />
+                <div className="flex justify-end">
+                  <Button type="button" onClick={handleSave} disabled={saving}>
+                    {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label>الموقع</Label>
-                  <Input
-                    value={form.location}
-                    onChange={e => handleChange("location", e.target.value)}
-                    placeholder="مثال: القاهرة، مصر"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>حجم الشركة</Label>
-                  <Input
-                    value={form.size}
-                    onChange={e => handleChange("size", e.target.value)}
-                    placeholder="مثال: 1-10، 50-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>الموقع الإلكتروني</Label>
-                  <Input
-                    value={form.website}
-                    onChange={e => handleChange("website", e.target.value)}
-                    dir="ltr"
-                    className="text-left"
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>سنة التأسيس</Label>
-                  <Input value={formatDate(company.createdAt)} dir="ltr" className="text-left" disabled />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>وصف الشركة</Label>
-                <Textarea
-                  value={form.description}
-                  onChange={e => handleChange("description", e.target.value)}
-                  rows={4}
-                  placeholder="اكتب وصفاً مختصراً عن الشركة..."
-                />
-              </div>
-              <Separator />
-              <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
-                </Button>
-              </div>
+              </form>
             </CardContent>
           </Card>
         </div>

@@ -43,6 +43,7 @@ export default function CandidateSettingsPage() {
   const [passwordSaving, setPasswordSaving] = useState(false)
 
   const [deleting, setDeleting] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -71,7 +72,17 @@ export default function CandidateSettingsPage() {
     }
   }, [])
 
+  const validatePersonal = () => {
+    const newErrors: Record<string, string> = {}
+    if (!fullName.trim()) {
+      newErrors.fullName = "هذا الحقل مطلوب"
+    }
+    setErrors(prev => ({ ...prev, ...newErrors }))
+    return !newErrors.fullName
+  }
+
   const handleSavePersonal = async () => {
+    if (!validatePersonal()) return
     setSaving(true)
     try {
       await apiJson<MeResponse>("/v1/auth/me", {
@@ -87,19 +98,27 @@ export default function CandidateSettingsPage() {
     }
   }
 
+  const validatePassword = () => {
+    const newErrors: Record<string, string> = {}
+    if (!currentPassword) {
+      newErrors.currentPassword = "هذا الحقل مطلوب"
+    }
+    if (!newPassword) {
+      newErrors.newPassword = "هذا الحقل مطلوب"
+    } else if (newPassword.length < 8) {
+      newErrors.newPassword = "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+    }
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "هذا الحقل مطلوب"
+    } else if (newPassword !== confirmPassword) {
+      newErrors.confirmPassword = "كلمتا المرور غير متطابقتين"
+    }
+    setErrors(prev => ({ ...prev, ...newErrors }))
+    return !newErrors.currentPassword && !newErrors.newPassword && !newErrors.confirmPassword
+  }
+
   const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("يرجى ملء جميع حقول كلمة المرور")
-      return
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("كلمة المرور الجديدة وتأكيدها غير متطابقتين")
-      return
-    }
-    if (newPassword.length < 8) {
-      toast.error("يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل")
-      return
-    }
+    if (!validatePassword()) return
     setPasswordSaving(true)
     try {
       await apiJson("/v1/auth/me/password", {
@@ -146,9 +165,9 @@ export default function CandidateSettingsPage() {
 
           <Card className="border-border bg-card">
             <CardHeader><CardTitle className="text-foreground">المعلومات الشخصية</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               {loading ? (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2 p-6">
                   <div className="space-y-2">
                     <Label>الاسم الكامل</Label>
                     <Skeleton className="h-9 w-full" />
@@ -167,7 +186,7 @@ export default function CandidateSettingsPage() {
                   </div>
                 </div>
               ) : (
-                <>
+                <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4 p-6">
                   {loadError && (
                     <p className="text-sm text-destructive">{loadError}</p>
                   )}
@@ -176,8 +195,14 @@ export default function CandidateSettingsPage() {
                       <Label>الاسم الكامل</Label>
                       <Input
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) => {
+                          setFullName(e.target.value)
+                          setErrors(prev => ({ ...prev, fullName: "" }))
+                        }}
                       />
+                      {errors.fullName && (
+                        <p className="text-red-400 text-xs mt-1 text-right">{errors.fullName}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label>البريد الإلكتروني</Label>
@@ -207,53 +232,73 @@ export default function CandidateSettingsPage() {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <Button onClick={handleSavePersonal} disabled={saving}>
+                    <Button type="button" onClick={handleSavePersonal} disabled={saving}>
                       {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
                     </Button>
                   </div>
-                </>
+                </form>
               )}
             </CardContent>
           </Card>
 
           <Card className="border-border bg-card">
             <CardHeader><CardTitle className="text-foreground">تغيير كلمة المرور</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>كلمة المرور الحالية</Label>
-                <Input
-                  type="password"
-                  dir="ltr"
-                  className="text-left"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>كلمة المرور الجديدة</Label>
-                <Input
-                  type="password"
-                  dir="ltr"
-                  className="text-left"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>تأكيد كلمة المرور</Label>
-                <Input
-                  type="password"
-                  dir="ltr"
-                  className="text-left"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button onClick={handleChangePassword} disabled={passwordSaving}>
-                  {passwordSaving ? "جاري التحديث..." : "تحديث كلمة المرور"}
-                </Button>
-              </div>
+            <CardContent>
+              <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4 p-6">
+                <div className="space-y-2">
+                  <Label>كلمة المرور الحالية</Label>
+                  <Input
+                    type="password"
+                    dir="ltr"
+                    className="text-left"
+                    value={currentPassword}
+                    onChange={(e) => {
+                      setCurrentPassword(e.target.value)
+                      setErrors(prev => ({ ...prev, currentPassword: "" }))
+                    }}
+                  />
+                  {errors.currentPassword && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.currentPassword}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>كلمة المرور الجديدة</Label>
+                  <Input
+                    type="password"
+                    dir="ltr"
+                    className="text-left"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value)
+                      setErrors(prev => ({ ...prev, newPassword: "" }))
+                    }}
+                  />
+                  {errors.newPassword && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.newPassword}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>تأكيد كلمة المرور</Label>
+                  <Input
+                    type="password"
+                    dir="ltr"
+                    className="text-left"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value)
+                      setErrors(prev => ({ ...prev, confirmPassword: "" }))
+                    }}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.confirmPassword}</p>
+                  )}
+                </div>
+                <div className="flex justify-end">
+                  <Button type="button" onClick={handleChangePassword} disabled={passwordSaving}>
+                    {passwordSaving ? "جاري التحديث..." : "تحديث كلمة المرور"}
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
 

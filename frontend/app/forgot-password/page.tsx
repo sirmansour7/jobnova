@@ -15,9 +15,22 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState("")
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    if (!email) {
+      newErrors.email = "هذا الحقل مطلوب"
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "صيغة البريد الإلكتروني غير صحيحة"
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validate()) return
     setLoading(true)
     setError("")
     try {
@@ -56,7 +69,7 @@ export default function ForgotPasswordPage() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} noValidate className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">البريد الإلكتروني</Label>
                   <Input
@@ -64,11 +77,17 @@ export default function ForgotPasswordPage() {
                     type="email"
                     placeholder="example@email.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      setErrors(prev => ({ ...prev, email: "" }))
+                    }}
                     required
                     dir="ltr"
                     className="text-left"
                   />
+                  {errors.email && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.email}</p>
+                  )}
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={loading}>

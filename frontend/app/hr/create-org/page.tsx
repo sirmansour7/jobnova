@@ -18,15 +18,22 @@ export default function CreateOrgPage() {
   const [location, setLocation] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    if (!name.trim()) {
+      newErrors.name = "هذا الحقل مطلوب"
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    if (!validate()) return
     const trimmedName = name.trim()
-    if (!trimmedName) {
-      setError("اسم الشركة مطلوب")
-      return
-    }
     setSubmitting(true)
     try {
       await apiJson("/v1/orgs", {
@@ -63,7 +70,7 @@ export default function CreateOrgPage() {
               <CardTitle className="text-foreground">ملف الشركة</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4" dir="rtl">
+              <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4" dir="rtl">
                 <div>
                   <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-foreground">
                     اسم الشركة <span className="text-destructive">*</span>
@@ -71,12 +78,18 @@ export default function CreateOrgPage() {
                   <Input
                     id="name"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value)
+                      setErrors(prev => ({ ...prev, name: "" }))
+                    }}
                     placeholder="مثال: شركة التقنية المتقدمة"
                     className="w-full"
                     maxLength={100}
                     disabled={submitting}
                   />
+                  {errors.name && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.name}</p>
+                  )}
                 </div>
 
                 <div>

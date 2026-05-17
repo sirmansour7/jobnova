@@ -31,17 +31,36 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const passResults = PASSWORD_RULES.map((r) => ({ ...r, passed: r.test(password) }))
   const passStrength = passResults.filter((r) => r.passed).length
   const passwordValid = passStrength === PASSWORD_RULES.length
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    if (!name) {
+      newErrors.name = "هذا الحقل مطلوب"
+    }
+    if (!email) {
+      newErrors.email = "هذا الحقل مطلوب"
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "صيغة البريد الإلكتروني غير صحيحة"
+    }
+    if (!password) {
+      newErrors.password = "هذا الحقل مطلوب"
+    } else if (password.length < 8) {
+      newErrors.password = "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+    } else if (!passwordValid) {
+      newErrors.password = "كلمة المرور لا تستوفي المتطلبات المطلوبة"
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!passwordValid) {
-      setError("كلمة المرور لا تستوفي المتطلبات المطلوبة")
-      return
-    }
+    if (!validate()) return
     setLoading(true)
     setError("")
 
@@ -89,7 +108,7 @@ export default function RegisterPage() {
             <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-secondary/50 p-1">
               <button
                 type="button"
-                onClick={() => setRole("candidate")}
+                onClick={() => { setRole("candidate"); setErrors({}) }}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   role === "candidate"
@@ -102,7 +121,7 @@ export default function RegisterPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setRole("hr")}
+                onClick={() => { setRole("hr"); setErrors({}) }}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   role === "hr"
@@ -115,7 +134,7 @@ export default function RegisterPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">الاسم الكامل</Label>
                 <Input
@@ -123,9 +142,15 @@ export default function RegisterPage() {
                   type="text"
                   placeholder="محمد أحمد"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value)
+                    setErrors(prev => ({ ...prev, name: "" }))
+                  }}
                   required
                 />
+                {errors.name && (
+                  <p className="text-red-400 text-xs mt-1 text-right">{errors.name}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">البريد الإلكتروني</Label>
@@ -134,11 +159,17 @@ export default function RegisterPage() {
                   type="email"
                   placeholder="example@email.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    setErrors(prev => ({ ...prev, email: "" }))
+                  }}
                   required
                   dir="ltr"
                   className="text-left"
                 />
+                {errors.email && (
+                  <p className="text-red-400 text-xs mt-1 text-right">{errors.email}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">كلمة المرور</Label>
@@ -148,7 +179,10 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="********"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      setErrors(prev => ({ ...prev, password: "" }))
+                    }}
                     required
                     dir="ltr"
                     className="ps-10 text-left"
@@ -161,6 +195,9 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-red-400 text-xs mt-1 text-right">{errors.password}</p>
+                )}
                 {password.length > 0 && (
                   <div className="space-y-2 pt-1">
                     <div className="flex gap-1">

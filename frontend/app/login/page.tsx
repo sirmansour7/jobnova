@@ -34,12 +34,30 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const rawRedirect = searchParams.get("redirect") ?? searchParams.get("next") ?? ""
   const redirectTo = isSafeRedirect(rawRedirect) ? rawRedirect : null
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    if (!email) {
+      newErrors.email = "هذا الحقل مطلوب"
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "صيغة البريد الإلكتروني غير صحيحة"
+    }
+    if (!password) {
+      newErrors.password = "هذا الحقل مطلوب"
+    } else if (password.length < 8) {
+      newErrors.password = "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validate()) return
     setLoading(true)
     setError("")
 
@@ -60,7 +78,7 @@ function LoginForm() {
       <div className="grid grid-cols-3 gap-2 rounded-xl bg-secondary/50 p-1">
         <button
           type="button"
-          onClick={() => { setSelectedRole("candidate"); setError("") }}
+          onClick={() => { setSelectedRole("candidate"); setError(""); setErrors({}) }}
           className={cn(
             "flex items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-all duration-200",
             selectedRole === "candidate"
@@ -73,7 +91,7 @@ function LoginForm() {
         </button>
         <button
           type="button"
-          onClick={() => { setSelectedRole("hr"); setError("") }}
+          onClick={() => { setSelectedRole("hr"); setError(""); setErrors({}) }}
           className={cn(
             "flex items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-all duration-200",
             selectedRole === "hr"
@@ -86,7 +104,7 @@ function LoginForm() {
         </button>
         <button
           type="button"
-          onClick={() => { setSelectedRole("admin"); setError("") }}
+          onClick={() => { setSelectedRole("admin"); setError(""); setErrors({}) }}
           className={cn(
             "flex items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-all duration-200",
             selectedRole === "admin"
@@ -99,7 +117,7 @@ function LoginForm() {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">البريد الإلكتروني</Label>
           <Input
@@ -107,11 +125,17 @@ function LoginForm() {
             type="email"
             placeholder="example@email.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setErrors(prev => ({ ...prev, email: "" }))
+            }}
             required
             dir="ltr"
             className="text-left"
           />
+          {errors.email && (
+            <p className="text-red-400 text-xs mt-1 text-right">{errors.email}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">كلمة المرور</Label>
@@ -121,7 +145,10 @@ function LoginForm() {
               type={showPassword ? "text" : "password"}
               placeholder="********"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setErrors(prev => ({ ...prev, password: "" }))
+              }}
               required
               dir="ltr"
               className="ps-10 text-left"
@@ -134,6 +161,9 @@ function LoginForm() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          {errors.password && (
+            <p className="text-red-400 text-xs mt-1 text-right">{errors.password}</p>
+          )}
         </div>
         <div className="flex justify-end -mt-2">
           <Link href="/forgot-password" className="text-xs text-primary hover:underline">

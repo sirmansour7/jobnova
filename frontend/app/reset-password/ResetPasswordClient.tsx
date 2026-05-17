@@ -21,6 +21,7 @@ function ResetPasswordContent() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState<Step>("form")
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   if (!token) {
     return (
@@ -43,19 +44,26 @@ function ResetPasswordContent() {
     )
   }
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    if (!newPassword) {
+      newErrors.newPassword = "هذا الحقل مطلوب"
+    } else if (newPassword.length < 8) {
+      newErrors.newPassword = "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+    }
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "هذا الحقل مطلوب"
+    } else if (newPassword !== confirmPassword) {
+      newErrors.confirmPassword = "كلمتا المرور غير متطابقتين"
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validate()) return
     setError("")
-
-    if (newPassword.length < 8) {
-      setError("كلمة المرور يجب أن تكون 8 أحرف على الأقل")
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError("كلمتا المرور غير متطابقتين")
-      return
-    }
 
     setLoading(true)
     try {
@@ -97,7 +105,7 @@ function ResetPasswordContent() {
           </CardHeader>
           <CardContent>
             {step === "form" ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} noValidate className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="new-password">كلمة المرور الجديدة</Label>
                   <Input
@@ -105,11 +113,17 @@ function ResetPasswordContent() {
                     type="password"
                     placeholder="********"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value)
+                      setErrors(prev => ({ ...prev, newPassword: "" }))
+                    }}
                     required
                     dir="ltr"
                     className="text-left"
                   />
+                  {errors.newPassword && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.newPassword}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
@@ -118,11 +132,17 @@ function ResetPasswordContent() {
                     type="password"
                     placeholder="********"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value)
+                      setErrors(prev => ({ ...prev, confirmPassword: "" }))
+                    }}
                     required
                     dir="ltr"
                     className="text-left"
                   />
+                  {errors.confirmPassword && (
+                    <p className="text-red-400 text-xs mt-1 text-right">{errors.confirmPassword}</p>
+                  )}
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={loading}>
