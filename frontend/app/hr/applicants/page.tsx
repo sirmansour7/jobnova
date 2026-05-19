@@ -31,7 +31,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Search, FileText, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, FileText, ChevronLeft, ChevronRight, MessageSquare, Loader2 } from "lucide-react"
+import { getOrCreateConversation } from "@/src/services/messages.service"
 import { apiJson } from "@/src/lib/api"
 import {
   STATUS_COLOR,
@@ -106,6 +107,7 @@ export default function ApplicantsPage() {
   const [cvSheetOpen, setCvSheetOpen] = useState(false)
   const [selectedApp, setSelectedApp] = useState<ApplicationWithJob | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [messagingLoading, setMessagingLoading] = useState<Record<string, boolean>>({})
   const LIMIT = 15
   const router = useRouter()
 
@@ -366,17 +368,44 @@ export default function ApplicantsPage() {
                             {formatDate(app.createdAt)}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedApp(app)
-                                setCvSheetOpen(true)
-                              }}
-                            >
-                              <FileText className="ml-2 h-4 w-4" />
-                              عرض السيرة الذاتية
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedApp(app)
+                                  setCvSheetOpen(true)
+                                }}
+                              >
+                                <FileText className="ml-2 h-4 w-4" />
+                                عرض السيرة الذاتية
+                              </Button>
+                              {app.candidate?.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={!!messagingLoading[app.id]}
+                                  onClick={async () => {
+                                    setMessagingLoading((prev) => ({ ...prev, [app.id]: true }))
+                                    try {
+                                      await getOrCreateConversation(app.candidate!.id)
+                                      router.push("/hr/messages")
+                                    } catch {
+                                      toast.error("فشل بدء المحادثة")
+                                    } finally {
+                                      setMessagingLoading((prev) => ({ ...prev, [app.id]: false }))
+                                    }
+                                  }}
+                                >
+                                  {messagingLoading[app.id] ? (
+                                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <MessageSquare className="ml-2 h-4 w-4" />
+                                  )}
+                                  راسل
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       )
