@@ -1,8 +1,7 @@
 import { io, Socket } from "socket.io-client"
-import { getCookie } from "./cookies"
 
 export const SOCKET_URL =
-  (process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-production-e410.up.railway.app").replace(/\/$/, "")
+  (process.env.NEXT_PUBLIC_API_URL ?? "https://jobnova-backend.fly.dev").replace(/\/$/, "")
 
 let socket: Socket | null = null
 
@@ -18,10 +17,8 @@ export function getSocket(forceNew = false): Socket {
     socket = null
   }
 
-  const token = getCookie("jobnova_token") ?? ""
-
   socket = io(`${SOCKET_URL}/chat`, {
-    auth: { token },
+    withCredentials: true,
     transports: ["websocket", "polling"],
     reconnectionAttempts: 5,
     reconnectionDelay: 2000,

@@ -38,11 +38,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(socket: AuthenticatedSocket) {
     try {
-      const token =
-        (socket.handshake.auth?.token as string | undefined) ??
+      // 1. Try explicit auth.token (e.g. mobile / non-browser clients)
+      // 2. Try Authorization header (Bearer <token>)
+      // 3. Try jobnova_token HttpOnly cookie sent on the WS upgrade handshake
+      let token: string | undefined =
+        (socket.handshake.auth?.token as string | undefined) ||
         (socket.handshake.headers?.authorization as string | undefined)
           ?.replace('Bearer ', '')
           .trim();
+
+      if (!token) {
+        const rawCookie = socket.handshake.headers?.cookie as string | undefined;
+        if (rawCookie) {
+          const match = rawCookie
+            .split(';')
+            .map((c) => c.trim())
+            .find((c) => c.startsWith('jobnova_token='));
+          if (match) token = match.split('=').slice(1).join('=');
+        }
+      }
 
       if (!token) throw new Error('No token provided');
 
