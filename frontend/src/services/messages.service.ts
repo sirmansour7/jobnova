@@ -26,7 +26,9 @@ export async function getConversations(): Promise<Conversation[]> {
 }
 
 export async function getConversationMessages(conversationId: string): Promise<Message[]> {
-  return apiJson<Message[]>(`/v1/conversations/${conversationId}/messages`)
+  return apiJson<Message[]>(`/v1/conversations/${conversationId}/messages`, {
+    cache: "no-store",
+  })
 }
 
 export async function sendMessage(conversationId: string, content: string): Promise<Message> {
