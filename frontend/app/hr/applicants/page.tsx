@@ -388,8 +388,8 @@ export default function ApplicantsPage() {
                                   onClick={async () => {
                                     setMessagingLoading((prev) => ({ ...prev, [app.id]: true }))
                                     try {
-                                      await getOrCreateConversation(app.candidate!.id)
-                                      router.push("/hr/messages")
+                                      const conv = await getOrCreateConversation(app.candidate!.id)
+                                      router.push(`/hr/messages?conv=${conv.id}`)
                                     } catch {
                                       toast.error("فشل بدء المحادثة")
                                     } finally {

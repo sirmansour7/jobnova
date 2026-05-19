@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useRef, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card } from "@/components/ui/card"
@@ -24,9 +25,19 @@ export default function HRMessagesPage() {
     typingUsers,
   } = useMessages()
 
+  const convParam = useSearchParams().get("conv")
+
   const [newMessage, setNewMessage] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Auto-select conversation when redirected from applicants page
+  useEffect(() => {
+    if (convParam && !loading && activeConvId !== convParam) {
+      const exists = conversations.some((c) => c.id === convParam)
+      if (exists) selectConversation(convParam)
+    }
+  }, [convParam, conversations, loading])
 
   const conversation = conversations.find((c) => c.id === activeConvId)
   const allowedRoles = useMemo(() => ["hr"] as const, [])
