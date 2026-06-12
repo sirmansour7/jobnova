@@ -133,9 +133,16 @@ export default function CandidateMessagesPage() {
       setHrConvs((prev) =>
         prev.map((c) => {
           if (c.id !== conversationId) return c
+          // Deduplicate: remove any optimistic (temp-*) messages with same content
+          const existing = c.messages ?? []
+          const withoutOptimistic = existing.filter(
+            (m) => !(m.id.startsWith("temp-") && m.content === message.content)
+          )
+          // Also skip if real message already exists
+          if (withoutOptimistic.some((m) => m.id === message.id)) return c
           return {
             ...c,
-            messages: [...(c.messages ?? []), message],
+            messages: [...withoutOptimistic, message],
             lastMessage: message.content,
             lastMessageTime: new Date(message.createdAt).toLocaleTimeString("ar-EG", {
               hour: "2-digit",
@@ -226,24 +233,95 @@ export default function CandidateMessagesPage() {
     []
   )
 
-  // ── Send for HR conversations via Socket.io ───────────────────────────────
+  // ── Send for HR conversations via Socket.io (with optimistic UI + REST fallback) ───
   const handleSendHr = useCallback(
-    (conversationId: string, content: string) => {
+    async (conversationId: string, content: string) => {
       const s = socketRef.current
-      if (!s) return
-
       setSending(true)
-      s.emit(
-        "sendMessage",
-        { conversationId, content },
-        () => setSending(false),
-      )
 
       // Stop typing indicator
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
-      s.emit("typing", { conversationId, isTyping: false })
+      s?.emit("typing", { conversationId, isTyping: false })
+
+      // ── Optimistic update: add message to UI immediately ─────────────────
+      const tempId = `temp-${Date.now()}`
+      const optimisticMsg: ApiMessage = {
+        id: tempId,
+        senderId: "__self__",   // placeholder; replaced when real msg arrives
+        senderName: candidateName,
+        content,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+      }
+      setHrConvs((prev) =>
+        prev.map((c) =>
+          c.id !== conversationId
+            ? c
+            : {
+                ...c,
+                messages: [...(c.messages ?? []), optimisticMsg],
+                lastMessage: content,
+                lastMessageTime: new Date().toLocaleTimeString("ar-EG", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              }
+        )
+      )
+
+      // ── Primary: socket when connected ───────────────────────────────────
+      if (s?.connected) {
+        s.emit(
+          "sendMessage",
+          { conversationId, content },
+          (ack: { event: string; data: ApiMessage | { message: string } }) => {
+            setSending(false)
+            if (ack?.event === "error") {
+              // Rollback optimistic message on error
+              setHrConvs((prev) =>
+                prev.map((c) =>
+                  c.id !== conversationId
+                    ? c
+                    : { ...c, messages: (c.messages ?? []).filter((m) => m.id !== tempId) }
+                )
+              )
+            }
+          },
+        )
+        return
+      }
+
+      // ── Fallback: REST when socket is disconnected ────────────────────────
+      try {
+        const { sendMessage: sendMessageREST } = await import("@/src/services/messages.service")
+        const realMsg = await sendMessageREST(conversationId, content)
+        // Replace optimistic message with the real one from server
+        setHrConvs((prev) =>
+          prev.map((c) =>
+            c.id !== conversationId
+              ? c
+              : {
+                  ...c,
+                  messages: (c.messages ?? []).map((m) =>
+                    m.id === tempId ? realMsg : m
+                  ),
+                }
+          )
+        )
+      } catch {
+        // Rollback on REST failure
+        setHrConvs((prev) =>
+          prev.map((c) =>
+            c.id !== conversationId
+              ? c
+              : { ...c, messages: (c.messages ?? []).filter((m) => m.id !== tempId) }
+          )
+        )
+      } finally {
+        setSending(false)
+      }
     },
-    []
+    [candidateName]
   )
 
   // ── Typing for HR ─────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import {
   getConversations,
   getConversationMessages,
   markConversationAsRead,
+  sendMessage as sendMessageREST,
   type Conversation,
   type Message,
 } from "@/src/services/messages.service"
@@ -54,11 +55,17 @@ export function useMessages() {
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== conversationId) return c
-          // If this conversation is currently open, add message + mark read
+          // Deduplicate: remove optimistic (temp-*) messages with same content
+          const existing = c.messages ?? []
+          const withoutOptimistic = existing.filter(
+            (m) => !(m.id.startsWith("temp-") && m.content === message.content)
+          )
+          // Skip if real message already exists
+          if (withoutOptimistic.some((m) => m.id === message.id)) return c
           const isActive = activeConvIdRef.current === conversationId
           return {
             ...c,
-            messages: [...(c.messages ?? []), message],
+            messages: [...withoutOptimistic, message],
             lastMessage: message.content,
             lastMessageTime: new Date(message.createdAt).toLocaleTimeString("ar-EG", {
               hour: "2-digit",
@@ -115,27 +122,94 @@ export function useMessages() {
     }
   }, [])
 
-  // ── Send message via Socket.io ────────────────────────────────────────────
+  // ── Send message (Socket primary, REST fallback) ──────────────────────
   const sendMessage = useCallback((conversationId: string, content: string) => {
     const s = socketRef.current
-    if (!s) {
-      setError("الاتصال غير متاح")
+    setSending(true)
+
+    // ── Optimistic update: show the message in UI immediately ──────────────
+    const tempId = `temp-${Date.now()}`
+    const optimisticMsg: Message = {
+      id: tempId,
+      senderId: "__self__",
+      senderName: "",
+      content,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    }
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id !== conversationId
+          ? c
+          : {
+              ...c,
+              messages: [...(c.messages ?? []), optimisticMsg],
+              lastMessage: content,
+              lastMessageTime: new Date().toLocaleTimeString("ar-EG", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            }
+      )
+    )
+
+    // ── Primary: use socket when connected ─────────────────────────────
+    if (s?.connected) {
+      s.emit(
+        "sendMessage",
+        { conversationId, content },
+        (ack: { event: string; data: Message | { message: string } }) => {
+          setSending(false)
+          if (ack?.event === "error") {
+            setError((ack.data as { message: string }).message ?? "فشل الإرسال")
+            // Rollback optimistic message
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id !== conversationId
+                  ? c
+                  : { ...c, messages: (c.messages ?? []).filter((m) => m.id !== tempId) }
+              )
+            )
+          }
+          // newMessage event will replace the temp message for everyone
+        },
+      )
       return
     }
 
-    setSending(true)
-
-    s.emit(
-      "sendMessage",
-      { conversationId, content },
-      (ack: { event: string; data: Message | { message: string } }) => {
+    // ── Fallback: REST when socket is not connected ─────────────────────
+    void (async () => {
+      try {
+        const message = await sendMessageREST(conversationId, content)
+        // Replace optimistic message with the real one from server
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== conversationId) return c
+            return {
+              ...c,
+              messages: (c.messages ?? []).map((m) => m.id === tempId ? message : m),
+              lastMessage: message.content,
+              lastMessageTime: new Date(message.createdAt).toLocaleTimeString("ar-EG", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            }
+          })
+        )
+      } catch {
+        setError("فشل الإرسال")
+        // Rollback optimistic message
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id !== conversationId
+              ? c
+              : { ...c, messages: (c.messages ?? []).filter((m) => m.id !== tempId) }
+          )
+        )
+      } finally {
         setSending(false)
-        if (ack?.event === "error") {
-          setError((ack.data as { message: string }).message ?? "فشل الإرسال")
-        }
-        // newMessage event will update state for everyone including sender
-      },
-    )
+      }
+    })()
   }, [])
 
   // ── Typing indicator ──────────────────────────────────────────────────────
