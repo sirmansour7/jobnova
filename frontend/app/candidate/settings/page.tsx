@@ -142,8 +142,9 @@ export default function CandidateSettingsPage() {
     setDeleting(true)
     try {
       await apiJson("/v1/auth/me", { method: "DELETE" })
-      deleteCookie("jobnova_token")
-      deleteCookie("jobnova_refresh")
+      // Call logout to clear HttpOnly cookies (jobnova_token & jobnova_refresh)
+      // since JS cannot delete HttpOnly cookies directly
+      await apiJson("/v1/auth/logout", { method: "POST" }).catch(() => null)
       deleteCookie("jobnova_user")
       toast.success("تم حذف الحساب بنجاح")
       router.replace("/")
