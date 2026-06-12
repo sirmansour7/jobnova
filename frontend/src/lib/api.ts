@@ -74,5 +74,11 @@ export async function apiJson<T>(path: string, options: RequestInit = {}): Promi
     const message: string = (body as { message?: string }).message ?? `HTTP ${res.status}`
     throw new Error(message)
   }
+  // 204 No Content or empty body — skip JSON parsing
+  const contentLength = res.headers.get("content-length")
+  const contentType = res.headers.get("content-type") ?? ""
+  if (res.status === 204 || contentLength === "0" || !contentType.includes("application/json")) {
+    return null as unknown as T
+  }
   return res.json() as Promise<T>
 }
