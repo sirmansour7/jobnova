@@ -10,6 +10,6 @@ import { OrgModule } from '../org/org.module';
   imports: [OrgModule],
   controllers: [JobsController],
   providers: [JobsService, JobMatchService, PrismaService, RolesGuard],
-  exports: [JobsService],
+  exports: [JobsService, JobMatchService],
 })
 export class JobsModule {}

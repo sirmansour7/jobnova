@@ -11,6 +11,7 @@ import { OrgAuthService } from '../org/org-auth.service';
 import { EmailProducer } from '../queues/email/email.producer';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
+import { JobMatchService } from '../jobs/job-match.service';
 
 const STATUS_LABELS_AR: Record<ApplicationStatus, string> = {
   APPLIED: 'قيد المراجعة',
@@ -25,6 +26,7 @@ export class ApplicationsService {
     private readonly prisma: PrismaService,
     private readonly orgAuth: OrgAuthService,
     private readonly emailProducer: EmailProducer,
+    private readonly jobMatchService: JobMatchService,
   ) {}
 
   // Candidate: apply for a job
@@ -229,7 +231,23 @@ export class ApplicationsService {
         },
         orderBy: { createdAt: 'desc' },
       });
-      return { items: orgItems, total: orgItems.length };
+
+      // Calculate matchScore for each applicant in parallel
+      const enriched = await Promise.all(
+        orgItems.map(async (app) => {
+          try {
+            const match = await this.jobMatchService.matchCvToJob(
+              app.candidateId,
+              app.jobId,
+            );
+            return { ...app, matchScore: match.matchScore };
+          } catch {
+            return { ...app, matchScore: null };
+          }
+        }),
+      );
+
+      return { items: enriched, total: enriched.length };
     }
 
     const items = await this.prisma.application.findMany({
