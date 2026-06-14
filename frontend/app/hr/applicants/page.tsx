@@ -68,6 +68,7 @@ type CvDataLike = {
 
 type ApplicationWithJob = JobApplication & {
   job?: { title?: string }
+  matchScore?: number | null
 }
 
 function formatDate(date: string | Date | undefined): string {
@@ -125,6 +126,7 @@ export default function ApplicantsPage() {
             cv: app.cv ?? app.candidate?.cv,
           },
           job: app.job ? { title: app.job.title } : undefined,
+          matchScore: typeof app.matchScore === "number" ? app.matchScore : null,
         }))
         setApplications(list)
       } catch (err) {
@@ -260,6 +262,7 @@ export default function ApplicantsPage() {
                     <TableHead className="w-10"></TableHead>
                     <TableHead className="text-start">المرشح</TableHead>
                     <TableHead className="text-start">الوظيفة</TableHead>
+                    <TableHead className="text-start">نسبة التطابق</TableHead>
                     <TableHead className="text-start">الحالة</TableHead>
                     <TableHead className="text-start">تاريخ التقديم</TableHead>
                     <TableHead className="text-start">إجراءات</TableHead>
@@ -333,6 +336,23 @@ export default function ApplicantsPage() {
                           </TableCell>
                           <TableCell className="text-sm text-foreground">
                             {jobTitle}
+                          </TableCell>
+                          <TableCell>
+                            {app.matchScore != null ? (
+                              <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                  app.matchScore >= 70
+                                    ? "bg-green-500/15 text-green-400"
+                                    : app.matchScore >= 40
+                                    ? "bg-yellow-500/15 text-yellow-400"
+                                    : "bg-red-500/15 text-red-400"
+                                }`}
+                              >
+                                {app.matchScore}%
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Select

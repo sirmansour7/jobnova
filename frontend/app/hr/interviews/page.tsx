@@ -366,6 +366,13 @@ export default function HrInterviewsPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => router.push(`/hr/interviews/${int.application?.id}`)}
+                      >
+                        عرض التفاصيل
+                      </Button>
                       <Button variant="outline" size="sm" onClick={() => openEdit(int)}>
                         تعديل
                       </Button>
