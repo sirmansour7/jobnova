@@ -90,19 +90,11 @@ export default function InterviewPage() {
     ])
 
     try {
-      const token =
-        typeof document !== "undefined"
-          ? document.cookie
-              .split("; ")
-              .find((r) => r.startsWith("jobnova_token="))
-              ?.split("=")[1] ?? null
-          : null
-
       const res = await fetch(`${API_URL}/v1/interviews/${sessionId}/answer/stream`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ content }),
       })
@@ -193,17 +185,9 @@ export default function InterviewPage() {
 
         // Use fetch directly — apiJson sets Content-Type: application/json
         // which conflicts with multipart/form-data
-        const token =
-          typeof document !== "undefined"
-            ? document.cookie
-                .split("; ")
-                .find((r) => r.startsWith("jobnova_token="))
-                ?.split("=")[1]
-            : null
-
         const res = await fetch(`${API_URL}/v1/cv/upload-pdf`, {
           method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          credentials: "include",
           body: formData,
         })
 
