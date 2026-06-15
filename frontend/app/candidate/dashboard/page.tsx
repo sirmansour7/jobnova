@@ -95,32 +95,32 @@ export default function CandidateDashboard() {
 
   useEffect(() => {
     Promise.all([
-      apiJson<RecentApplication[] | ApplicationsMyResponse>("/v1/applications/my?page=1&limit=4")
+      // جلب الطلبات مع limit أكبر عشان نحسب عدد المقابلات منها
+      apiJson<ApplicationsMyResponse>("/v1/applications/my?page=1&limit=100")
         .then((r) => {
-          if (Array.isArray(r)) return { items: r.slice(0, 4), total: r.length }
-          const items = (r.items ?? []).slice(0, 4)
-          const total = typeof (r as ApplicationsMyResponse).total === "number" ? (r as ApplicationsMyResponse).total : items.length
-          return { items, total }
+          const allItems = r.items ?? []
+          const recentItems = allItems.slice(0, 4)
+          const total = typeof r.total === "number" ? r.total : allItems.length
+          // عدد المقابلات = الطلبات اللي اتعمل عليها SHORTLISTED أو HIRED
+          const interviewsCount = allItems.filter(
+            (a) => a.status === "SHORTLISTED" || a.status === "HIRED"
+          ).length
+          return { items: recentItems, total, interviewsCount }
         })
-        .catch(() => ({ items: [] as RecentApplication[], total: 0 })),
+        .catch(() => ({ items: [] as RecentApplication[], total: 0, interviewsCount: 0 })),
       apiJson<RecentJob[] | { items: RecentJob[] }>("/v1/jobs?limit=3")
         .then((r) => (Array.isArray(r) ? r : r.items ?? []).slice(0, 3))
         .catch(() => [] as RecentJob[]),
       apiJson<SavedJobStub[] | { items?: SavedJobStub[] }>("/v1/saved-jobs")
         .then((r) => (Array.isArray(r) ? r : r.items ?? []))
         .catch(() => [] as SavedJobStub[]),
-      apiJson<unknown[]>("/v1/interviews")
-        .then((r) => (Array.isArray(r) ? r.length : 0))
-        .catch(() => 0),
     ])
-      .then(([appsResult, jobsList, saved, interviews]) => {
-        const apps = "items" in appsResult ? appsResult.items : []
-        const total = "total" in appsResult && typeof appsResult.total === "number" ? appsResult.total : apps.length
-        setApplications(apps)
-        setApplicationsTotal(total)
+      .then(([appsResult, jobsList, saved]) => {
+        setApplications(appsResult.items)
+        setApplicationsTotal(appsResult.total)
         setJobs(jobsList)
         setSavedJobs(saved)
-        setInterviewsCount(typeof interviews === "number" ? interviews : 0)
+        setInterviewsCount(appsResult.interviewsCount)
         setLoading(false)
       })
       .catch(() => setLoading(false))

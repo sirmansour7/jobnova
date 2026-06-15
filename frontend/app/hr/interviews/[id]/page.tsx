@@ -206,7 +206,7 @@ export default function HrInterviewDetailPage() {
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => handleDecision("shortlist")}
+                  onClick={() => handleDecision("SHORTLISTED")}
                   disabled={decisionLoading}
                 >
                   مقبول مبدئياً
@@ -214,7 +214,7 @@ export default function HrInterviewDetailPage() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => handleDecision("reject")}
+                  onClick={() => handleDecision("REJECTED")}
                   disabled={decisionLoading}
                 >
                   رفض
@@ -222,7 +222,7 @@ export default function HrInterviewDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDecision("needs review")}
+                  onClick={() => handleDecision("NEEDS_REVIEW")}
                   disabled={decisionLoading}
                 >
                   يحتاج مراجعة

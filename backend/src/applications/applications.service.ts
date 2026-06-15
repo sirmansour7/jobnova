@@ -276,7 +276,22 @@ export class ApplicationsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return { items, total: items.length };
+    // Calculate matchScore for each applicant in parallel
+    const enrichedAll = await Promise.all(
+      items.map(async (app) => {
+        try {
+          const match = await this.jobMatchService.matchCvToJob(
+            app.candidateId,
+            app.jobId,
+          );
+          return { ...app, matchScore: match.matchScore };
+        } catch {
+          return { ...app, matchScore: null };
+        }
+      }),
+    );
+
+    return { items: enrichedAll, total: enrichedAll.length };
   }
 
   // PRIVILEGED: update any application's status
