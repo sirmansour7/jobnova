@@ -342,44 +342,61 @@ Rules:
 
   // ─── Groq call ─────────────────────────────────────────────────────────────
 
-  private async callGroq(apiKey: string, prompt: string): Promise<string | null> {
-    try {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          max_tokens: 3500,
-          temperature: 0.2,
-          stream: false,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a world-class ATS recruiter and career coach. Always return valid JSON only.',
-            },
-            { role: 'user', content: prompt },
-          ],
-        }),
-      });
+  private async callGroq(apiKey: string, prompt: string, maxRetries = 3): Promise<string | null> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            max_tokens: 3500,
+            temperature: 0.2,
+            stream: false,
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are a world-class ATS recruiter and career coach. Always return valid JSON only.',
+              },
+              { role: 'user', content: prompt },
+            ],
+          }),
+        });
 
-      if (!res.ok) {
-        this.logger.warn(`[CvIntelligence] Groq HTTP ${res.status}: ${res.statusText}`);
+        if (!res.ok) {
+          this.logger.warn(
+            `[CvIntelligence] Groq HTTP ${res.status} (attempt ${attempt}/${maxRetries}): ${res.statusText}`,
+          );
+          // Don't retry on auth errors (invalid API key)
+          if (res.status === 401 || res.status === 403) return null;
+          if (attempt < maxRetries) {
+            await new Promise((r) => setTimeout(r, attempt * 1500));
+            continue;
+          }
+          return null;
+        }
+
+        const body = (await res.json()) as {
+          choices?: [{ message?: { content?: string } }];
+        };
+
+        return (body.choices?.[0]?.message?.content ?? '').trim() || null;
+      } catch (err) {
+        this.logger.warn(
+          `[CvIntelligence] Groq fetch error (attempt ${attempt}/${maxRetries}): ${String(err)}`,
+        );
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, attempt * 1500));
+          continue;
+        }
         return null;
       }
-
-      const body = (await res.json()) as {
-        choices?: [{ message?: { content?: string } }];
-      };
-
-      return (body.choices?.[0]?.message?.content ?? '').trim() || null;
-    } catch (err) {
-      this.logger.warn(`[CvIntelligence] Groq fetch error: ${String(err)}`);
-      return null;
     }
+    return null;
   }
 
   // ─── Response parsing ──────────────────────────────────────────────────────
