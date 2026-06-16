@@ -21,252 +21,252 @@ const RECOMMENDED_THRESHOLD = 60;
  */
 const SKILL_ALIASES: Record<string, string> = {
   // JavaScript / TypeScript
-  js:                   'javascript',
-  javascript:           'javascript',
-  'vanilla js':         'javascript',
-  es6:                  'javascript',
-  es2015:               'javascript',
-  ts:                   'typescript',
-  typescript:           'typescript',
+  js: 'javascript',
+  javascript: 'javascript',
+  'vanilla js': 'javascript',
+  es6: 'javascript',
+  es2015: 'javascript',
+  ts: 'typescript',
+  typescript: 'typescript',
 
   // React ecosystem
-  react:                'react',
-  reactjs:              'react',
-  'react.js':           'react',
-  'react js':           'react',
-  'react native':       'react-native',
-  'react-native':       'react-native',
+  react: 'react',
+  reactjs: 'react',
+  'react.js': 'react',
+  'react js': 'react',
+  'react native': 'react-native',
+  'react-native': 'react-native',
 
   // Next.js
-  next:                 'next.js',
-  nextjs:               'next.js',
-  'next.js':            'next.js',
-  nuxt:                 'nuxt.js',
-  nuxtjs:               'nuxt.js',
-  'nuxt.js':            'nuxt.js',
+  next: 'next.js',
+  nextjs: 'next.js',
+  'next.js': 'next.js',
+  nuxt: 'nuxt.js',
+  nuxtjs: 'nuxt.js',
+  'nuxt.js': 'nuxt.js',
 
   // Vue
-  vue:                  'vue',
-  vuejs:                'vue',
-  'vue.js':             'vue',
-  'vue 3':              'vue',
-  'vue 2':              'vue',
+  vue: 'vue',
+  vuejs: 'vue',
+  'vue.js': 'vue',
+  'vue 3': 'vue',
+  'vue 2': 'vue',
 
   // Angular
-  angular:              'angular',
-  angularjs:            'angular',
-  'angular.js':         'angular',
+  angular: 'angular',
+  angularjs: 'angular',
+  'angular.js': 'angular',
 
   // Svelte / Astro / Remix (emerging)
-  svelte:               'svelte',
-  sveltekit:            'svelte',
-  astro:                'astro',
-  remix:                'remix',
+  svelte: 'svelte',
+  sveltekit: 'svelte',
+  astro: 'astro',
+  remix: 'remix',
 
   // Node.js
-  node:                 'nodejs',
-  nodejs:               'nodejs',
-  'node.js':            'nodejs',
-  'node js':            'nodejs',
+  node: 'nodejs',
+  nodejs: 'nodejs',
+  'node.js': 'nodejs',
+  'node js': 'nodejs',
 
   // Express
-  express:              'express',
-  expressjs:            'express',
-  'express.js':         'express',
+  express: 'express',
+  expressjs: 'express',
+  'express.js': 'express',
 
   // NestJS
-  nestjs:               'nestjs',
-  'nest.js':            'nestjs',
-  nest:                 'nestjs',
+  nestjs: 'nestjs',
+  'nest.js': 'nestjs',
+  nest: 'nestjs',
 
   // Python
-  python:               'python',
-  python3:              'python',
-  'python 3':           'python',
-  py:                   'python',
+  python: 'python',
+  python3: 'python',
+  'python 3': 'python',
+  py: 'python',
 
   // Python web frameworks
-  django:               'django',
-  'django rest':        'django',
-  drf:                  'django',
-  fastapi:              'fastapi',
-  'fast api':           'fastapi',
-  flask:                'flask',
+  django: 'django',
+  'django rest': 'django',
+  drf: 'django',
+  fastapi: 'fastapi',
+  'fast api': 'fastapi',
+  flask: 'flask',
 
   // PHP
-  php:                  'php',
-  php7:                 'php',
-  php8:                 'php',
-  laravel:              'laravel',
-  symfony:              'symfony',
+  php: 'php',
+  php7: 'php',
+  php8: 'php',
+  laravel: 'laravel',
+  symfony: 'symfony',
 
   // Java
-  java:                 'java',
-  'java 8':             'java',
-  'java 11':            'java',
-  'java 17':            'java',
-  spring:               'spring',
-  'spring boot':        'spring-boot',
-  springboot:           'spring-boot',
-  hibernate:            'hibernate',
+  java: 'java',
+  'java 8': 'java',
+  'java 11': 'java',
+  'java 17': 'java',
+  spring: 'spring',
+  'spring boot': 'spring-boot',
+  springboot: 'spring-boot',
+  hibernate: 'hibernate',
 
   // C# / .NET
-  'c#':                 'csharp',
-  csharp:               'csharp',
-  dotnet:               'dotnet',
-  '.net':               'dotnet',
-  'asp.net':            'dotnet',
-  'asp.net core':       'dotnet',
+  'c#': 'csharp',
+  csharp: 'csharp',
+  dotnet: 'dotnet',
+  '.net': 'dotnet',
+  'asp.net': 'dotnet',
+  'asp.net core': 'dotnet',
 
   // Go
-  go:                   'go',
-  golang:               'go',
+  go: 'go',
+  golang: 'go',
 
   // Rust
-  rust:                 'rust',
+  rust: 'rust',
 
   // Databases
-  mysql:                'mysql',
-  mariadb:              'mysql',
-  postgres:             'postgresql',
-  postgresql:           'postgresql',
-  mongo:                'mongodb',
-  mongodb:              'mongodb',
-  redis:                'redis',
-  sqlite:               'sqlite',
-  oracle:               'oracle',
-  'sql server':         'sql-server',
-  mssql:                'sql-server',
-  elasticsearch:        'elasticsearch',
-  elastic:              'elasticsearch',
-  cassandra:            'cassandra',
+  mysql: 'mysql',
+  mariadb: 'mysql',
+  postgres: 'postgresql',
+  postgresql: 'postgresql',
+  mongo: 'mongodb',
+  mongodb: 'mongodb',
+  redis: 'redis',
+  sqlite: 'sqlite',
+  oracle: 'oracle',
+  'sql server': 'sql-server',
+  mssql: 'sql-server',
+  elasticsearch: 'elasticsearch',
+  elastic: 'elasticsearch',
+  cassandra: 'cassandra',
 
   // General SQL
-  sql:                  'sql',
-  nosql:                'nosql',
+  sql: 'sql',
+  nosql: 'nosql',
 
   // Cloud
-  aws:                  'aws',
-  'amazon web services':'aws',
-  gcp:                  'gcp',
-  'google cloud':       'gcp',
-  azure:                'azure',
-  'microsoft azure':    'azure',
-  'aws lambda':         'aws',
-  ec2:                  'aws',
-  's3':                 'aws',
+  aws: 'aws',
+  'amazon web services': 'aws',
+  gcp: 'gcp',
+  'google cloud': 'gcp',
+  azure: 'azure',
+  'microsoft azure': 'azure',
+  'aws lambda': 'aws',
+  ec2: 'aws',
+  s3: 'aws',
 
   // DevOps / Infra
-  docker:               'docker',
-  kubernetes:           'kubernetes',
-  k8s:                  'kubernetes',
-  terraform:            'terraform',
-  ansible:              'ansible',
-  jenkins:              'jenkins',
-  'github actions':     'github-actions',
-  'gitlab ci':          'gitlab',
-  'ci/cd':              'ci-cd',
-  cicd:                 'ci-cd',
-  nginx:                'nginx',
-  apache:               'apache',
-  linux:                'linux',
-  bash:                 'bash',
-  shell:                'bash',
+  docker: 'docker',
+  kubernetes: 'kubernetes',
+  k8s: 'kubernetes',
+  terraform: 'terraform',
+  ansible: 'ansible',
+  jenkins: 'jenkins',
+  'github actions': 'github-actions',
+  'gitlab ci': 'gitlab',
+  'ci/cd': 'ci-cd',
+  cicd: 'ci-cd',
+  nginx: 'nginx',
+  apache: 'apache',
+  linux: 'linux',
+  bash: 'bash',
+  shell: 'bash',
 
   // CSS / UI
-  css:                  'css',
-  css3:                 'css',
-  sass:                 'sass',
-  scss:                 'sass',
-  tailwind:             'tailwind',
-  tailwindcss:          'tailwind',
-  bootstrap:            'bootstrap',
-  'material ui':        'material-ui',
-  mui:                  'material-ui',
+  css: 'css',
+  css3: 'css',
+  sass: 'sass',
+  scss: 'sass',
+  tailwind: 'tailwind',
+  tailwindcss: 'tailwind',
+  bootstrap: 'bootstrap',
+  'material ui': 'material-ui',
+  mui: 'material-ui',
 
   // HTML
-  html:                 'html',
-  html5:                'html',
+  html: 'html',
+  html5: 'html',
 
   // Git / VCS
-  git:                  'git',
-  github:               'github',
-  gitlab:               'gitlab',
-  bitbucket:            'bitbucket',
+  git: 'git',
+  github: 'github',
+  gitlab: 'gitlab',
+  bitbucket: 'bitbucket',
 
   // API
-  'rest api':           'rest-api',
-  restful:              'rest-api',
-  'restful api':        'rest-api',
-  graphql:              'graphql',
-  grpc:                 'grpc',
-  websocket:            'websocket',
-  'web socket':         'websocket',
+  'rest api': 'rest-api',
+  restful: 'rest-api',
+  'restful api': 'rest-api',
+  graphql: 'graphql',
+  grpc: 'grpc',
+  websocket: 'websocket',
+  'web socket': 'websocket',
 
   // State management
-  redux:                'redux',
-  mobx:                 'mobx',
-  zustand:              'zustand',
-  pinia:                'pinia',
-  recoil:               'recoil',
+  redux: 'redux',
+  mobx: 'mobx',
+  zustand: 'zustand',
+  pinia: 'pinia',
+  recoil: 'recoil',
 
   // Testing
-  jest:                 'jest',
-  mocha:                'mocha',
-  cypress:              'cypress',
-  playwright:           'playwright',
-  selenium:             'selenium',
-  pytest:               'pytest',
-  junit:                'junit',
+  jest: 'jest',
+  mocha: 'mocha',
+  cypress: 'cypress',
+  playwright: 'playwright',
+  selenium: 'selenium',
+  pytest: 'pytest',
+  junit: 'junit',
 
   // Mobile
-  flutter:              'flutter',
-  dart:                 'dart',
-  kotlin:               'kotlin',
-  swift:                'swift',
-  android:              'android',
-  ios:                  'ios',
-  xamarin:              'xamarin',
+  flutter: 'flutter',
+  dart: 'dart',
+  kotlin: 'kotlin',
+  swift: 'swift',
+  android: 'android',
+  ios: 'ios',
+  xamarin: 'xamarin',
 
   // Data / ML
-  'machine learning':   'machine-learning',
-  ml:                   'machine-learning',
-  'deep learning':      'deep-learning',
-  ai:                   'ai',
-  tensorflow:           'tensorflow',
-  pytorch:              'pytorch',
-  keras:                'keras',
-  pandas:               'pandas',
-  numpy:                'numpy',
-  'scikit-learn':       'scikit-learn',
-  scikit:               'scikit-learn',
-  spark:                'spark',
-  hadoop:               'hadoop',
-  kafka:                'kafka',
-  tableau:              'tableau',
-  'power bi':           'power-bi',
-  powerbi:              'power-bi',
+  'machine learning': 'machine-learning',
+  ml: 'machine-learning',
+  'deep learning': 'deep-learning',
+  ai: 'ai',
+  tensorflow: 'tensorflow',
+  pytorch: 'pytorch',
+  keras: 'keras',
+  pandas: 'pandas',
+  numpy: 'numpy',
+  'scikit-learn': 'scikit-learn',
+  scikit: 'scikit-learn',
+  spark: 'spark',
+  hadoop: 'hadoop',
+  kafka: 'kafka',
+  tableau: 'tableau',
+  'power bi': 'power-bi',
+  powerbi: 'power-bi',
 
   // Design
-  figma:                'figma',
-  photoshop:            'photoshop',
-  illustrator:          'illustrator',
-  xd:                   'adobe-xd',
-  'adobe xd':           'adobe-xd',
-  sketch:               'sketch',
-  'ui/ux':              'ui-ux',
-  'ui ux':              'ui-ux',
+  figma: 'figma',
+  photoshop: 'photoshop',
+  illustrator: 'illustrator',
+  xd: 'adobe-xd',
+  'adobe xd': 'adobe-xd',
+  sketch: 'sketch',
+  'ui/ux': 'ui-ux',
+  'ui ux': 'ui-ux',
 
   // Messaging / Queue
-  rabbitmq:             'rabbitmq',
-  celery:               'celery',
+  rabbitmq: 'rabbitmq',
+  celery: 'celery',
 
   // Architecture
-  microservices:        'microservices',
-  'micro services':     'microservices',
+  microservices: 'microservices',
+  'micro services': 'microservices',
   'clean architecture': 'clean-architecture',
-  'domain driven':      'ddd',
-  ddd:                  'ddd',
+  'domain driven': 'ddd',
+  ddd: 'ddd',
 };
 
 /**
@@ -301,13 +301,64 @@ export function isSimilar(a: string, b: string): boolean {
 
 const STOP_WORDS = new Set([
   // Arabic
-  'في', 'من', 'على', 'مع', 'أو', 'و', 'هذا', 'التي', 'الذي', 'إلى',
+  'في',
+  'من',
+  'على',
+  'مع',
+  'أو',
+  'و',
+  'هذا',
+  'التي',
+  'الذي',
+  'إلى',
   // English
-  'the', 'a', 'an', 'in', 'on', 'at', 'for', 'with', 'and', 'or', 'of',
-  'to', 'is', 'are', 'be', 'have', 'has', 'had', 'do', 'does', 'did',
-  'will', 'would', 'can', 'could', 'should', 'may', 'might', 'must',
-  'this', 'that', 'our', 'your', 'their', 'we', 'you', 'they', 'it',
-  'not', 'but', 'also', 'work', 'team', 'good', 'well', 'time', 'able',
+  'the',
+  'a',
+  'an',
+  'in',
+  'on',
+  'at',
+  'for',
+  'with',
+  'and',
+  'or',
+  'of',
+  'to',
+  'is',
+  'are',
+  'be',
+  'have',
+  'has',
+  'had',
+  'do',
+  'does',
+  'did',
+  'will',
+  'would',
+  'can',
+  'could',
+  'should',
+  'may',
+  'might',
+  'must',
+  'this',
+  'that',
+  'our',
+  'your',
+  'their',
+  'we',
+  'you',
+  'they',
+  'it',
+  'not',
+  'but',
+  'also',
+  'work',
+  'team',
+  'good',
+  'well',
+  'time',
+  'able',
 ]);
 
 function extractKeywords(text: string): string[] {
@@ -333,12 +384,12 @@ function getCvSkills(cvData: Record<string, unknown>): string[] {
   // Keyword-extraction fallback when no structured skills list exists
   if (skills.size === 0) {
     const parts: string[] = [];
-    if (cvData.summary)   parts.push(String(cvData.summary));
-    if (cvData.title)     parts.push(String(cvData.title));
+    if (cvData.summary) parts.push(String(cvData.summary));
+    if (cvData.title) parts.push(String(cvData.title));
     if (cvData.objective) parts.push(String(cvData.objective));
     if (Array.isArray(cvData.experience)) {
       for (const e of cvData.experience as Record<string, unknown>[]) {
-        if (e.title)       parts.push(String(e.title));
+        if (e.title) parts.push(String(e.title));
         if (e.description) parts.push(String(e.description));
       }
     }
@@ -385,53 +436,162 @@ function getJobSkills(job: {
  */
 const SPECIALIZATION_KEYWORDS: Partial<Record<JobCategory, string[]>> = {
   TECHNOLOGY: [
-    'software', 'developer', 'engineer', 'programming', 'backend', 'frontend',
-    'fullstack', 'full stack', 'web', 'mobile', 'devops', 'data', 'cloud',
-    'مطور', 'مبرمج', 'هندسة برمجيات', 'برمجة', 'تقنية',
+    'software',
+    'developer',
+    'engineer',
+    'programming',
+    'backend',
+    'frontend',
+    'fullstack',
+    'full stack',
+    'web',
+    'mobile',
+    'devops',
+    'data',
+    'cloud',
+    'مطور',
+    'مبرمج',
+    'هندسة برمجيات',
+    'برمجة',
+    'تقنية',
   ],
   MARKETING: [
-    'marketing', 'digital marketing', 'seo', 'sem', 'social media', 'content',
-    'brand', 'campaign', 'تسويق', 'رقمي', 'محتوى', 'إعلام',
+    'marketing',
+    'digital marketing',
+    'seo',
+    'sem',
+    'social media',
+    'content',
+    'brand',
+    'campaign',
+    'تسويق',
+    'رقمي',
+    'محتوى',
+    'إعلام',
   ],
   FINANCE: [
-    'finance', 'accounting', 'financial', 'audit', 'treasury', 'cpa', 'cfa',
-    'محاسب', 'مالي', 'تمويل', 'محاسبة', 'مراجعة',
+    'finance',
+    'accounting',
+    'financial',
+    'audit',
+    'treasury',
+    'cpa',
+    'cfa',
+    'محاسب',
+    'مالي',
+    'تمويل',
+    'محاسبة',
+    'مراجعة',
   ],
   HEALTHCARE: [
-    'medical', 'health', 'clinical', 'nurse', 'pharmacy', 'physician', 'doctor',
-    'طبيب', 'طبية', 'صحة', 'صيدلاني', 'تمريض', 'سريري',
+    'medical',
+    'health',
+    'clinical',
+    'nurse',
+    'pharmacy',
+    'physician',
+    'doctor',
+    'طبيب',
+    'طبية',
+    'صحة',
+    'صيدلاني',
+    'تمريض',
+    'سريري',
   ],
   EDUCATION: [
-    'teacher', 'instructor', 'training', 'education', 'academic', 'curriculum',
-    'معلم', 'مدرس', 'تدريب', 'تعليم', 'أكاديمي',
+    'teacher',
+    'instructor',
+    'training',
+    'education',
+    'academic',
+    'curriculum',
+    'معلم',
+    'مدرس',
+    'تدريب',
+    'تعليم',
+    'أكاديمي',
   ],
   ENGINEERING: [
-    'mechanical', 'civil', 'electrical', 'structural', 'chemical', 'industrial',
-    'مهندس', 'ميكانيكا', 'كهرباء', 'مدني', 'كيمياء',
+    'mechanical',
+    'civil',
+    'electrical',
+    'structural',
+    'chemical',
+    'industrial',
+    'مهندس',
+    'ميكانيكا',
+    'كهرباء',
+    'مدني',
+    'كيمياء',
   ],
   SALES: [
-    'sales', 'business development', 'account', 'revenue', 'b2b', 'b2c',
-    'مبيعات', 'تطوير أعمال', 'بيع',
+    'sales',
+    'business development',
+    'account',
+    'revenue',
+    'b2b',
+    'b2c',
+    'مبيعات',
+    'تطوير أعمال',
+    'بيع',
   ],
   DESIGN: [
-    'design', 'ui', 'ux', 'graphic', 'creative', 'visual', 'motion',
-    'مصمم', 'تصميم', 'جرافيك', 'واجهات',
+    'design',
+    'ui',
+    'ux',
+    'graphic',
+    'creative',
+    'visual',
+    'motion',
+    'مصمم',
+    'تصميم',
+    'جرافيك',
+    'واجهات',
   ],
   OPERATIONS: [
-    'operations', 'logistics', 'supply chain', 'procurement', 'warehouse',
-    'عمليات', 'لوجستيات', 'سلاسل التوريد', 'مشتريات',
+    'operations',
+    'logistics',
+    'supply chain',
+    'procurement',
+    'warehouse',
+    'عمليات',
+    'لوجستيات',
+    'سلاسل التوريد',
+    'مشتريات',
   ],
   LEGAL: [
-    'legal', 'law', 'compliance', 'contract', 'litigation', 'attorney',
-    'قانون', 'محامي', 'قانوني', 'عقود', 'امتثال',
+    'legal',
+    'law',
+    'compliance',
+    'contract',
+    'litigation',
+    'attorney',
+    'قانون',
+    'محامي',
+    'قانوني',
+    'عقود',
+    'امتثال',
   ],
   HR: [
-    'hr', 'human resources', 'recruitment', 'talent', 'payroll', 'people',
-    'موارد بشرية', 'توظيف', 'تطوير موارد',
+    'hr',
+    'human resources',
+    'recruitment',
+    'talent',
+    'payroll',
+    'people',
+    'موارد بشرية',
+    'توظيف',
+    'تطوير موارد',
   ],
   CUSTOMER_SERVICE: [
-    'customer service', 'support', 'help desk', 'client', 'satisfaction',
-    'خدمة عملاء', 'دعم', 'دعم فني',
+    'customer service',
+    'support',
+    'help desk',
+    'client',
+    'satisfaction',
+    'خدمة عملاء',
+    'دعم',
+    'دعم فني',
   ],
 };
 
@@ -459,10 +619,7 @@ function computeSpecializationRatio(
 
   if (!candidateSpec && !candidateSkills.length) return 0.5;
 
-  const searchText = [
-    candidateSpec ?? '',
-    ...candidateSkills,
-  ]
+  const searchText = [candidateSpec ?? '', ...candidateSkills]
     .join(' ')
     .toLowerCase();
 
@@ -523,8 +680,26 @@ function computeSemanticBonus(
 // ===========================================================================
 
 /** Keywords that signal seniority level from a job title */
-const SENIOR_TITLE_KEYWORDS = ['senior', 'sr', 'lead', 'manager', 'director', 'head', 'principal', 'staff', 'architect'];
-const JUNIOR_TITLE_KEYWORDS = ['junior', 'jr', 'entry', 'trainee', 'intern', 'graduate', 'fresh'];
+const SENIOR_TITLE_KEYWORDS = [
+  'senior',
+  'sr',
+  'lead',
+  'manager',
+  'director',
+  'head',
+  'principal',
+  'staff',
+  'architect',
+];
+const JUNIOR_TITLE_KEYWORDS = [
+  'junior',
+  'jr',
+  'entry',
+  'trainee',
+  'intern',
+  'graduate',
+  'fresh',
+];
 
 type Seniority = 'junior' | 'mid' | 'senior';
 
@@ -569,8 +744,16 @@ function computeSeniorityBonus(
  * All entries are pre-normalized for direct comparison.
  */
 const IMPORTANT_SKILLS: ReadonlySet<string> = new Set([
-  'react', 'nodejs', 'typescript', 'python', 'java',
-  'docker', 'kubernetes', 'aws', 'machine-learning', 'next.js',
+  'react',
+  'nodejs',
+  'typescript',
+  'python',
+  'java',
+  'docker',
+  'kubernetes',
+  'aws',
+  'machine-learning',
+  'next.js',
 ]);
 
 function getImportantMatched(matchedSkills: string[]): string[] {
@@ -635,7 +818,8 @@ function computeScore(
     }
   }
 
-  const skillsRatio = jobSkills.length > 0 ? matchedSkills.length / jobSkills.length : 0.5;
+  const skillsRatio =
+    jobSkills.length > 0 ? matchedSkills.length / jobSkills.length : 0.5;
 
   // ── Experience (20%) ─────────────────────────────────────────────────────────
   let experienceRatio: number;
@@ -648,27 +832,44 @@ function computeScore(
   }
 
   // ── Specialization (20%) ─────────────────────────────────────────────────────
-  const specializationRatio = computeSpecializationRatio(cvSpecialization, cvSkills, jobCategory);
+  const specializationRatio = computeSpecializationRatio(
+    cvSpecialization,
+    cvSkills,
+    jobCategory,
+  );
 
   // ── Location (10%) ───────────────────────────────────────────────────────────
   const jCity = (jobCity ?? '').toLowerCase().trim();
   const locationRatio =
-    cvCity.length > 0 && jCity.length > 0 && (jCity.includes(cvCity) || cvCity.includes(jCity))
+    cvCity.length > 0 &&
+    jCity.length > 0 &&
+    (jCity.includes(cvCity) || cvCity.includes(jCity))
       ? 1
       : 0;
 
   // ── Base score ───────────────────────────────────────────────────────────────
   const base = Math.round(
-    skillsRatio * 50 + experienceRatio * 20 + specializationRatio * 20 + locationRatio * 10,
+    skillsRatio * 50 +
+      experienceRatio * 20 +
+      specializationRatio * 20 +
+      locationRatio * 10,
   );
 
   // ── Bonuses ──────────────────────────────────────────────────────────────────
   const importantMatchedSkills = getImportantMatched(matchedSkills);
-  const importantBonus  = importantMatchedSkills.length > 0 ? 8 : 0;
-  const semanticBonus   = computeSemanticBonus(cvSkills, cvSpecialization, jobTitle, jobDescription);
-  const seniorityBonus  = computeSeniorityBonus(cvSeniority, jobTitle);
+  const importantBonus = importantMatchedSkills.length > 0 ? 8 : 0;
+  const semanticBonus = computeSemanticBonus(
+    cvSkills,
+    cvSpecialization,
+    jobTitle,
+    jobDescription,
+  );
+  const seniorityBonus = computeSeniorityBonus(cvSeniority, jobTitle);
 
-  const score = Math.min(100, base + importantBonus + semanticBonus + seniorityBonus);
+  const score = Math.min(
+    100,
+    base + importantBonus + semanticBonus + seniorityBonus,
+  );
 
   return { score, matchedSkills, missingSkills, importantMatchedSkills };
 }
@@ -700,20 +901,29 @@ export class JobMatchService {
         matchScore: 0,
         matchedSkills: [],
         missingSkills: [],
-        recommendation: 'لم يتم العثور على السيرة الذاتية أو الوظيفة. أنشئ سيرتك الذاتية أولاً.',
+        recommendation:
+          'لم يتم العثور على السيرة الذاتية أو الوظيفة. أنشئ سيرتك الذاتية أولاً.',
         level: 'low',
       };
     }
 
     const cvData = cv.data as Record<string, unknown>;
-    const cvSkills        = getCvSkills(cvData);
+    const cvSkills = getCvSkills(cvData);
     const cvExperienceYears =
-      typeof cvData.experienceYears === 'number' ? cvData.experienceYears : null;
-    const cvCity          = String((cvData.city ?? cvData.location ?? '') as unknown).toLowerCase().trim();
-    const cvSpecialization = typeof cvData.title === 'string' ? cvData.title : null;
-    const rawSeniority     = typeof cvData.seniority === 'string' ? cvData.seniority : null;
+      typeof cvData.experienceYears === 'number'
+        ? cvData.experienceYears
+        : null;
+    const cvCity = String((cvData.city ?? cvData.location ?? '') as unknown)
+      .toLowerCase()
+      .trim();
+    const cvSpecialization =
+      typeof cvData.title === 'string' ? cvData.title : null;
+    const rawSeniority =
+      typeof cvData.seniority === 'string' ? cvData.seniority : null;
     const cvSeniority: Seniority | null =
-      rawSeniority === 'junior' || rawSeniority === 'mid' || rawSeniority === 'senior'
+      rawSeniority === 'junior' ||
+      rawSeniority === 'mid' ||
+      rawSeniority === 'senior'
         ? rawSeniority
         : null;
 
@@ -725,9 +935,17 @@ export class JobMatchService {
     });
 
     const { score, matchedSkills, missingSkills } = computeScore(
-      cvSkills, cvExperienceYears, cvCity, cvSpecialization, cvSeniority,
-      jobSkills, job.minExperience, job.cityRel?.name ?? null,
-      job.category, job.title, job.description,
+      cvSkills,
+      cvExperienceYears,
+      cvCity,
+      cvSpecialization,
+      cvSeniority,
+      jobSkills,
+      job.minExperience,
+      job.cityRel?.name ?? null,
+      job.category,
+      job.title,
+      job.description,
     );
 
     let level: JobMatchResult['level'];
@@ -735,7 +953,8 @@ export class JobMatchService {
 
     if (score >= 80) {
       level = 'excellent';
-      recommendation = 'مؤهل ممتاز لهذه الوظيفة! مهاراتك تتطابق بشكل كبير مع متطلبات الوظيفة.';
+      recommendation =
+        'مؤهل ممتاز لهذه الوظيفة! مهاراتك تتطابق بشكل كبير مع متطلبات الوظيفة.';
     } else if (score >= 60) {
       level = 'good';
       recommendation = `مؤهل جيد. يُنصح بإضافة: ${missingSkills.slice(0, 3).join('، ')} لتقوية طلبك.`;
@@ -747,7 +966,13 @@ export class JobMatchService {
       recommendation = `هذه الوظيفة تتطلب مهارات مختلفة. فكّر في تطوير: ${missingSkills.slice(0, 3).join('، ')}.`;
     }
 
-    return { matchScore: score, matchedSkills, missingSkills, recommendation, level };
+    return {
+      matchScore: score,
+      matchedSkills,
+      missingSkills,
+      recommendation,
+      level,
+    };
   }
 
   // ─── Recommended jobs list ───────────────────────────────────────────────
@@ -764,15 +989,23 @@ export class JobMatchService {
     const cv = await this.prisma.cv.findUnique({ where: { userId } });
     if (!cv) return { jobs: [], total: 0 };
 
-    const cvData           = cv.data as Record<string, unknown>;
-    const cvSkills         = getCvSkills(cvData);
+    const cvData = cv.data as Record<string, unknown>;
+    const cvSkills = getCvSkills(cvData);
     const cvExperienceYears =
-      typeof cvData.experienceYears === 'number' ? cvData.experienceYears : null;
-    const cvCity           = String((cvData.city ?? cvData.location ?? '') as unknown).toLowerCase().trim();
-    const cvSpecialization = typeof cvData.title === 'string' ? cvData.title : null;
-    const rawSeniority     = typeof cvData.seniority === 'string' ? cvData.seniority : null;
+      typeof cvData.experienceYears === 'number'
+        ? cvData.experienceYears
+        : null;
+    const cvCity = String((cvData.city ?? cvData.location ?? '') as unknown)
+      .toLowerCase()
+      .trim();
+    const cvSpecialization =
+      typeof cvData.title === 'string' ? cvData.title : null;
+    const rawSeniority =
+      typeof cvData.seniority === 'string' ? cvData.seniority : null;
     const cvSeniority: Seniority | null =
-      rawSeniority === 'junior' || rawSeniority === 'mid' || rawSeniority === 'senior'
+      rawSeniority === 'junior' ||
+      rawSeniority === 'mid' ||
+      rawSeniority === 'senior'
         ? rawSeniority
         : null;
 
@@ -783,19 +1016,30 @@ export class JobMatchService {
         isActive: true,
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
         ...(filters?.governorate && {
-          governorateRel: { name: { equals: filters.governorate, mode: 'insensitive' } },
+          governorateRel: {
+            name: { equals: filters.governorate, mode: 'insensitive' },
+          },
         }),
         ...(filters?.city && {
           cityRel: { name: { equals: filters.city, mode: 'insensitive' } },
         }),
       },
       select: {
-        id: true, title: true, partnerName: true, description: true,
-        category: true, jobType: true, skills: true, minExperience: true,
-        salaryMin: true, salaryMax: true, currency: true, createdAt: true,
+        id: true,
+        title: true,
+        partnerName: true,
+        description: true,
+        category: true,
+        jobType: true,
+        skills: true,
+        minExperience: true,
+        salaryMin: true,
+        salaryMax: true,
+        currency: true,
+        createdAt: true,
         governorateRel: { select: { name: true } },
-        cityRel:        { select: { name: true } },
-        organization:   { select: { id: true, name: true } },
+        cityRel: { select: { name: true } },
+        organization: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
@@ -812,11 +1056,20 @@ export class JobMatchService {
           category: job.category,
         });
 
-        const { score, matchedSkills, missingSkills, importantMatchedSkills } = computeScore(
-          cvSkills, cvExperienceYears, cvCity, cvSpecialization, cvSeniority,
-          jobSkills, job.minExperience, job.cityRel?.name ?? null,
-          job.category, job.title, job.description,
-        );
+        const { score, matchedSkills, missingSkills, importantMatchedSkills } =
+          computeScore(
+            cvSkills,
+            cvExperienceYears,
+            cvCity,
+            cvSpecialization,
+            cvSeniority,
+            jobSkills,
+            job.minExperience,
+            job.cityRel?.name ?? null,
+            job.category,
+            job.title,
+            job.description,
+          );
 
         return {
           id: job.id,
@@ -837,7 +1090,10 @@ export class JobMatchService {
           createdAt: job.createdAt,
         };
       })
-      .sort((a, b) => b.score - a.score || b.createdAt.getTime() - a.createdAt.getTime())
+      .sort(
+        (a, b) =>
+          b.score - a.score || b.createdAt.getTime() - a.createdAt.getTime(),
+      )
       .slice(0, safeLimit);
 
     return { jobs: scored, total: scored.length };
@@ -869,7 +1125,13 @@ export class JobMatchService {
   >(
     userId: string,
     jobs: T[],
-  ): Promise<(T & { matchScore: number; isRecommended: boolean; matchedSkills: string[] })[]> {
+  ): Promise<
+    (T & {
+      matchScore: number;
+      isRecommended: boolean;
+      matchedSkills: string[];
+    })[]
+  > {
     if (!jobs.length) return [];
 
     const cv = await this.prisma.cv.findUnique({ where: { userId } });
@@ -883,20 +1145,33 @@ export class JobMatchService {
 
     if (!cv) return noScores;
 
-    const cvData           = cv.data as Record<string, unknown>;
-    const cvSkills         = getCvSkills(cvData);
+    const cvData = cv.data as Record<string, unknown>;
+    const cvSkills = getCvSkills(cvData);
     const cvExperienceYears =
-      typeof cvData.experienceYears === 'number' ? cvData.experienceYears : null;
-    const cvCity           = String((cvData.city ?? cvData.location ?? '') as unknown).toLowerCase().trim();
-    const cvSpecialization = typeof cvData.title === 'string' ? cvData.title : null;
-    const rawSeniority     = typeof cvData.seniority === 'string' ? cvData.seniority : null;
+      typeof cvData.experienceYears === 'number'
+        ? cvData.experienceYears
+        : null;
+    const cvCity = String((cvData.city ?? cvData.location ?? '') as unknown)
+      .toLowerCase()
+      .trim();
+    const cvSpecialization =
+      typeof cvData.title === 'string' ? cvData.title : null;
+    const rawSeniority =
+      typeof cvData.seniority === 'string' ? cvData.seniority : null;
     const cvSeniority: Seniority | null =
-      rawSeniority === 'junior' || rawSeniority === 'mid' || rawSeniority === 'senior'
+      rawSeniority === 'junior' ||
+      rawSeniority === 'mid' ||
+      rawSeniority === 'senior'
         ? rawSeniority
         : null;
 
     // Skip scoring when there is truly nothing to compare against
-    if (!cvSkills.length && cvExperienceYears === null && !cvCity && !cvSpecialization) {
+    if (
+      !cvSkills.length &&
+      cvExperienceYears === null &&
+      !cvCity &&
+      !cvSpecialization
+    ) {
       return noScores;
     }
 
@@ -909,9 +1184,17 @@ export class JobMatchService {
       });
 
       const { score, matchedSkills } = computeScore(
-        cvSkills, cvExperienceYears, cvCity, cvSpecialization, cvSeniority,
-        jobSkills, job.minExperience ?? null, job.cityRel?.name ?? null,
-        job.category ?? null, job.title, job.description ?? null,
+        cvSkills,
+        cvExperienceYears,
+        cvCity,
+        cvSpecialization,
+        cvSeniority,
+        jobSkills,
+        job.minExperience ?? null,
+        job.cityRel?.name ?? null,
+        job.category ?? null,
+        job.title,
+        job.description ?? null,
       );
 
       return {

@@ -43,12 +43,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // 3. Try jobnova_token HttpOnly cookie sent on the WS upgrade handshake
       let token: string | undefined =
         (socket.handshake.auth?.token as string | undefined) ||
-        (socket.handshake.headers?.authorization as string | undefined)
-          ?.replace('Bearer ', '')
-          .trim();
+        socket.handshake.headers?.authorization?.replace('Bearer ', '').trim();
 
       if (!token) {
-        const rawCookie = socket.handshake.headers?.cookie as string | undefined;
+        const rawCookie = socket.handshake.headers?.cookie;
         if (rawCookie) {
           const match = rawCookie
             .split(';')
@@ -61,7 +59,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!token) throw new Error('No token provided');
 
       const secret = this.config.get<string>('JWT_ACCESS_SECRET');
-      const payload = this.jwtService.verify<{ sub: string }>(token, { secret });
+      const payload = this.jwtService.verify<{ sub: string }>(token, {
+        secret,
+      });
       socket.userId = payload.sub;
       this.logger.log(`Connected: ${socket.id} (user: ${socket.userId})`);
     } catch {
@@ -87,7 +87,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const room = `conversation_${data.conversationId}`;
     await socket.join(room);
     this.logger.log(`${socket.userId} joined room ${room}`);
-    return { event: 'joinedConversation', data: { conversationId: data.conversationId } };
+    return {
+      event: 'joinedConversation',
+      data: { conversationId: data.conversationId },
+    };
   }
 
   /**

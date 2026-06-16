@@ -159,7 +159,12 @@ export class ApplicationsService {
       this.prisma.application.count({ where: { jobId } }),
     ]);
 
-    return { items, total, page: safePage, totalPages: Math.ceil(total / safeLimit) };
+    return {
+      items,
+      total,
+      page: safePage,
+      totalPages: Math.ceil(total / safeLimit),
+    };
   }
 
   // HR/OWNER: update application status

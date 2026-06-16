@@ -364,9 +364,7 @@ export class EmailService {
         return false;
       }
 
-      this.logger.log(
-        `Application status email sent: to=${to} resendId=${id}`,
-      );
+      this.logger.log(`Application status email sent: to=${to} resendId=${id}`);
       return true;
     } catch (err) {
       const e = err as {

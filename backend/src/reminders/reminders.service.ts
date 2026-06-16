@@ -112,7 +112,9 @@ export class RemindersService {
       return;
     }
 
-    this.logger.log(`Interview reminder: found ${interviews.length} interviews`);
+    this.logger.log(
+      `Interview reminder: found ${interviews.length} interviews`,
+    );
 
     for (const interview of interviews) {
       const { application } = interview;
@@ -122,29 +124,31 @@ export class RemindersService {
       // Notify candidate
       try {
         // Dedup: skip if already notified in last 24h
-        const existingCandidateNotif = await this.prisma.notification.findFirst({
-          where: {
-            userId: candidate.id,
-            type: 'INTERVIEW_REMINDER',
-            meta: { path: ['interviewId'], equals: interview.id },
-            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        const existingCandidateNotif = await this.prisma.notification.findFirst(
+          {
+            where: {
+              userId: candidate.id,
+              type: 'INTERVIEW_REMINDER',
+              meta: { path: ['interviewId'], equals: interview.id },
+              createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            },
           },
-        });
+        );
         if (!existingCandidateNotif) {
-        await this.notifications.create(
-          candidate.id,
-          'INTERVIEW_REMINDER',
-          'تذكير بموعد مقابلتك',
-          `لديك مقابلة عمل لوظيفة "${job.title}" غداً`,
-          { interviewId: interview.id, jobId: job.id },
-        );
-        await this.email.sendInterviewReminderEmail(
-          candidate.email,
-          candidate.fullName,
-          job.title,
-          scheduledAt,
-          'candidate',
-        );
+          await this.notifications.create(
+            candidate.id,
+            'INTERVIEW_REMINDER',
+            'تذكير بموعد مقابلتك',
+            `لديك مقابلة عمل لوظيفة "${job.title}" غداً`,
+            { interviewId: interview.id, jobId: job.id },
+          );
+          await this.email.sendInterviewReminderEmail(
+            candidate.email,
+            candidate.fullName,
+            job.title,
+            scheduledAt,
+            'candidate',
+          );
         }
       } catch (err) {
         this.logger.error(
@@ -166,24 +170,24 @@ export class RemindersService {
             },
           });
           if (!existingHrNotif) {
-          await this.notifications.create(
-            hrUser.id,
-            'INTERVIEW_REMINDER',
-            'تذكير: مقابلة مجدولة غداً',
-            `مقابلة مجدولة لوظيفة "${job.title}" مع المرشح ${candidate.fullName}`,
-            {
-              interviewId: interview.id,
-              jobId: job.id,
-              candidateId: candidate.id,
-            },
-          );
-          await this.email.sendInterviewReminderEmail(
-            hrUser.email,
-            hrUser.fullName,
-            job.title,
-            scheduledAt,
-            'hr',
-          );
+            await this.notifications.create(
+              hrUser.id,
+              'INTERVIEW_REMINDER',
+              'تذكير: مقابلة مجدولة غداً',
+              `مقابلة مجدولة لوظيفة "${job.title}" مع المرشح ${candidate.fullName}`,
+              {
+                interviewId: interview.id,
+                jobId: job.id,
+                candidateId: candidate.id,
+              },
+            );
+            await this.email.sendInterviewReminderEmail(
+              hrUser.email,
+              hrUser.fullName,
+              job.title,
+              scheduledAt,
+              'hr',
+            );
           }
         } catch (err) {
           this.logger.error(

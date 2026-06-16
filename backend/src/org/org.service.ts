@@ -70,7 +70,9 @@ export class OrgService {
       }
     }
     // Unreachable — loop always returns or throws, but satisfies TypeScript.
-    throw new ConflictException('Could not generate a unique organization slug');
+    throw new ConflictException(
+      'Could not generate a unique organization slug',
+    );
   }
 
   private slugify(value: string): string {
@@ -232,7 +234,8 @@ export class OrgService {
         _count: { select: { jobs: true } },
       },
     });
-    if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
+    if (!org || org.deletedAt)
+      throw new NotFoundException('Organization not found');
     await this.assertMember(userId, id);
     return org;
   }

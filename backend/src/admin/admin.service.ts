@@ -78,7 +78,8 @@ export class AdminService {
 
   async restoreUser(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user || !user.deletedAt) throw new NotFoundException('Deleted user not found');
+    if (!user || !user.deletedAt)
+      throw new NotFoundException('Deleted user not found');
     await this.prisma.user.update({ where: { id }, data: { deletedAt: null } });
     return { message: 'User restored successfully' };
   }
@@ -95,7 +96,8 @@ export class AdminService {
         deletedAt: true,
       },
     });
-    if (!existing || existing.deletedAt) throw new NotFoundException('User not found');
+    if (!existing || existing.deletedAt)
+      throw new NotFoundException('User not found');
 
     const now = new Date();
     const isLocked = existing.lockedUntil != null && existing.lockedUntil > now;
@@ -190,7 +192,8 @@ export class AdminService {
 
   async restoreJob(id: string) {
     const job = await this.prisma.job.findUnique({ where: { id } });
-    if (!job || !job.deletedAt) throw new NotFoundException('Deleted job not found');
+    if (!job || !job.deletedAt)
+      throw new NotFoundException('Deleted job not found');
     await this.prisma.job.update({ where: { id }, data: { deletedAt: null } });
     return { message: 'Job restored successfully' };
   }
@@ -221,7 +224,9 @@ export class AdminService {
           createdAt: true,
           memberships: {
             where: { roleInOrg: 'HR' },
-            select: { user: { select: { id: true, fullName: true, email: true } } },
+            select: {
+              user: { select: { id: true, fullName: true, email: true } },
+            },
           },
           _count: { select: { jobs: true, memberships: true } },
         },
@@ -243,7 +248,8 @@ export class AdminService {
       where: { id: orgId },
       select: { id: true, deletedAt: true },
     });
-    if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
+    if (!org || org.deletedAt)
+      throw new NotFoundException('Organization not found');
 
     // Validate all provided users exist and have HR role
     if (hrUserIds.length > 0) {
@@ -273,7 +279,11 @@ export class AdminService {
       // Remove HR memberships no longer in the list
       if (toRemove.length > 0) {
         await tx.membership.deleteMany({
-          where: { organizationId: orgId, userId: { in: toRemove }, roleInOrg: 'HR' },
+          where: {
+            organizationId: orgId,
+            userId: { in: toRemove },
+            roleInOrg: 'HR',
+          },
         });
       }
       // Add new HR memberships — upsert so existing MEMBER records are promoted
@@ -293,7 +303,9 @@ export class AdminService {
         id: true,
         memberships: {
           where: { roleInOrg: 'HR' },
-          select: { user: { select: { id: true, fullName: true, email: true } } },
+          select: {
+            user: { select: { id: true, fullName: true, email: true } },
+          },
         },
       },
     });
@@ -321,18 +333,32 @@ export class AdminService {
         _count: { select: { jobs: true, memberships: true } },
       },
     });
-    if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
+    if (!org || org.deletedAt)
+      throw new NotFoundException('Organization not found');
     return org;
   }
 
-  async updateOrg(id: string, data: { name?: string; description?: string; industry?: string; website?: string; location?: string; size?: string }) {
+  async updateOrg(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      industry?: string;
+      website?: string;
+      location?: string;
+      size?: string;
+    },
+  ) {
     const org = await this.prisma.organization.findUnique({ where: { id } });
-    if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
+    if (!org || org.deletedAt)
+      throw new NotFoundException('Organization not found');
     return this.prisma.organization.update({
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
         ...(data.industry !== undefined && { industry: data.industry }),
         ...(data.website !== undefined && { website: data.website }),
         ...(data.location !== undefined && { location: data.location }),
@@ -343,10 +369,14 @@ export class AdminService {
 
   async deleteOrg(id: string) {
     const org = await this.prisma.organization.findUnique({ where: { id } });
-    if (!org || org.deletedAt) throw new NotFoundException('Organization not found');
+    if (!org || org.deletedAt)
+      throw new NotFoundException('Organization not found');
     const now = new Date();
     await this.prisma.$transaction([
-      this.prisma.organization.update({ where: { id }, data: { deletedAt: now } }),
+      this.prisma.organization.update({
+        where: { id },
+        data: { deletedAt: now },
+      }),
       // cascade soft-delete all jobs that belong to this org
       this.prisma.job.updateMany({
         where: { organizationId: id, deletedAt: null },
@@ -358,8 +388,12 @@ export class AdminService {
 
   async restoreOrg(id: string) {
     const org = await this.prisma.organization.findUnique({ where: { id } });
-    if (!org || !org.deletedAt) throw new NotFoundException('Deleted organization not found');
-    await this.prisma.organization.update({ where: { id }, data: { deletedAt: null } });
+    if (!org || !org.deletedAt)
+      throw new NotFoundException('Deleted organization not found');
+    await this.prisma.organization.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
     return { message: 'Organization restored successfully' };
   }
 
@@ -380,7 +414,9 @@ export class AdminService {
         this.prisma.organization.count({ where: { deletedAt: null } }),
         this.prisma.job.count({ where: { deletedAt: null } }),
         this.prisma.application.count(),
-        this.prisma.user.count({ where: { role: Role.candidate, deletedAt: null } }),
+        this.prisma.user.count({
+          where: { role: Role.candidate, deletedAt: null },
+        }),
       ]);
 
     const applicationsByStatusRaw = await this.prisma.application.groupBy({

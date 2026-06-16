@@ -278,7 +278,11 @@ export class AuthService {
       data: { failedLoginAttempts: 0, lockedUntil: null },
     });
 
-    const { accessToken, refreshToken } = this.issueTokens(user.id, user.role, user.tokenVersion);
+    const { accessToken, refreshToken } = this.issueTokens(
+      user.id,
+      user.role,
+      user.tokenVersion,
+    );
     await this.tokenStore.store(user.id, refreshToken);
 
     this.audit.log({
@@ -366,7 +370,9 @@ export class AuthService {
     // ✅ Per-email rate limit: max 3 requests per 15 minutes.
     // Key hashes the email so PII is never stored in the cache layer.
     // Always return the same response — don't reveal rate-limit status.
-    const emailHash = createHash('sha256').update(normalizedEmail).digest('hex');
+    const emailHash = createHash('sha256')
+      .update(normalizedEmail)
+      .digest('hex');
     const rlKey = `rl:fp:${emailHash}`;
     const attempts = (await this.cache.get<number>(rlKey)) ?? 0;
     if (attempts >= FORGOT_PASSWORD_MAX_REQUESTS) {
@@ -448,7 +454,7 @@ export class AuthService {
         passwordHash,
         passwordResetToken: null,
         passwordResetExpiry: null,
-        refreshTokenHash: null,    // invalidate refresh token
+        refreshTokenHash: null, // invalidate refresh token
         tokenVersion: { increment: 1 }, // invalidate all outstanding access tokens
         failedLoginAttempts: 0,
         lockedUntil: null,
@@ -480,7 +486,8 @@ export class AuthService {
         deletedAt: true,
       },
     });
-    if (!user || user.deletedAt) throw new UnauthorizedException(INVALID_CREDENTIALS);
+    if (!user || user.deletedAt)
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
     const { deletedAt: _deleted, ...rest } = user;
     return rest;
   }
@@ -664,7 +671,8 @@ export class AuthService {
     newPassword: string,
   ): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.deletedAt) throw new UnauthorizedException(INVALID_CREDENTIALS);
+    if (!user || user.deletedAt)
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
     if (!user.passwordHash)
       throw new BadRequestException(
         'Password change is not available for accounts linked via Google',
@@ -682,7 +690,8 @@ export class AuthService {
 
   async deleteAccount(userId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.deletedAt) throw new UnauthorizedException(INVALID_CREDENTIALS);
+    if (!user || user.deletedAt)
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
     await this.prisma.user.delete({ where: { id: userId } });
   }
 }

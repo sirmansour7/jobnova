@@ -77,13 +77,15 @@ export async function extractPdfText(
 
     return raw
       .replace(/\r\n/g, '\n')
-      .replace(/\u200B-\u200D\uFEFF/g, '')   // invisible chars
-      .replace(/[ \t]+/g, ' ')               // collapse horizontal whitespace
-      .replace(/\n{3,}/g, '\n\n')            // collapse blank lines
+      .replace(/\u200B-\u200D\uFEFF/g, '') // invisible chars
+      .replace(/[ \t]+/g, ' ') // collapse horizontal whitespace
+      .replace(/\n{3,}/g, '\n\n') // collapse blank lines
       .trim()
-      .slice(0, 7000);                        // ~1 750 tokens
+      .slice(0, 7000); // ~1 750 tokens
   } catch (err) {
-    logger.warn(`[CvPdfAnalyzer] pdf-parse failed for ${filePath}: ${String(err)}`);
+    logger.warn(
+      `[CvPdfAnalyzer] pdf-parse failed for ${filePath}: ${String(err)}`,
+    );
     return null;
   }
 }
@@ -129,12 +131,15 @@ Return ONLY this JSON — no markdown, no explanation:
 CV:
 ${text}`;
 
-function parseProfileJson(content: string, logger: Logger): PdfExtractedProfile | null {
+function parseProfileJson(
+  content: string,
+  logger: Logger,
+): PdfExtractedProfile | null {
   const m = content.match(/\{[\s\S]*?\}/);
   if (!m) return null;
 
   const raw = m[0]
-    .replace(/,\s*([\]}])/g, '$1')  // trailing commas
+    .replace(/,\s*([\]}])/g, '$1') // trailing commas
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"');
 
@@ -149,7 +154,9 @@ function parseProfileJson(content: string, logger: Logger): PdfExtractedProfile 
 
     const skills = Array.isArray(p.skills)
       ? (p.skills as unknown[])
-          .filter((s): s is string => typeof s === 'string' && s.trim().length > 1)
+          .filter(
+            (s): s is string => typeof s === 'string' && s.trim().length > 1,
+          )
           .map((s) => s.trim().toLowerCase())
           .slice(0, 30)
       : [];
@@ -159,9 +166,12 @@ function parseProfileJson(content: string, logger: Logger): PdfExtractedProfile 
         ? Math.min(60, Math.round(p.yearsOfExperience))
         : null;
 
-    const rawSen = typeof p.seniority === 'string' ? p.seniority.toLowerCase().trim() : null;
+    const rawSen =
+      typeof p.seniority === 'string' ? p.seniority.toLowerCase().trim() : null;
     const seniority: PdfExtractedProfile['seniority'] =
-      rawSen === 'junior' || rawSen === 'mid' || rawSen === 'senior' ? rawSen : null;
+      rawSen === 'junior' || rawSen === 'mid' || rawSen === 'senior'
+        ? rawSen
+        : null;
 
     const specialization =
       typeof p.specialization === 'string' && p.specialization.trim().length > 1
@@ -177,12 +187,20 @@ function parseProfileJson(content: string, logger: Logger): PdfExtractedProfile 
     const inferredSeniority: PdfExtractedProfile['seniority'] =
       seniority ??
       (yearsOfExperience !== null
-        ? yearsOfExperience <= 2 ? 'junior'
-          : yearsOfExperience <= 5 ? 'mid'
-          : 'senior'
+        ? yearsOfExperience <= 2
+          ? 'junior'
+          : yearsOfExperience <= 5
+            ? 'mid'
+            : 'senior'
         : null);
 
-    return { skills, yearsOfExperience, seniority: inferredSeniority, specialization, location };
+    return {
+      skills,
+      yearsOfExperience,
+      seniority: inferredSeniority,
+      specialization,
+      location,
+    };
   } catch (err) {
     logger.warn(`[CvPdfAnalyzer] Profile JSON.parse failed: ${String(err)}`);
     return null;
@@ -201,7 +219,10 @@ export async function extractProfileFromText(
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         max_tokens: 700,
@@ -209,7 +230,7 @@ export async function extractProfileFromText(
         stream: false,
         messages: [
           { role: 'system', content: PROFILE_SYSTEM },
-          { role: 'user',   content: buildProfilePrompt(text) },
+          { role: 'user', content: buildProfilePrompt(text) },
         ],
       }),
     });
@@ -219,7 +240,9 @@ export async function extractProfileFromText(
       return EMPTY_PROFILE;
     }
 
-    const body = (await res.json()) as { choices?: [{ message?: { content?: string } }] };
+    const body = (await res.json()) as {
+      choices?: [{ message?: { content?: string } }];
+    };
     const content = (body.choices?.[0]?.message?.content ?? '').trim();
     const profile = content ? parseProfileJson(content, logger) : null;
 
@@ -291,7 +314,9 @@ function parseFeedbackJson(content: string, logger: Logger): CvFeedback | null {
     const toStringArray = (v: unknown, max = 8): string[] =>
       Array.isArray(v)
         ? (v as unknown[])
-            .filter((s): s is string => typeof s === 'string' && s.trim().length > 2)
+            .filter(
+              (s): s is string => typeof s === 'string' && s.trim().length > 2,
+            )
             .map((s) => s.trim())
             .slice(0, max)
         : [];
@@ -303,11 +328,11 @@ function parseFeedbackJson(content: string, logger: Logger): CvFeedback | null {
 
     return {
       score,
-      strengths:        toStringArray(p.strengths, 6),
-      weaknesses:       toStringArray(p.weaknesses, 6),
-      improvements:     toStringArray(p.improvements, 8),
+      strengths: toStringArray(p.strengths, 6),
+      weaknesses: toStringArray(p.weaknesses, 6),
+      improvements: toStringArray(p.improvements, 8),
       recommendedSkills: toStringArray(p.recommendedSkills, 6),
-      analyzedAt:       new Date().toISOString(),
+      analyzedAt: new Date().toISOString(),
     };
   } catch (err) {
     logger.warn(`[CvPdfAnalyzer] Feedback JSON.parse failed: ${String(err)}`);
@@ -327,15 +352,18 @@ export async function extractFeedbackFromText(
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         max_tokens: 800,
-        temperature: 0.3,   // slight creativity for richer feedback
+        temperature: 0.3, // slight creativity for richer feedback
         stream: false,
         messages: [
           { role: 'system', content: FEEDBACK_SYSTEM },
-          { role: 'user',   content: buildFeedbackPrompt(text) },
+          { role: 'user', content: buildFeedbackPrompt(text) },
         ],
       }),
     });
@@ -345,13 +373,17 @@ export async function extractFeedbackFromText(
       return null;
     }
 
-    const body = (await res.json()) as { choices?: [{ message?: { content?: string } }] };
+    const body = (await res.json()) as {
+      choices?: [{ message?: { content?: string } }];
+    };
     const content = (body.choices?.[0]?.message?.content ?? '').trim();
     if (!content) return null;
 
     const feedback = parseFeedbackJson(content, logger);
     if (feedback) {
-      logger.log(`[CvPdfAnalyzer] Feedback: score=${feedback.score}, strengths=${feedback.strengths.length}`);
+      logger.log(
+        `[CvPdfAnalyzer] Feedback: score=${feedback.score}, strengths=${feedback.strengths.length}`,
+      );
     }
     return feedback;
   } catch (err) {

@@ -111,7 +111,9 @@ describe('AuthService', () => {
 
       expect(mockPrisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ verificationToken: expect.any(String) }),
+          data: expect.objectContaining({
+            verificationToken: expect.any(String),
+          }),
         }),
       );
       expect(result.email).toBe('test@example.com');
@@ -144,8 +146,14 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should return tokens for valid credentials', async () => {
       const hash = await bcrypt.hash('Password123!', 10);
-      mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, passwordHash: hash });
-      mockPrisma.user.update.mockResolvedValue({ ...baseUser, passwordHash: hash });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...baseUser,
+        passwordHash: hash,
+      });
+      mockPrisma.user.update.mockResolvedValue({
+        ...baseUser,
+        passwordHash: hash,
+      });
 
       const result = await service.login({
         email: 'test@example.com',
@@ -163,11 +171,17 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException for invalid password', async () => {
       const hash = await bcrypt.hash('CorrectPassword!', 10);
-      mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, passwordHash: hash });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...baseUser,
+        passwordHash: hash,
+      });
       mockPrisma.user.update.mockResolvedValue({});
 
       await expect(
-        service.login({ email: 'test@example.com', password: 'WrongPassword!' }),
+        service.login({
+          email: 'test@example.com',
+          password: 'WrongPassword!',
+        }),
       ).rejects.toThrow(UnauthorizedException);
 
       expect(mockTokenStore.store).not.toHaveBeenCalled();
@@ -214,7 +228,11 @@ describe('AuthService', () => {
 
   describe('googleLogin', () => {
     it('should create a new user if email not found', async () => {
-      const newUser = { ...baseUser, email: 'new@example.com', emailVerified: true };
+      const newUser = {
+        ...baseUser,
+        email: 'new@example.com',
+        emailVerified: true,
+      };
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue(newUser);
 
@@ -263,7 +281,10 @@ describe('AuthService', () => {
 
   describe('verifyEmail', () => {
     it('should verify email with valid token', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', emailVerified: false });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        emailVerified: false,
+      });
       mockPrisma.user.update.mockResolvedValue({});
 
       const res = await service.verifyEmail('valid-token');
@@ -277,12 +298,19 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException for invalid token', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      await expect(service.verifyEmail('bad')).rejects.toThrow(BadRequestException);
+      await expect(service.verifyEmail('bad')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if email already verified', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', emailVerified: true });
-      await expect(service.verifyEmail('token')).rejects.toThrow(BadRequestException);
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        emailVerified: true,
+      });
+      await expect(service.verifyEmail('token')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -307,7 +335,9 @@ describe('AuthService', () => {
     it('should not reveal whether email exists', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       const res = await service.forgotPassword({ email: 'missing@test.com' });
-      expect(res).toEqual({ message: 'If this email exists, a reset link has been sent' });
+      expect(res).toEqual({
+        message: 'If this email exists, a reset link has been sent',
+      });
       expect(mockEmailProducer.sendPasswordResetEmail).not.toHaveBeenCalled();
     });
 
@@ -322,7 +352,8 @@ describe('AuthService', () => {
       await service.forgotPassword({ email: 'u@test.com' });
 
       expect(mockEmailProducer.sendPasswordResetEmail).toHaveBeenCalledTimes(1);
-      const [, , rawToken] = mockEmailProducer.sendPasswordResetEmail.mock.calls[0];
+      const [, , rawToken] =
+        mockEmailProducer.sendPasswordResetEmail.mock.calls[0];
       const tokenHash = createHash('sha256').update(rawToken).digest('hex');
 
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
@@ -348,19 +379,27 @@ describe('AuthService', () => {
 
       mockPrisma.user.findUnique.mockImplementation(async (args: any) => {
         if (args?.where?.passwordResetToken === tokenHash) {
-          return { id: 'u1', passwordResetExpiry: new Date(Date.now() + 60_000) };
+          return {
+            id: 'u1',
+            passwordResetExpiry: new Date(Date.now() + 60_000),
+          };
         }
         return null;
       });
       mockPrisma.user.update.mockResolvedValue({});
 
-      await service.resetPassword({ token: rawToken, newPassword: 'newpassword123' });
+      await service.resetPassword({
+        token: rawToken,
+        newPassword: 'newpassword123',
+      });
 
       const updateCall = mockPrisma.user.update.mock.calls[0][0];
       expect(updateCall.where).toEqual({ id: 'u1' });
       expect(updateCall.data.passwordResetToken).toBeNull();
       expect(updateCall.data.passwordResetExpiry).toBeNull();
-      await expect(bcrypt.compare('newpassword123', updateCall.data.passwordHash)).resolves.toBe(true);
+      await expect(
+        bcrypt.compare('newpassword123', updateCall.data.passwordHash),
+      ).resolves.toBe(true);
     });
 
     it('should throw BadRequestException for invalid token', async () => {
@@ -376,7 +415,10 @@ describe('AuthService', () => {
         passwordResetExpiry: new Date(Date.now() - 60_000),
       });
       await expect(
-        service.resetPassword({ token: 'expired', newPassword: 'newpassword123' }),
+        service.resetPassword({
+          token: 'expired',
+          newPassword: 'newpassword123',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
   });

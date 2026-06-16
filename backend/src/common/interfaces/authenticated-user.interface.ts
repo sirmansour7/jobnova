@@ -3,4 +3,3 @@ export interface AuthenticatedUser {
   role: string;
   orgId?: string;
 }
-

@@ -83,11 +83,7 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const result = await this.authService.login(
-      body,
-      getIp(req),
-      getUA(req),
-    );
+    const result = await this.authService.login(body, getIp(req), getUA(req));
     const { accessToken, refreshToken, user } = result;
 
     res.cookie('jobnova_token', accessToken, {
@@ -164,7 +160,7 @@ export class AuthController {
           const payload = this.jwtService.verify(accessToken, {
             secret,
             ignoreExpiration: true,
-          }) as { sub?: string };
+          });
           userId = payload?.sub ?? null;
         }
       } catch {
@@ -246,7 +242,10 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @SkipThrottle()
   async googleCallback(
-    @Req() req: Request & { user: { googleId: string; email: string; fullName: string } },
+    @Req()
+    req: Request & {
+      user: { googleId: string; email: string; fullName: string };
+    },
     @Res() res: Response,
   ) {
     const result = await this.authService.googleLogin(req.user);
@@ -261,7 +260,10 @@ export class AuthController {
   @Post('google/exchange')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async googleExchange(@Body(VP) body: GoogleExchangeDto, @Res() res: Response) {
+  async googleExchange(
+    @Body(VP) body: GoogleExchangeDto,
+    @Res() res: Response,
+  ) {
     const result = await this.authService.exchangeOAuthCode(body.code);
     const { accessToken, refreshToken, user } = result;
 

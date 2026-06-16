@@ -73,14 +73,15 @@ export class JobsController {
     const result = await this.jobsService.findAll(
       {
         search,
-        category:        toCategory(category),
-        jobType:         toJobType(jobType),
+        category: toCategory(category),
+        jobType: toJobType(jobType),
         governorate,
-        salaryMin:       salaryMin     != null ? parseInt(salaryMin, 10)     : undefined,
-        salaryMax:       salaryMax     != null ? parseInt(salaryMax, 10)     : undefined,
-        maxExperience:   maxExperience != null ? parseInt(maxExperience, 10) : undefined,
-        page:            page          != null ? parseInt(page, 10)          : undefined,
-        limit:           limit         != null ? parseInt(limit, 10)         : undefined,
+        salaryMin: salaryMin != null ? parseInt(salaryMin, 10) : undefined,
+        salaryMax: salaryMax != null ? parseInt(salaryMax, 10) : undefined,
+        maxExperience:
+          maxExperience != null ? parseInt(maxExperience, 10) : undefined,
+        page: page != null ? parseInt(page, 10) : undefined,
+        limit: limit != null ? parseInt(limit, 10) : undefined,
         includeInactive: includeInactive === 'true',
       },
       req?.user,

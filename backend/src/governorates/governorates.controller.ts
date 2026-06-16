@@ -32,7 +32,10 @@ export class GovernoratesController {
   }
 
   @Get(':id/cities')
-  getCities(@Param('id', ParseCuidPipe) id: string, @Query('search') search?: string) {
+  getCities(
+    @Param('id', ParseCuidPipe) id: string,
+    @Query('search') search?: string,
+  ) {
     return this.govService.getCities(id, search);
   }
 
@@ -47,7 +50,10 @@ export class GovernoratesController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  updateGovernorate(@Param('id', ParseCuidPipe) id: string, @Body('name') name: string) {
+  updateGovernorate(
+    @Param('id', ParseCuidPipe) id: string,
+    @Body('name') name: string,
+  ) {
     return this.govService.updateGovernorate(id, name);
   }
 
@@ -68,7 +74,10 @@ export class GovernoratesController {
   @Patch('cities/:cityId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  updateCity(@Param('cityId', ParseCuidPipe) cityId: string, @Body('name') name: string) {
+  updateCity(
+    @Param('cityId', ParseCuidPipe) cityId: string,
+    @Body('name') name: string,
+  ) {
     return this.govService.updateCity(cityId, name);
   }
 

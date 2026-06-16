@@ -67,7 +67,7 @@ export class HrController {
   async getOrgJobs(
     @Req() req: Request & { user: { sub: string } },
     @Query('limit') limit?: string,
-    @Query('page')  page?: string,
+    @Query('page') page?: string,
     @Query('search') search?: string,
     @Query('includeInactive') includeInactive?: string,
   ) {
@@ -83,7 +83,7 @@ export class HrController {
 
     const where = {
       organizationId,
-      deletedAt: null as null,
+      deletedAt: null,
       ...(showAll ? {} : { isActive: true }),
       ...(search
         ? { title: { contains: search, mode: 'insensitive' as const } }
@@ -248,8 +248,7 @@ export class HrController {
 
     const skillFreq = new Map<string, number>();
     for (const app of appsWithCv) {
-      const cvData =
-        app.candidate?.cv?.data as Record<string, unknown> | null;
+      const cvData = app.candidate?.cv?.data as Record<string, unknown> | null;
       const skills = cvData?.skills;
       if (Array.isArray(skills)) {
         for (const skill of skills as string[]) {

@@ -89,7 +89,10 @@ export class InterviewsService {
         const resumed = await this.prisma.interviewSession.update({
           where: { id: existing.id },
           data: { status: 'active', completedAt: null },
-          include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
+          include: {
+            messages: { orderBy: { createdAt: 'asc' } },
+            summary: true,
+          },
         });
         return this.toSessionResponse(resumed);
       }
@@ -117,7 +120,10 @@ export class InterviewsService {
         });
         return tx.interviewSession.findUniqueOrThrow({
           where: { id: s.id },
-          include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
+          include: {
+            messages: { orderBy: { createdAt: 'asc' } },
+            summary: true,
+          },
         });
       });
     } catch (err) {
@@ -128,7 +134,10 @@ export class InterviewsService {
       ) {
         const race = await this.prisma.interviewSession.findUnique({
           where: { applicationId },
-          include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
+          include: {
+            messages: { orderBy: { createdAt: 'asc' } },
+            summary: true,
+          },
         });
         if (race) return this.toSessionResponse(race);
       }
@@ -363,7 +372,9 @@ export class InterviewsService {
           }
         }
       } catch (err) {
-        this.logger.warn(`Groq streaming failed, using fallback: ${String(err)}`);
+        this.logger.warn(
+          `Groq streaming failed, using fallback: ${String(err)}`,
+        );
         // Fallback handled below
       }
     }
@@ -390,7 +401,10 @@ export class InterviewsService {
   }
 
   /** Writes a single SSE data line to the response. */
-  private sseWrite(res: ExpressResponse, payload: Record<string, unknown>): void {
+  private sseWrite(
+    res: ExpressResponse,
+    payload: Record<string, unknown>,
+  ): void {
     res.write(`data: ${JSON.stringify(payload)}\n\n`);
   }
 
@@ -434,7 +448,11 @@ export class InterviewsService {
     return this.toHrSessionResponse(session);
   }
 
-  async updateDecision(sessionId: string, userId: string, decision: HrDecision) {
+  async updateDecision(
+    sessionId: string,
+    userId: string,
+    decision: HrDecision,
+  ) {
     const session = await this.prisma.interviewSession.findUnique({
       where: { id: sessionId },
       include: { job: true },

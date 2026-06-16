@@ -18,8 +18,14 @@ export class EmailProducer {
     token: string,
   ): Promise<void> {
     await Promise.race([
-      this.queue.add(EmailJobName.SEND_VERIFICATION, { email, fullName, token }, EMAIL_JOB_OPTS),
-      new Promise<void>((_, reject) => setTimeout(() => reject(new Error('Queue timeout')), 5000)),
+      this.queue.add(
+        EmailJobName.SEND_VERIFICATION,
+        { email, fullName, token },
+        EMAIL_JOB_OPTS,
+      ),
+      new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('Queue timeout')), 5000),
+      ),
     ]);
   }
 

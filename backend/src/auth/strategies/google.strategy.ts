@@ -24,7 +24,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     },
     done: VerifyCallback,
   ): void {
-    console.log('GoogleStrategy.validate called, profile id:', profile?.id, 'email:', profile?.emails?.[0]?.value);
+    console.log(
+      'GoogleStrategy.validate called, profile id:',
+      profile?.id,
+      'email:',
+      profile?.emails?.[0]?.value,
+    );
     const email = profile.emails?.[0]?.value ?? '';
     const user = {
       googleId: profile.id,

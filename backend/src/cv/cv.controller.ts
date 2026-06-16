@@ -116,13 +116,19 @@ export class CvController {
     @Body('applicationId') applicationId: string,
   ) {
     if (!file) throw new BadRequestException('No PDF file received');
-    if (!applicationId) throw new BadRequestException('applicationId is required');
+    if (!applicationId)
+      throw new BadRequestException('applicationId is required');
 
     const baseUrl =
       this.config.get<string>('BACKEND_URL') ??
       `http://localhost:${this.config.get<string>('PORT') ?? '8080'}`;
 
-    return this.cvService.uploadCvPdf(req.user.sub, applicationId, file, baseUrl);
+    return this.cvService.uploadCvPdf(
+      req.user.sub,
+      applicationId,
+      file,
+      baseUrl,
+    );
   }
 
   /**

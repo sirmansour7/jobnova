@@ -30,15 +30,17 @@ export class CvGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const token =
         (socket.handshake.auth?.token as string | undefined) ??
-        (socket.handshake.headers?.authorization as string | undefined)
-          ?.replace('Bearer ', '')
-          .trim();
+        socket.handshake.headers?.authorization?.replace('Bearer ', '').trim();
       if (!token) throw new Error('No token');
       const secret = this.config.get<string>('JWT_ACCESS_SECRET');
-      const payload = this.jwtService.verify<{ sub: string }>(token, { secret });
+      const payload = this.jwtService.verify<{ sub: string }>(token, {
+        secret,
+      });
       socket.userId = payload.sub;
       await socket.join(`cv_${payload.sub}`);
-      this.logger.log(`[CvGateway] Connected: ${socket.id} user=${payload.sub}`);
+      this.logger.log(
+        `[CvGateway] Connected: ${socket.id} user=${payload.sub}`,
+      );
     } catch {
       this.logger.warn(`[CvGateway] Unauthorized: ${socket.id}`);
       socket.disconnect(true);
@@ -53,7 +55,10 @@ export class CvGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`cv_${userId}`).emit('cv:intelligence:ready', result);
   }
 
-  emitAnalysisProgress(userId: string, status: 'analyzing' | 'done' | 'error'): void {
+  emitAnalysisProgress(
+    userId: string,
+    status: 'analyzing' | 'done' | 'error',
+  ): void {
     this.server.to(`cv_${userId}`).emit('cv:analysis:progress', { status });
   }
 }

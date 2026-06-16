@@ -37,7 +37,13 @@ export class ChatController {
     @Body() body: CvAssistantDto,
     @Req() req: Request & { user: { sub: string; role: Role } },
   ) {
-    const { userMessage, conversationHistory, candidateName, currentStep, cvContext } = body;
+    const {
+      userMessage,
+      conversationHistory,
+      candidateName,
+      currentStep,
+      cvContext,
+    } = body;
     const reply = await this.chatService.getCvAssistantResponse(
       userMessage,
       conversationHistory ?? [],

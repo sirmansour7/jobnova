@@ -40,7 +40,8 @@ export class CvService {
     private readonly rulesProvider: RulesAnalysisProvider,
     private readonly openAiProvider: OpenAiAnalysisProvider,
     private readonly aiProducer: AiProducer,
-    @Optional() private readonly cvIntelligenceService: CvIntelligenceService | null = null,
+    @Optional()
+    private readonly cvIntelligenceService: CvIntelligenceService | null = null,
     @Optional() private readonly cvGateway: CvGateway | null = null,
   ) {}
 
@@ -55,7 +56,7 @@ export class CvService {
     // CV fields can contain arbitrary user text that may later be interpolated
     // into LLM prompts or rendered in HR dashboards.
     const sanitized = sanitizeObjectStrings(body.contentJson);
-    const data = sanitized as unknown as Prisma.InputJsonValue;
+    const data = sanitized as Prisma.InputJsonValue;
     const result = await this.prisma.cv.upsert({
       where: { userId },
       create: { userId, data },
@@ -77,7 +78,9 @@ export class CvService {
    * Returns the last analysis result persisted in `cv.data.analysis`.
    * Returns null when no CV exists or no analysis has been run yet.
    */
-  async getMyAnalysis(userId: string): Promise<CombinedCvAnalysisResult | null> {
+  async getMyAnalysis(
+    userId: string,
+  ): Promise<CombinedCvAnalysisResult | null> {
     const cv = await this.prisma.cv.findUnique({ where: { userId } });
     if (!cv) return null;
     const data = cv.data as Record<string, unknown>;
@@ -163,10 +166,13 @@ export class CvService {
     // 4. Merge into unified result
     const score = rulesResult.score;
     const level: CombinedCvAnalysisResult['level'] =
-      score >= 80 ? 'excellent'
-      : score >= 60 ? 'good'
-      : score >= 40 ? 'fair'
-      : 'poor';
+      score >= 80
+        ? 'excellent'
+        : score >= 60
+          ? 'good'
+          : score >= 40
+            ? 'fair'
+            : 'poor';
 
     // Deduplicated recommendations: rules improvements → job-aware improvements → AI improvements
     const recommendations = [
@@ -300,7 +306,8 @@ export class CvService {
 
     return {
       status: 'queued',
-      message: 'CV analysis started. Your job recommendations will update shortly.',
+      message:
+        'CV analysis started. Your job recommendations will update shortly.',
     };
   }
 
@@ -320,7 +327,9 @@ export class CvService {
   ): Promise<void> {
     const apiKey = this.config.get<string>('GROQ_API_KEY');
     if (!apiKey) {
-      this.logger.warn('[CvService] GROQ_API_KEY not set — skipping PDF analysis');
+      this.logger.warn(
+        '[CvService] GROQ_API_KEY not set — skipping PDF analysis',
+      );
       return;
     }
 
@@ -345,7 +354,9 @@ export class CvService {
         extracted.location !== null;
 
       if (!hasProfileData && !feedback) {
-        this.logger.warn(`[CvService] Both Groq calls returned empty for user ${userId}`);
+        this.logger.warn(
+          `[CvService] Both Groq calls returned empty for user ${userId}`,
+        );
         return;
       }
 
@@ -365,11 +376,13 @@ export class CvService {
         ...(extracted.yearsOfExperience !== null && {
           experienceYears: extracted.yearsOfExperience,
         }),
-        ...(extracted.specialization !== null && { title: extracted.specialization }),
-        ...(extracted.seniority       !== null && { seniority: extracted.seniority }),
-        ...(extracted.location        !== null && {
+        ...(extracted.specialization !== null && {
+          title: extracted.specialization,
+        }),
+        ...(extracted.seniority !== null && { seniority: extracted.seniority }),
+        ...(extracted.location !== null && {
           location: extracted.location,
-          city:     extracted.location, // job-match service reads 'city'
+          city: extracted.location, // job-match service reads 'city'
         }),
         pdfAnalyzedAt: new Date().toISOString(),
         // Career-advisor feedback (stored as a nested object for easy retrieval)
@@ -388,10 +401,14 @@ export class CvService {
       // Auto-chain full intelligence analysis (fire-and-forget)
       // The intelligence service will emit cv:intelligence:ready when done
       if (this.cvIntelligenceService) {
-        void this.cvIntelligenceService.analyze(userId, true).catch((err: unknown) => {
-          this.logger.warn(`[CvService] Auto-intelligence failed for ${userId}: ${String(err)}`);
-          this.cvGateway?.emitAnalysisProgress(userId, 'error');
-        });
+        void this.cvIntelligenceService
+          .analyze(userId, true)
+          .catch((err: unknown) => {
+            this.logger.warn(
+              `[CvService] Auto-intelligence failed for ${userId}: ${String(err)}`,
+            );
+            this.cvGateway?.emitAnalysisProgress(userId, 'error');
+          });
       }
 
       this.logger.log(

@@ -53,7 +53,10 @@ export class AdminController {
   }
 
   @Patch('users/:id/role')
-  updateUserRole(@Param('id', ParseCuidPipe) id: string, @Body() dto: UpdateUserRoleDto) {
+  updateUserRole(
+    @Param('id', ParseCuidPipe) id: string,
+    @Body() dto: UpdateUserRoleDto,
+  ) {
     return this.adminService.updateUserRole(id, dto.role);
   }
 
@@ -124,13 +127,27 @@ export class AdminController {
   }
 
   @Patch('orgs/:id')
-  updateOrg(@Param('id') id: string, @Body() body: { name?: string; description?: string; industry?: string; website?: string; location?: string; size?: string }) {
+  updateOrg(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      name?: string;
+      description?: string;
+      industry?: string;
+      website?: string;
+      location?: string;
+      size?: string;
+    },
+  ) {
     return this.adminService.updateOrg(id, body);
   }
 
   @Patch('orgs/:id/assign-hr')
   assignHr(@Param('id') id: string, @Body() body: { hrUserIds: string[] }) {
-    return this.adminService.assignHr(id, Array.isArray(body.hrUserIds) ? body.hrUserIds : []);
+    return this.adminService.assignHr(
+      id,
+      Array.isArray(body.hrUserIds) ? body.hrUserIds : [],
+    );
   }
 
   @Delete('orgs/:id')

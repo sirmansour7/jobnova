@@ -100,7 +100,10 @@ export class CvIntelligenceService {
    *
    * Synchronous — the caller waits for the result (~10–15 s).
    */
-  private readonly activeAnalyses = new Map<string, Promise<CvIntelligenceResult>>();
+  private readonly activeAnalyses = new Map<
+    string,
+    Promise<CvIntelligenceResult>
+  >();
 
   /**
    * Runs the full CV intelligence pipeline:
@@ -135,7 +138,9 @@ export class CvIntelligenceService {
 
     // Cooldown check: prevent manual re-analysis spamming (30 seconds)
     if (!isAuto) {
-      const intelligence = cvData.intelligence as CvIntelligenceResult | undefined;
+      const intelligence = cvData.intelligence as
+        | CvIntelligenceResult
+        | undefined;
       if (intelligence?.analyzedAt) {
         const lastAnalyzed = new Date(intelligence.analyzedAt);
         const now = new Date();
@@ -173,7 +178,7 @@ export class CvIntelligenceService {
     const cvContext = this.buildCvContextText(cvData);
 
     // ── 2. Load jobs ──────────────────────────────────────────────────────────
-    const jobs = await this.prisma.job.findMany({
+    const jobs = (await this.prisma.job.findMany({
       where: {
         deletedAt: null,
         isActive: true,
@@ -186,12 +191,12 @@ export class CvIntelligenceService {
         skills: true,
         minExperience: true,
         category: true,
-        cityRel:        { select: { name: true } },
+        cityRel: { select: { name: true } },
         governorateRel: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: 20,
-    }) as JobRow[];
+    })) as JobRow[];
 
     if (!jobs.length) {
       throw new BadRequestException(
@@ -214,7 +219,9 @@ export class CvIntelligenceService {
     // ── 4. Parse ──────────────────────────────────────────────────────────────
     const parsed = this.parseGroqResponse(rawContent);
     if (!parsed) {
-      this.logger.warn(`[CvIntelligence] Could not parse Groq response for user ${userId}`);
+      this.logger.warn(
+        `[CvIntelligence] Could not parse Groq response for user ${userId}`,
+      );
       throw new ServiceUnavailableException(
         'Could not parse AI response. Please try again.',
       );
@@ -265,12 +272,17 @@ export class CvIntelligenceService {
   private buildCvContextText(cvData: Record<string, unknown>): string {
     const lines: string[] = [];
 
-    if (typeof cvData.fullName === 'string') lines.push(`Name: ${cvData.fullName}`);
-    if (typeof cvData.title === 'string')    lines.push(`Title: ${cvData.title}`);
-    if (typeof cvData.location === 'string') lines.push(`Location: ${cvData.location}`);
+    if (typeof cvData.fullName === 'string')
+      lines.push(`Name: ${cvData.fullName}`);
+    if (typeof cvData.title === 'string') lines.push(`Title: ${cvData.title}`);
+    if (typeof cvData.location === 'string')
+      lines.push(`Location: ${cvData.location}`);
 
-    const exp = typeof cvData.experienceYears === 'number' ? cvData.experienceYears : null;
-    const sen = typeof cvData.seniority       === 'string' ? cvData.seniority       : null;
+    const exp =
+      typeof cvData.experienceYears === 'number'
+        ? cvData.experienceYears
+        : null;
+    const sen = typeof cvData.seniority === 'string' ? cvData.seniority : null;
     if (exp !== null) lines.push(`Experience: ${exp} years`);
     if (sen !== null) lines.push(`Seniority: ${sen}`);
 
@@ -284,7 +296,10 @@ export class CvIntelligenceService {
     }
 
     // Skills
-    if (Array.isArray(cvData.skills) && (cvData.skills as string[]).length > 0) {
+    if (
+      Array.isArray(cvData.skills) &&
+      (cvData.skills as string[]).length > 0
+    ) {
       lines.push(`Skills: ${(cvData.skills as string[]).join(', ')}`);
     }
 
@@ -298,22 +313,31 @@ export class CvIntelligenceService {
     if (expEntries?.length) {
       lines.push('Work Experience:');
       for (const e of (expEntries as Record<string, unknown>[]).slice(0, 4)) {
-        const title   = typeof e.title === 'string' ? e.title : '';
+        const title = typeof e.title === 'string' ? e.title : '';
         const company = typeof e.company === 'string' ? e.company : '';
-        const from    = typeof e.from === 'string' ? e.from : '';
-        const to      = typeof e.to === 'string' ? e.to : 'Present';
-        const desc    = typeof e.description === 'string' ? e.description.slice(0, 200) : '';
-        lines.push(`- ${title} at ${company} (${from}–${to})${desc ? ': ' + desc : ''}`);
+        const from = typeof e.from === 'string' ? e.from : '';
+        const to = typeof e.to === 'string' ? e.to : 'Present';
+        const desc =
+          typeof e.description === 'string' ? e.description.slice(0, 200) : '';
+        lines.push(
+          `- ${title} at ${company} (${from}–${to})${desc ? ': ' + desc : ''}`,
+        );
       }
     }
 
     // Education
-    if (Array.isArray(cvData.education) && (cvData.education as unknown[]).length > 0) {
+    if (
+      Array.isArray(cvData.education) &&
+      (cvData.education as unknown[]).length > 0
+    ) {
       lines.push('Education:');
-      for (const edu of (cvData.education as Record<string, unknown>[]).slice(0, 3)) {
+      for (const edu of (cvData.education as Record<string, unknown>[]).slice(
+        0,
+        3,
+      )) {
         const degree = typeof edu.degree === 'string' ? edu.degree : '';
-        const inst   = typeof edu.institution === 'string' ? edu.institution : '';
-        const year   = typeof edu.year === 'string' ? edu.year : '';
+        const inst = typeof edu.institution === 'string' ? edu.institution : '';
+        const year = typeof edu.year === 'string' ? edu.year : '';
         lines.push(`- ${degree} | ${inst} ${year}`);
       }
     }
@@ -326,10 +350,9 @@ export class CvIntelligenceService {
     indexedJobs: JobRow[];
   } {
     const lines = jobs.map((j, i) => {
-      const loc =
-        j.cityRel?.name ?? j.governorateRel?.name ?? '';
+      const loc = j.cityRel?.name ?? j.governorateRel?.name ?? '';
       const skills = j.skills.slice(0, 8).join(', ') || 'general';
-      const exp    = j.minExperience ? `${j.minExperience}yr+` : 'any';
+      const exp = j.minExperience ? `${j.minExperience}yr+` : 'any';
       return `#${i + 1} | ${j.title} | ${j.partnerName} | Skills: ${skills} | Exp: ${exp} | ${j.category ?? ''} | ${loc}`;
     });
 
@@ -338,7 +361,11 @@ export class CvIntelligenceService {
 
   // ─── Prompt builder ────────────────────────────────────────────────────────
 
-  private buildPrompt(cvContext: string, jobList: string, jobCount: number): string {
+  private buildPrompt(
+    cvContext: string,
+    jobList: string,
+    jobCount: number,
+  ): string {
     return `You are an expert ATS recruiter, career coach, and CV specialist.
 
 CANDIDATE PROFILE:
@@ -397,30 +424,37 @@ Rules:
 
   // ─── Groq call ─────────────────────────────────────────────────────────────
 
-  private async callGroq(apiKey: string, prompt: string, maxRetries = 3): Promise<string | null> {
+  private async callGroq(
+    apiKey: string,
+    prompt: string,
+    maxRetries = 3,
+  ): Promise<string | null> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
+        const res = await fetch(
+          'https://api.groq.com/openai/v1/chat/completions',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'llama-3.1-8b-instant',
+              max_tokens: 3500,
+              temperature: 0.2,
+              stream: false,
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'You are a world-class ATS recruiter and career coach. Always return valid JSON only.',
+                },
+                { role: 'user', content: prompt },
+              ],
+            }),
           },
-          body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
-            max_tokens: 3500,
-            temperature: 0.2,
-            stream: false,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a world-class ATS recruiter and career coach. Always return valid JSON only.',
-              },
-              { role: 'user', content: prompt },
-            ],
-          }),
-        });
+        );
 
         if (!res.ok) {
           this.logger.warn(
@@ -456,9 +490,11 @@ Rules:
 
   // ─── Response parsing ──────────────────────────────────────────────────────
 
-  private parseGroqResponse(content: string): Omit<CvIntelligenceResult, 'analyzedAt'> | null {
+  private parseGroqResponse(
+    content: string,
+  ): Omit<CvIntelligenceResult, 'analyzedAt'> | null {
     // Strip markdown code fences if present (```json ... ``` or ``` ... ```)
-    let cleaned = content
+    const cleaned = content
       .replace(/^```(?:json)?\s*/i, '')
       .replace(/\s*```\s*$/, '')
       .trim();
@@ -467,8 +503,8 @@ Rules:
     const m = cleaned.match(/\{[\s\S]*\}/);
     if (!m) return null;
 
-    let raw = m[0]
-      .replace(/,\s*([\]}])/g, '$1')        // trailing commas
+    const raw = m[0]
+      .replace(/,\s*([\]}])/g, '$1') // trailing commas
       .replace(/[\u2018\u2019]/g, "'")
       .replace(/[\u201C\u201D]/g, '"');
 
@@ -484,7 +520,10 @@ Rules:
       const toArr = (v: unknown, max = 10): string[] =>
         Array.isArray(v)
           ? (v as unknown[])
-              .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+              .filter(
+                (s): s is string =>
+                  typeof s === 'string' && s.trim().length > 0,
+              )
               .map((s) => s.trim())
               .slice(0, max)
           : [];
@@ -492,28 +531,32 @@ Rules:
       const toStr = (v: unknown, fb = ''): string =>
         typeof v === 'string' && v.trim() ? v.trim() : fb;
 
-      const sd = p.structuredData       ?? {};
-      const ga = p.gapAnalysis          ?? {};
-      const ic = p.improvedCv           ?? {};
+      const sd = p.structuredData ?? {};
+      const ga = p.gapAnalysis ?? {};
+      const ic = p.improvedCv ?? {};
       const ma = p.marketSkillAnalytics ?? {};
 
       const rawSen = toStr(sd.seniority);
       const seniority =
-        rawSen === 'junior' || rawSen === 'mid' || rawSen === 'senior' ? rawSen : null;
+        rawSen === 'junior' || rawSen === 'mid' || rawSen === 'senior'
+          ? rawSen
+          : null;
 
       return {
         structuredData: {
-          skills:            toArr(sd.skills, 30),
+          skills: toArr(sd.skills, 30),
           yearsOfExperience:
-            typeof sd.yearsOfExperience === 'number' ? Math.round(sd.yearsOfExperience) : null,
-          specialization:    toStr(sd.specialization) || null,
+            typeof sd.yearsOfExperience === 'number'
+              ? Math.round(sd.yearsOfExperience)
+              : null,
+          specialization: toStr(sd.specialization) || null,
           seniority,
-          location:          toStr(sd.location) || null,
+          location: toStr(sd.location) || null,
         },
         gapAnalysis: {
-          missingSkills:      toArr(ga.missingSkills, 10),
-          missingExperience:  toStr(ga.missingExperience, 'لا توجد ثغرات واضحة'),
-          improvements:       toArr(ga.improvements, 6),
+          missingSkills: toArr(ga.missingSkills, 10),
+          missingExperience: toStr(ga.missingExperience, 'لا توجد ثغرات واضحة'),
+          improvements: toArr(ga.improvements, 6),
           marketDemandSkills: toArr(ga.marketDemandSkills, 10),
         },
         careerRecommendations: Array.isArray(p.careerRecommendations)
@@ -521,28 +564,27 @@ Rules:
               .filter((r) => typeof r === 'object' && r !== null)
               .slice(0, 5)
               .map((r) => ({
-                jobId: '',   // filled in by enrichWithJobIds
-                jobTitle:           toStr(r.jobTitle),
-                company:            toStr(r.company),
+                jobId: '', // filled in by enrichWithJobIds
+                jobTitle: toStr(r.jobTitle),
+                company: toStr(r.company),
                 matchScore:
                   typeof r.matchScore === 'number'
                     ? Math.min(100, Math.max(0, Math.round(r.matchScore)))
                     : 50,
-                recommendedSkills:  toArr(r.recommendedSkills, 5),
-                reason:             toStr(r.reason),
-                _jobIndex:
-                  typeof r.jobIndex === 'number' ? r.jobIndex : null,
+                recommendedSkills: toArr(r.recommendedSkills, 5),
+                reason: toStr(r.reason),
+                _jobIndex: typeof r.jobIndex === 'number' ? r.jobIndex : null,
               }))
           : [],
         improvedCv: {
           professionalSummary: toStr(ic.professionalSummary),
-          optimizedSkills:     toArr(ic.optimizedSkills, 25),
-          achievementTips:     toArr(ic.achievementTips, 6),
-          fullText:            toStr(ic.fullText),
+          optimizedSkills: toArr(ic.optimizedSkills, 25),
+          achievementTips: toArr(ic.achievementTips, 6),
+          fullText: toStr(ic.fullText),
         },
         marketSkillAnalytics: {
-          topSkills: Array.isArray((ma as Record<string, unknown>).topSkills)
-            ? ((ma as Record<string, unknown>).topSkills as unknown[])
+          topSkills: Array.isArray(ma.topSkills)
+            ? (ma.topSkills as unknown[])
                 .filter(
                   (item): item is Record<string, unknown> =>
                     typeof item === 'object' && item !== null,
@@ -571,17 +613,16 @@ Rules:
       ...result,
       analyzedAt: '',
       careerRecommendations: result.careerRecommendations.map((rec) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const idx = (rec as any)._jobIndex as number | null;
-        const job = idx && idx >= 1 && idx <= indexedJobs.length
-          ? indexedJobs[idx - 1]
-          : indexedJobs.find(
-              (j) =>
-                j.title.toLowerCase() === rec.jobTitle.toLowerCase() ||
-                j.partnerName.toLowerCase() === rec.company.toLowerCase(),
-            );
+        const job =
+          idx && idx >= 1 && idx <= indexedJobs.length
+            ? indexedJobs[idx - 1]
+            : indexedJobs.find(
+                (j) =>
+                  j.title.toLowerCase() === rec.jobTitle.toLowerCase() ||
+                  j.partnerName.toLowerCase() === rec.company.toLowerCase(),
+              );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { _jobIndex: _drop, ...clean } = rec as any;
         void _drop;
 

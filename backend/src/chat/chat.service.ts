@@ -29,7 +29,10 @@ export class ChatService {
       sanitizeLlmInput(sanitizeInput(candidateName, 60), 60) || 'المرشح';
     const safeJobTitle =
       sanitizeLlmInput(sanitizeInput(jobTitle, 100), 100) || 'الوظيفة';
-    const safeMessage = sanitizeLlmInput(sanitizeInput(userMessage, 1000), 1000);
+    const safeMessage = sanitizeLlmInput(
+      sanitizeInput(userMessage, 1000),
+      1000,
+    );
 
     const systemPrompt = `أنت مساعد توظيف ذكي ومحترف اسمك "نوفا" تعمل لصالح منصة JobNova المصرية.
 تجري الآن مقابلة تعارف مع مرشح اسمه "${safeName}" لوظيفة "${safeJobTitle}".
@@ -81,7 +84,10 @@ export class ChatService {
               ...conversationHistory,
               // Wrap the live user message in XML delimiters so the model
               // treats it as data, not as a new instruction set.
-              { role: 'user', content: `<user_input>${safeMessage}</user_input>` },
+              {
+                role: 'user',
+                content: `<user_input>${safeMessage}</user_input>`,
+              },
             ],
           }),
         },
@@ -184,12 +190,19 @@ ${safeCvContext ? `\nبيانات السيرة الذاتية الحالية:\n$
 
       const data = await response.json();
       if (!response.ok) {
-        console.error('[CV Assistant] Groq API error:', response.status, JSON.stringify(data));
+        console.error(
+          '[CV Assistant] Groq API error:',
+          response.status,
+          JSON.stringify(data),
+        );
         return 'عذراً، حدث خطأ مؤقت. حاول مرة أخرى. 🙏';
       }
       const text: string | undefined = data?.choices?.[0]?.message?.content;
       if (text) return text;
-      console.error('[CV Assistant] No text in Groq response:', JSON.stringify(data));
+      console.error(
+        '[CV Assistant] No text in Groq response:',
+        JSON.stringify(data),
+      );
       return 'عذراً، حدث خطأ مؤقت. حاول مرة أخرى. 🙏';
     } catch (err) {
       console.error('[CV Assistant] Fetch error:', err);

@@ -10,22 +10,22 @@ import { sanitizeInput } from '../common/utils/sanitize-input.util';
 import { CacheKeys, CacheTTL } from '../common/cache-keys';
 
 export interface JobFilters {
-  category?:      JobCategory;
-  jobType?:       JobType;
-  governorate?:   string;
-  isActive?:      boolean;
-  search?:        string;
+  category?: JobCategory;
+  jobType?: JobType;
+  governorate?: string;
+  isActive?: boolean;
+  search?: string;
   /** Include only jobs whose salaryMax is >= this value (or salaryMax is null) */
-  salaryMin?:     number;
+  salaryMin?: number;
   /** Include only jobs whose salaryMin is <= this value (or salaryMin is null) */
-  salaryMax?:     number;
+  salaryMax?: number;
   /**
    * Show jobs that require AT MOST this many years of experience.
    * Filters: job.minExperience <= maxExperience OR job.minExperience IS NULL
    */
-  maxExperience?:   number;
-  page?:            number;
-  limit?:           number;
+  maxExperience?: number;
+  page?: number;
+  limit?: number;
   /** HR only: when true, omits the isActive=true filter so all org jobs are returned */
   includeInactive?: boolean;
 }
@@ -87,8 +87,8 @@ export class JobsService {
       !filters?.category &&
       !filters?.jobType &&
       !filters?.governorate &&
-      filters?.salaryMin     === undefined &&
-      filters?.salaryMax     === undefined &&
+      filters?.salaryMin === undefined &&
+      filters?.salaryMax === undefined &&
       filters?.maxExperience === undefined &&
       filters?.isActive !== false;
 
@@ -104,10 +104,12 @@ export class JobsService {
         where: { userId: user.sub, roleInOrg: 'HR' },
         select: { organizationId: true },
       });
-      const membership = hrMembership ?? await this.prisma.membership.findFirst({
-        where: { userId: user.sub, roleInOrg: 'OWNER' },
-        select: { organizationId: true },
-      });
+      const membership =
+        hrMembership ??
+        (await this.prisma.membership.findFirst({
+          where: { userId: user.sub, roleInOrg: 'OWNER' },
+          select: { organizationId: true },
+        }));
       if (!membership) {
         return { items: [], total: 0, page, totalPages: 0 };
       }
@@ -145,20 +147,14 @@ export class JobsService {
     //   → job's salaryMax must be >= the requested minimum (or be unset).
     if (filters?.salaryMin !== undefined) {
       andConditions.push({
-        OR: [
-          { salaryMax: { gte: filters.salaryMin } },
-          { salaryMax: null },
-        ],
+        OR: [{ salaryMax: { gte: filters.salaryMin } }, { salaryMax: null }],
       });
     }
     // "salaryMax" filter means: I don't want jobs above this rate
     //   → job's salaryMin must be <= the requested maximum (or be unset).
     if (filters?.salaryMax !== undefined) {
       andConditions.push({
-        OR: [
-          { salaryMin: { lte: filters.salaryMax } },
-          { salaryMin: null },
-        ],
+        OR: [{ salaryMin: { lte: filters.salaryMax } }, { salaryMin: null }],
       });
     }
 
@@ -297,7 +293,11 @@ export class JobsService {
     let governorateId: string | null | undefined;
     if (governorate !== undefined) {
       governorateId = governorate
-        ? ((await this.prisma.governorate.findUnique({ where: { name: governorate } }))?.id ?? null)
+        ? ((
+            await this.prisma.governorate.findUnique({
+              where: { name: governorate },
+            })
+          )?.id ?? null)
         : null;
     }
 
@@ -305,7 +305,8 @@ export class JobsService {
     let cityId: string | null | undefined;
     if (city !== undefined) {
       cityId = city
-        ? ((await this.prisma.city.findFirst({ where: { name: city } }))?.id ?? null)
+        ? ((await this.prisma.city.findFirst({ where: { name: city } }))?.id ??
+          null)
         : null;
     }
 

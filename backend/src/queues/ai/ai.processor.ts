@@ -13,7 +13,11 @@ import type {
 import { runJobAwareAnalysis } from '../../cv/analysis/cv-job-analyzer';
 import { QUEUE_AI, AiJobName } from '../queues.constants';
 
-type CvAnalysisPayload = { userId: string; providerKey: string; version: number };
+type CvAnalysisPayload = {
+  userId: string;
+  providerKey: string;
+  version: number;
+};
 type InterviewSummaryPayload = { sessionId: string };
 
 @Processor(QUEUE_AI, { concurrency: 2 })
@@ -80,10 +84,13 @@ export class AiProcessor extends WorkerHost {
     // 4. Merge into CombinedCvAnalysisResult
     const score = rulesResult.score;
     const level: CombinedCvAnalysisResult['level'] =
-      score >= 80 ? 'excellent'
-      : score >= 60 ? 'good'
-      : score >= 40 ? 'fair'
-      : 'poor';
+      score >= 80
+        ? 'excellent'
+        : score >= 60
+          ? 'good'
+          : score >= 40
+            ? 'fair'
+            : 'poor';
 
     const recommendations = [
       ...rulesResult.suggestedImprovements,

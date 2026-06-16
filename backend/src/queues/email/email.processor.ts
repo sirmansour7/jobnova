@@ -25,12 +25,20 @@ export class EmailProcessor extends WorkerHost {
     switch (job.name) {
       case EmailJobName.SEND_VERIFICATION: {
         const d = job.data as VerificationPayload;
-        await this.emailService.sendVerificationEmail(d.email, d.fullName, d.token);
+        await this.emailService.sendVerificationEmail(
+          d.email,
+          d.fullName,
+          d.token,
+        );
         break;
       }
       case EmailJobName.SEND_PASSWORD_RESET: {
         const d = job.data as PasswordResetPayload;
-        await this.emailService.sendPasswordResetEmail(d.email, d.fullName, d.token);
+        await this.emailService.sendPasswordResetEmail(
+          d.email,
+          d.fullName,
+          d.token,
+        );
         break;
       }
       case EmailJobName.SEND_APPLICATION_STATUS: {
