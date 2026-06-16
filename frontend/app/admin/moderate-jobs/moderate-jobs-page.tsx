@@ -222,7 +222,7 @@ export default function ModerateJobsPage() {
                                 <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}`)}>
+                                <DropdownMenuItem>
                                   <Eye className="ml-2 h-4 w-4" /> عرض التفاصيل
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleToggle(job.id, job.isActive)}>

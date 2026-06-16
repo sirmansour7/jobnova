@@ -171,7 +171,7 @@ export class ApplicationsService {
   async updateStatus(
     id: string,
     dto: UpdateApplicationStatusDto,
-    user: { sub: string; role: string },
+    userId: string,
   ) {
     const application = await this.prisma.application.findUnique({
       where: { id },
@@ -182,12 +182,7 @@ export class ApplicationsService {
     });
     if (!application) throw new NotFoundException('Application not found');
 
-    if (user.role !== 'admin') {
-      await this.orgAuth.assertOrgAccess(
-        user.sub,
-        application.job.organizationId,
-      );
-    }
+    await this.orgAuth.assertOrgAccess(userId, application.job.organizationId);
 
     const updated = await this.prisma.application.update({
       where: { id },
@@ -214,11 +209,8 @@ export class ApplicationsService {
   // PRIVILEGED: get all applicants across all jobs
   private static readonly PRIVILEGED_USER_ID = 'cmnb1ujku000lns0c21p805vz';
 
-  async getAllApplicants(user: { sub: string; role: string }) {
-    if (
-      user.role !== 'admin' &&
-      user.sub !== ApplicationsService.PRIVILEGED_USER_ID
-    ) {
+  async getAllApplicants(user: { sub: string }) {
+    if (user.sub !== ApplicationsService.PRIVILEGED_USER_ID) {
       // Return applications for jobs in the HR user's organisation(s)
       const memberships = await this.prisma.membership.findMany({
         where: { userId: user.sub, roleInOrg: { in: ['OWNER', 'HR'] } },
@@ -309,14 +301,11 @@ export class ApplicationsService {
 
   // PRIVILEGED: update any application's status
   async updateApplicationStatus(
-    user: { sub: string; role: string },
+    user: { sub: string },
     appId: string,
     dto: UpdateApplicationStatusDto,
   ) {
-    if (
-      user.role !== 'admin' &&
-      user.sub !== ApplicationsService.PRIVILEGED_USER_ID
-    ) {
+    if (user.sub !== ApplicationsService.PRIVILEGED_USER_ID) {
       throw new ForbiddenException('Access denied');
     }
 

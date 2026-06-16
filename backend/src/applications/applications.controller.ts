@@ -66,9 +66,7 @@ export class ApplicationsController {
   }
 
   @Get('applicants')
-  getAllApplicants(
-    @Req() req: Request & { user: { sub: string; role: string } },
-  ) {
+  getAllApplicants(@Req() req: Request & { user: { sub: string } }) {
     return this.applicationsService.getAllApplicants(req.user);
   }
 
@@ -76,7 +74,7 @@ export class ApplicationsController {
   updateApplicationStatus(
     @Param('id', ParseCuidPipe) id: string,
     @Body(VP) body: UpdateApplicationStatusDto,
-    @Req() req: Request & { user: { sub: string; role: string } },
+    @Req() req: Request & { user: { sub: string } },
   ) {
     return this.applicationsService.updateApplicationStatus(req.user, id, body);
   }
@@ -106,8 +104,8 @@ export class ApplicationsController {
   updateStatus(
     @Param('id', ParseCuidPipe) id: string,
     @Body(VP) body: UpdateApplicationStatusDto,
-    @Req() req: Request & { user: { sub: string; role: string } },
+    @Req() req: Request & { user: { sub: string } },
   ) {
-    return this.applicationsService.updateStatus(id, body, req.user);
+    return this.applicationsService.updateStatus(id, body, req.user.sub);
   }
 }

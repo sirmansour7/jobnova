@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { DashboardLayout } from "@/components/shared/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -111,8 +111,6 @@ export default function ApplicantsPage() {
   const [messagingLoading, setMessagingLoading] = useState<Record<string, boolean>>({})
   const LIMIT = 15
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const filterJobId = searchParams.get("job")
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -127,7 +125,7 @@ export default function ApplicantsPage() {
             ...app.candidate,
             cv: app.cv ?? app.candidate?.cv,
           },
-          job: app.job ? { id: app.job.id, title: app.job.title } : undefined,
+          job: app.job ? { title: app.job.title } : undefined,
           matchScore: typeof app.matchScore === "number" ? app.matchScore : null,
         }))
         setApplications(list)
@@ -153,10 +151,9 @@ export default function ApplicantsPage() {
       const label = getStatusLabel(app.status)
       const matchesStatus =
         statusFilter === "all" || app.status === statusFilter
-      const matchesJob = !filterJobId || app.job?.id === filterJobId
-      return matchesSearch && matchesStatus && matchesJob && label
+      return matchesSearch && matchesStatus && label
     })
-  }, [applications, search, statusFilter, filterJobId])
+  }, [applications, search, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / LIMIT))
   const paginated = useMemo(
@@ -200,7 +197,7 @@ export default function ApplicantsPage() {
     }
   }
 
-  const allowedRoles = useMemo(() => ["hr", "admin"] as const, [])
+  const allowedRoles = useMemo(() => ["hr"] as const, [])
 
   return (
     <ProtectedRoute allowedRoles={allowedRoles}>
