@@ -402,8 +402,14 @@ Rules:
   // ─── Response parsing ──────────────────────────────────────────────────────
 
   private parseGroqResponse(content: string): Omit<CvIntelligenceResult, 'analyzedAt'> | null {
-    // Extract JSON object from potential surrounding text
-    const m = content.match(/\{[\s\S]*\}/);
+    // Strip markdown code fences if present (```json ... ``` or ``` ... ```)
+    let cleaned = content
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```\s*$/, '')
+      .trim();
+
+    // Extract first JSON object from the (possibly cleaned) string
+    const m = cleaned.match(/\{[\s\S]*\}/);
     if (!m) return null;
 
     let raw = m[0]
