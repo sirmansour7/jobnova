@@ -7,10 +7,16 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Response as ExpressResponse } from 'express';
-import { HrDecision, InterviewType, Prisma } from '@prisma/client';
+import {
+  HrDecision,
+  InterviewType,
+  Prisma,
+  ApplicationStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrgAuthService } from '../org/org-auth.service';
 import { AiProducer } from '../queues/ai/ai.producer';
+import { EmailProducer } from '../queues/email/email.producer';
 import { CreateScheduleInterviewDto } from './dto/create-schedule-interview.dto';
 import { UpdateScheduleInterviewDto } from './dto/update-schedule-interview.dto';
 import {
@@ -63,6 +69,7 @@ export class InterviewsService {
     private readonly orgAuth: OrgAuthService,
     private readonly aiProducer: AiProducer,
     private readonly config: ConfigService,
+    private readonly emailProducer: EmailProducer,
   ) {}
 
   async startInterview(applicationId: string, candidateId: string) {
@@ -460,15 +467,63 @@ export class InterviewsService {
     if (!session) throw new NotFoundException('Session not found');
     await this.orgAuth.assertOrgAccess(userId, session.job.organizationId);
 
-    const updated = await this.prisma.interviewSession.update({
-      where: { id: sessionId },
-      data: {
-        hrDecision: decision,
-        hrDecisionAt: new Date(),
-        status: 'reviewed',
-      },
-      include: SESSION_INCLUDE,
+    // Map HrDecision to ApplicationStatus
+    let appStatus: ApplicationStatus;
+    if (decision === HrDecision.SHORTLISTED) {
+      appStatus = ApplicationStatus.SHORTLISTED;
+    } else if (decision === HrDecision.REJECTED) {
+      appStatus = ApplicationStatus.REJECTED;
+    } else {
+      appStatus = ApplicationStatus.APPLIED;
+    }
+
+    // Update both the interview decision and the application status
+    const { updated, app } = await this.prisma.$transaction(async (tx) => {
+      const sess = await tx.interviewSession.update({
+        where: { id: sessionId },
+        data: {
+          hrDecision: decision,
+          hrDecisionAt: new Date(),
+          status: 'reviewed',
+        },
+        include: SESSION_INCLUDE,
+      });
+
+      const updatedApp = await tx.application.update({
+        where: { id: sess.applicationId },
+        data: { status: appStatus },
+        include: {
+          job: true,
+          candidate: { select: { email: true, fullName: true } },
+        },
+      });
+
+      return { updated: sess, app: updatedApp };
     });
+
+    // Send email notification to candidate in the background (non-blocking)
+    try {
+      if (app.candidate?.email && app.job?.title) {
+        const STATUS_LABELS_AR: Record<ApplicationStatus, string> = {
+          APPLIED: 'قيد المراجعة',
+          SHORTLISTED: 'مقبول مبدئيًا',
+          REJECTED: 'مرفوض',
+          HIRED: 'مقبول 🎉',
+        };
+        const statusLabel = STATUS_LABELS_AR[appStatus] ?? appStatus;
+        await this.emailProducer.sendApplicationStatusEmail(
+          app.candidate.email,
+          app.candidate.fullName ?? 'مرشح',
+          app.job.title,
+          statusLabel,
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        `[CvIntelligence] Failed to send status email for session ${sessionId}: ${String(err)}`,
+      );
+    }
+
     return this.toHrSessionResponse(updated);
   }
 
