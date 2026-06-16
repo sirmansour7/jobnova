@@ -53,6 +53,19 @@ export class AdminService {
     });
   }
 
+  async getUserLatestCvApplication(userId: string) {
+    const application = await this.prisma.application.findFirst({
+      where: {
+        candidateId: userId,
+        cvUrl: { not: null },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, cvUrl: true },
+    });
+    if (!application) return { applicationId: null };
+    return { applicationId: application.id };
+  }
+
   async deleteUser(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user || user.deletedAt) throw new NotFoundException('User not found');

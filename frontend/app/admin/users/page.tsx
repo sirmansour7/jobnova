@@ -158,7 +158,26 @@ export default function ManageUsersPage() {
                               <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
-                              <DropdownMenuItem><Eye className="ml-2 h-4 w-4" /> عرض الملف</DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    const data = await apiJson<{ applicationId: string | null }>(
+                                      `/v1/admin/users/${user.id}/cv-application`
+                                    )
+                                    if (!data.applicationId) {
+                                      toast.error("هذا المستخدم لم يرفع سيرة ذاتية بعد")
+                                      return
+                                    }
+                                    const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"
+                                    window.open(`${API_URL}/v1/files/cv/applications/${data.applicationId}`, "_blank")
+                                  } catch {
+                                    toast.error("فشل تحميل الملف")
+                                  }
+                                }}
+                              >
+                                <Eye className="ml-2 h-4 w-4" /> عرض الملف
+                              </DropdownMenuItem>
+
                               <DropdownMenuItem
                                 onClick={async () => {
                                   const newRole = window

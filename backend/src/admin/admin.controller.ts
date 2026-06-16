@@ -62,6 +62,11 @@ export class AdminController {
     return this.adminService.deleteUser(id);
   }
 
+  @Get('users/:id/cv-application')
+  getUserCvApplication(@Param('id', ParseCuidPipe) id: string) {
+    return this.adminService.getUserLatestCvApplication(id);
+  }
+
   @Post('users/:id/restore')
   restoreUser(@Param('id') id: string) {
     return this.adminService.restoreUser(id);
