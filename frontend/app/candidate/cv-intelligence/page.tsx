@@ -384,7 +384,7 @@ export default function CvIntelligencePage() {
               <div>
                 <p className="text-lg font-semibold text-foreground">لا يوجد تحليل حتى الآن</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  اضغط على "ابدأ التحليل" لتحصل على تقرير كامل عن سيرتك الذاتية وأفضل الوظائف المناسبة لك
+                  اضغط على &quot;ابدأ التحليل&quot; لتحصل على تقرير كامل عن سيرتك الذاتية وأفضل الوظائف المناسبة لك
                 </p>
               </div>
               <p className="text-xs text-muted-foreground">

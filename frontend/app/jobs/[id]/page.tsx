@@ -457,32 +457,36 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                 <div className="flex flex-col gap-2">
                   {isCandidate && <JobMatchPanel jobId={id} />}
                   <div className="flex flex-wrap items-center gap-2">
-                    {applied ? (
-                      <Button disabled className="gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
-                        تم التقديم
-                      </Button>
-                    ) : (
-                      <Button onClick={() => setApplyDialogOpen(true)} disabled={applyLoading} className="gap-2">
-                        {applyLoading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            جاري التقديم...
-                          </>
+                    {(!user || isCandidate) && (
+                      <>
+                        {applied ? (
+                          <Button disabled className="gap-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            تم التقديم
+                          </Button>
                         ) : (
-                          "تقدم الآن"
+                          <Button onClick={() => setApplyDialogOpen(true)} disabled={applyLoading} className="gap-2">
+                            {applyLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                جاري التقديم...
+                              </>
+                            ) : (
+                              "تقدم الآن"
+                            )}
+                          </Button>
                         )}
-                      </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSave}
+                          className="gap-2"
+                        >
+                          {saved ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
+                          {saved ? "محفوظة" : "حفظ"}
+                        </Button>
+                      </>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSave}
-                      className="gap-2"
-                    >
-                      {saved ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
-                      {saved ? "محفوظة" : "حفظ"}
-                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
