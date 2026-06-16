@@ -293,41 +293,51 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     setApplyMessage(null)
     try {
       const cvId = cvSelectValue === "none" ? undefined : cvSelectValue
-      let res;
-      if (uploadedFile) {
-        const formData = new FormData()
-        formData.append("jobId", id)
-        if (cvId) {
-          formData.append("cvId", cvId)
-        }
-        formData.append("cvFile", uploadedFile)
 
-        res = await fetch(`${API_URL}/v1/applications`, {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        })
-      } else {
-        res = await api("/v1/applications", {
-          method: "POST",
-          body: JSON.stringify({ jobId: id, ...(cvId ? { cvId } : {}) }),
-        })
-      }
+      // Step 1: Submit the application (always JSON)
+      const res = await api("/v1/applications", {
+        method: "POST",
+        body: JSON.stringify({ jobId: id, ...(cvId ? { cvId } : {}) }),
+      })
 
       const body = await res.json().catch(() => ({}))
-      if (res.status === 201) {
-        setApplied(true)
-        setApplyMessage("تم التقديم بنجاح ✓")
-        setApplyDialogOpen(false)
-      } else if (res.status === 409) {
+
+      if (res.status === 409) {
         setApplied(true)
         setApplyMessage("لقد تقدمت لهذه الوظيفة من قبل")
         setApplyDialogOpen(false)
-      } else if (res.status === 401) {
-        setApplyMessage("يجب تسجيل الدخول أولاً")
-      } else {
-        setApplyMessage(typeof body?.message === "string" ? body.message : "حدث خطأ، حاول مرة أخرى")
+        return
       }
+
+      if (res.status === 401) {
+        setApplyMessage("يجب تسجيل الدخول أولاً")
+        return
+      }
+
+      if (res.status !== 201) {
+        setApplyMessage(typeof body?.message === "string" ? body.message : "حدث خطأ، حاول مرة أخرى")
+        return
+      }
+
+      // Step 2: If user uploaded a PDF, attach it via /v1/cv/upload-pdf
+      if (uploadedFile && body?.id) {
+        const formData = new FormData()
+        formData.append("file", uploadedFile)
+        formData.append("applicationId", body.id)
+        try {
+          await fetch(`${API_URL}/v1/cv/upload-pdf`, {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          })
+        } catch {
+          // PDF upload failure is non-fatal — application was already submitted
+        }
+      }
+
+      setApplied(true)
+      setApplyMessage("تم التقديم بنجاح ✓")
+      setApplyDialogOpen(false)
     } catch {
       setApplyMessage("حدث خطأ، حاول مرة أخرى")
     } finally {
