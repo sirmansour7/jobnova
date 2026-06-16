@@ -81,6 +81,18 @@ export class InterviewsService {
       include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
     });
     if (existing) {
+      // If session was marked 'completed' prematurely (not all questions answered), reset to 'active'
+      if (
+        existing.status !== 'active' &&
+        existing.currentStep < INTERVIEW_QUESTIONS_COUNT
+      ) {
+        const resumed = await this.prisma.interviewSession.update({
+          where: { id: existing.id },
+          data: { status: 'active', completedAt: null },
+          include: { messages: { orderBy: { createdAt: 'asc' } }, summary: true },
+        });
+        return this.toSessionResponse(resumed);
+      }
       return this.toSessionResponse(existing);
     }
 
