@@ -166,7 +166,7 @@ export class CvController {
   @Post('intelligence')
   @HttpCode(HttpStatus.OK)
   runIntelligence(@Req() req: Request & { user: { sub: string } }) {
-    return this.cvIntelligenceService.analyze(req.user.sub);
+    return this.cvIntelligenceService.analyze(req.user.sub, false);
   }
 
   /**

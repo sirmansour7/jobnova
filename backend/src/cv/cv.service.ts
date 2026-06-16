@@ -64,7 +64,7 @@ export class CvService {
 
     // Auto-refresh intelligence in background when CV is manually updated
     if (this.cvIntelligenceService) {
-      void this.cvIntelligenceService.analyze(userId).catch(() => {
+      void this.cvIntelligenceService.analyze(userId, true).catch(() => {
         /* non-fatal */
       });
     }
@@ -388,7 +388,7 @@ export class CvService {
       // Auto-chain full intelligence analysis (fire-and-forget)
       // The intelligence service will emit cv:intelligence:ready when done
       if (this.cvIntelligenceService) {
-        void this.cvIntelligenceService.analyze(userId).catch((err: unknown) => {
+        void this.cvIntelligenceService.analyze(userId, true).catch((err: unknown) => {
           this.logger.warn(`[CvService] Auto-intelligence failed for ${userId}: ${String(err)}`);
           this.cvGateway?.emitAnalysisProgress(userId, 'error');
         });

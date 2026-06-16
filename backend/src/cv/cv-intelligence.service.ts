@@ -100,13 +100,30 @@ export class CvIntelligenceService {
    *
    * Synchronous — the caller waits for the result (~10–15 s).
    */
-  async analyze(userId: string): Promise<CvIntelligenceResult> {
-    const apiKey = this.config.get<string>('GROQ_API_KEY');
-    if (!apiKey) {
-      throw new ServiceUnavailableException('Groq API key not configured.');
+  private readonly activeAnalyses = new Map<string, Promise<CvIntelligenceResult>>();
+
+  /**
+   * Runs the full CV intelligence pipeline:
+   *   1. Loads the candidate's cv.data from DB
+   *   2. Fetches the 20 most recent active jobs
+   *   3. Sends a unified prompt to Groq
+   *   4. Parses + enriches the response
+   *   5. Persists in cv.data.intelligence
+   *
+   * Deduplicates concurrent calls for the same user, and enforces a cooldown
+   * for manual requests.
+   */
+  async analyze(userId: string, isAuto = false): Promise<CvIntelligenceResult> {
+    // Check if an analysis is already in progress for this user
+    const active = this.activeAnalyses.get(userId);
+    if (active) {
+      this.logger.log(
+        `[CvIntelligence] Analysis already in progress for user ${userId}. Coalescing request.`,
+      );
+      return active;
     }
 
-    // ── 1. Load CV ────────────────────────────────────────────────────────────
+    // Load CV data to check details and cooldown
     const cv = await this.prisma.cv.findUnique({ where: { userId } });
     if (!cv?.data) {
       throw new BadRequestException(
@@ -115,6 +132,44 @@ export class CvIntelligenceService {
     }
 
     const cvData = cv.data as Record<string, unknown>;
+
+    // Cooldown check: prevent manual re-analysis spamming (30 seconds)
+    if (!isAuto) {
+      const intelligence = cvData.intelligence as CvIntelligenceResult | undefined;
+      if (intelligence?.analyzedAt) {
+        const lastAnalyzed = new Date(intelligence.analyzedAt);
+        const now = new Date();
+        const diffMs = now.getTime() - lastAnalyzed.getTime();
+        const cooldownMs = 30 * 1000; // 30 seconds
+        if (diffMs < cooldownMs) {
+          const waitSec = Math.ceil((cooldownMs - diffMs) / 1000);
+          throw new BadRequestException(
+            `يرجى الانتظار ${waitSec} ثانية قبل إعادة التحليل لتجنب الضغط على الخادم.`,
+          );
+        }
+      }
+    }
+
+    // Run pipeline and store the promise
+    const promise = this.runAnalysisPipeline(userId, cvData);
+    this.activeAnalyses.set(userId, promise);
+
+    try {
+      return await promise;
+    } finally {
+      this.activeAnalyses.delete(userId);
+    }
+  }
+
+  private async runAnalysisPipeline(
+    userId: string,
+    cvData: Record<string, unknown>,
+  ): Promise<CvIntelligenceResult> {
+    const apiKey = this.config.get<string>('GROQ_API_KEY');
+    if (!apiKey) {
+      throw new ServiceUnavailableException('Groq API key not configured.');
+    }
+
     const cvContext = this.buildCvContextText(cvData);
 
     // ── 2. Load jobs ──────────────────────────────────────────────────────────
